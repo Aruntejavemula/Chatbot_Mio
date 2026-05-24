@@ -1,0 +1,7 @@
+{
+  "task_id": "task-flutter-project-setup",
+  "task_description": "Create a new Flutter project in /frontend with all specified dependencies and folder structure on feature/project-setup branch",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
