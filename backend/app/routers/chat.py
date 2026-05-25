@@ -21,6 +21,7 @@ from app.services.encryption_service import EncryptionService
 from app.services.search_service import search_service
 from app.tasks.research_task import run_deep_research
 from app.services.circuit_breaker import circuit_breaker as provider_circuit_breaker
+from app.services.skills.skill_registry import skill_registry
 from app.utils.constants import SUPPORTED_PROVIDERS
 from app.utils.helpers import check_token_abuse, circuit_breaker
 from app.worker import celery_app
@@ -115,6 +116,21 @@ async def get_providers_health(
     """
     health = await provider_circuit_breaker.get_provider_health()
     return {"providers": health}
+
+
+@router.get("/skills")
+async def get_skills(
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Get available skills for the user's plan.
+
+    Args:
+        current_user: Authenticated user.
+
+    Returns:
+        Dictionary with list of skill metadata.
+    """
+    return {"skills": skill_registry.get_skill_metadata()}
 
 
 @router.get("/task/{task_id}")

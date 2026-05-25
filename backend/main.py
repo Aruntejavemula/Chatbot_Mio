@@ -7,6 +7,7 @@ from app.config import get_settings
 from app.routers import (
     auth,
     chat,
+    connectors,
     export,
     files,
     keys,
@@ -47,6 +48,7 @@ app.include_router(settings.router, prefix="/settings", tags=["Settings"])
 app.include_router(payments_stripe.router, prefix="/payments/stripe", tags=["Payments - Stripe"])
 app.include_router(payments_razorpay.router, prefix="/payments/razorpay", tags=["Payments - Razorpay"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
+app.include_router(connectors.router, prefix="/connectors", tags=["Connectors"])
 
 
 @app.get("/health")
