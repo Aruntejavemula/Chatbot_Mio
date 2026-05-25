@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,6 +18,8 @@ class StorageScreen extends ConsumerStatefulWidget {
 }
 
 class _StorageScreenState extends ConsumerState<StorageScreen> {
+  static const String _providerStorageKey = 'storage_selected_provider';
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   String _currentPlan = 'free';
   String? _selectedProvider;
 
@@ -28,9 +31,21 @@ class _StorageScreenState extends ConsumerState<StorageScreen> {
 
   Future<void> _loadStorageSettings() async {
     try {
+      final savedProvider = await _secureStorage.read(key: _providerStorageKey);
       setState(() {
         _currentPlan = 'free';
-        _selectedProvider = null;
+        _selectedProvider = savedProvider;
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> _saveSelectedProvider(String providerKey) async {
+    try {
+      await _secureStorage.write(key: _providerStorageKey, value: providerKey);
+      setState(() {
+        _selectedProvider = providerKey;
       });
     } catch (e) {
       rethrow;
@@ -267,9 +282,7 @@ class _StorageScreenState extends ConsumerState<StorageScreen> {
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedProvider = providerKey;
-        });
+        _saveSelectedProvider(providerKey);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -329,9 +342,7 @@ class _StorageScreenState extends ConsumerState<StorageScreen> {
             else
               OutlinedButton(
                 onPressed: () {
-                  setState(() {
-                    _selectedProvider = providerKey;
-                  });
+                  _saveSelectedProvider(providerKey);
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.persian,

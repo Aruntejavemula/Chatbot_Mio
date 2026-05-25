@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/router.dart';
 import '../../../data/repositories/chat_repository.dart';
 
 class ExportMenuWidget extends ConsumerWidget {
@@ -157,14 +159,15 @@ class ExportMenuWidget extends ConsumerWidget {
   }
 
   Future<void> _exportMarkdown(BuildContext context, WidgetRef ref) async {
+    File? tempFile;
     try {
       Navigator.of(context).pop();
       final chatService = ref.read(chatServiceProvider);
       final bytes = await chatService.exportChatMarkdown(chatId);
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/chat_export.md');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)]);
+      tempFile = File('${tempDir.path}/chat_export.md');
+      await tempFile.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(tempFile.path)]);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Chat exported successfully')),
@@ -174,6 +177,10 @@ class ExportMenuWidget extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to export chat')),
       );
+    } finally {
+      if (tempFile != null && tempFile.existsSync()) {
+        await tempFile.delete();
+      }
     }
   }
 
@@ -183,14 +190,15 @@ class ExportMenuWidget extends ConsumerWidget {
       _showUpgradeDialog(context);
       return;
     }
+    File? tempFile;
     try {
       Navigator.of(context).pop();
       final chatService = ref.read(chatServiceProvider);
       final bytes = await chatService.exportChatPdf(chatId);
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/chat_export.pdf');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)]);
+      tempFile = File('${tempDir.path}/chat_export.pdf');
+      await tempFile.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(tempFile.path)]);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PDF exported successfully')),
@@ -200,6 +208,10 @@ class ExportMenuWidget extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to export PDF')),
       );
+    } finally {
+      if (tempFile != null && tempFile.existsSync()) {
+        await tempFile.delete();
+      }
     }
   }
 
@@ -209,14 +221,15 @@ class ExportMenuWidget extends ConsumerWidget {
       _showUpgradeDialog(context);
       return;
     }
+    File? tempFile;
     try {
       Navigator.of(context).pop();
       final chatService = ref.read(chatServiceProvider);
       final bytes = await chatService.exportAllChats();
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/all_chats_export.md');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)]);
+      tempFile = File('${tempDir.path}/all_chats_export.md');
+      await tempFile.writeAsBytes(bytes);
+      await Share.shareXFiles([XFile(tempFile.path)]);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All chats exported successfully')),
@@ -226,6 +239,10 @@ class ExportMenuWidget extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to export chats')),
       );
+    } finally {
+      if (tempFile != null && tempFile.existsSync()) {
+        await tempFile.delete();
+      }
     }
   }
 
@@ -273,7 +290,10 @@ class ExportMenuWidget extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go(AppRoutes.subscription);
+              },
               child: Text(
                 'Upgrade',
                 style: GoogleFonts.dmSans(

@@ -227,15 +227,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               ),
             ),
-            // Export button (only when messages exist)
-            if (messages.isNotEmpty)
+            // Export button (only when messages exist and chatId is available)
+            if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 12),
                 child: GestureDetector(
                   onTap: () {
                     ExportMenuWidget.showExportSheet(
                       context: context,
-                      chatId: widget.chatId ?? '',
+                      chatId: widget.chatId!,
                       userPlan: 'free',
                     );
                   },

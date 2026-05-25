@@ -91,6 +91,8 @@ class ChatRepository {
     required bool useOurTokens,
   }) async {
     try {
+      _ref.read(tokenCapProvider.notifier).state = null;
+
       final userMessage = MessageModel(
         id: const Uuid().v4(),
         chatId: chatId,
