@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../widgets/common/ghost_mascot.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -18,29 +19,17 @@ class WelcomeScreen extends ConsumerStatefulWidget {
   ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
-    with TickerProviderStateMixin {
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   bool _isLoadingGoogle = false;
   bool _isLoadingApple = false;
-  late final AnimationController _floatingController;
-  late final Animation<double> _floatingAnimation;
 
   @override
   void initState() {
     super.initState();
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _floatingAnimation = Tween<double>(begin: 0, end: -8).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
   }
 
   @override
   void dispose() {
-    _floatingController.dispose();
     super.dispose();
   }
 
@@ -101,32 +90,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
           children: [
             const Spacer(flex: 2),
             // Mascot placeholder
-            AnimatedBuilder(
-              animation: _floatingAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, _floatingAnimation.value),
-                  child: child,
-                );
-              },
-              // TODO: Replace with Mio mascot image
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkBgSecondary
-                      : AppColors.bgSecondary,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-                ),
-                child: const Center(
-                  child: Text(
-                    '\u{1F47B}',
-                    style: TextStyle(fontSize: 40),
-                  ),
-                ),
-              ),
-            ),
+            const PenguinMascot(size: 80),
             const SizedBox(height: 20),
             // App name
             Text(

@@ -10,6 +10,7 @@ import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../widgets/common/ghost_mascot.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
@@ -220,7 +221,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 // TODO: Replace with mascot image
                 child: const Center(
-                  child: Text('👻', style: TextStyle(fontSize: 18)),
+                  child: PenguinMascot(size: 28, animate: false),
                 ),
               ),
             ),
@@ -536,7 +537,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             width: 48,
             height: 48,
             // TODO: Replace with mascot
-            child: Center(child: Text('👻', style: TextStyle(fontSize: 32))),
+            child: Center(child: PenguinMascot(size: 48)),
           ),
           const SizedBox(height: 16),
           ConstrainedBox(

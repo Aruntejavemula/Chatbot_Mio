@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../widgets/common/ghost_mascot.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -123,6 +124,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // TODO: Add mascot image here
+            const PenguinMascot(size: 80),
+            const SizedBox(height: 16),
             SlideTransition(
               position: _titleSlide,
               child: FadeTransition(

@@ -1,0 +1,17 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  macos: true
+  windows: true
+  web: true
+  image_path: "assets/images/mascot.png"
+  adaptive_icon_background: "#FAF8F5"
+  adaptive_icon_foreground: "assets/images/mascot.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  background_color_ios: "#FAF8F5"
+  web:
+    generate: true
+    image_path: "assets/images/mascot.png"
+    background_color: "#FAF8F5"
+    theme_color: "#CC5801"
