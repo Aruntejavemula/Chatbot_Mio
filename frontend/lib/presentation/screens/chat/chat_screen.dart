@@ -9,12 +9,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/animations.dart';
+import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -30,6 +32,7 @@ import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/funny_snackbar.dart';
 import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/offline_banner_widget.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../data/services/notification_service.dart';
@@ -64,6 +67,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   AppLifecycleState _appLifecycleState = AppLifecycleState.resumed;
   late AnimationController _scrollButtonAnimController;
   late Animation<double> _scrollButtonFadeAnimation;
+  bool _showDisclaimer = true;
+  bool _isOnline = true;
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -132,17 +137,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         _focusNode.requestFocus();
       });
     }
+    // Load disclaimer dismissed state
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _showDisclaimer = !(prefs.getBool('disclaimer_dismissed') ?? false);
+        });
+      }
+    });
+    // Listen to connectivity changes
+    _isOnline = ConnectivityService.instance.isOnline.value;
+    ConnectivityService.instance.isOnline.addListener(_onConnectivityChanged);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ConnectivityService.instance.isOnline.removeListener(_onConnectivityChanged);
     _inputController.dispose();
     _focusNode.dispose();
     _scrollController.dispose();
     _sendButtonAnimController.dispose();
     _scrollButtonAnimController.dispose();
     super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (mounted) {
+      setState(() {
+        _isOnline = ConnectivityService.instance.isOnline.value;
+      });
+    }
   }
 
   @override
@@ -286,6 +311,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                       },
                       child: Column(
                         children: [
+                          // Offline banner
+                          if (!_isOnline)
+                            const OfflineBannerWidget(),
                           // Top bar
                           _buildTopBar(isDark, showPermanentSidebar: showPermanentSidebar),
                           // Model selector bar
@@ -304,6 +332,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                       streamingThinkingText, isThinkingStreaming),
                             ),
                           ),
+                          // AI disclaimer pill
+                          if (_showDisclaimer)
+                            _buildDisclaimerPill(isDark),
                           // Input bar
                           if (tokenCap != null)
                             TokenCapBanner(
@@ -1273,6 +1304,49 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDisclaimerPill(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkBgSecondary
+            : AppColors.bgSecondary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'AI can make mistakes. Don\'t rely on it for medical or legal advice.',
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () async {
+              setState(() => _showDisclaimer = false);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('disclaimer_dismissed', true);
+            },
+            child: Icon(
+              Icons.close,
+              size: 16,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

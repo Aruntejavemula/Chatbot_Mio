@@ -11,9 +11,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/cost_rates.dart';
 import '../../../core/utils/animations.dart';
 import '../../../data/models/message_model.dart';
 import 'artifact_viewer.dart';
+import 'cache_indicator_widget.dart';
+import 'image_result_widget.dart';
 import 'thinking_block_widget.dart';
 
 class ChatBubble extends StatefulWidget {
@@ -220,8 +223,24 @@ class _ChatBubbleState extends State<ChatBubble>
               thinkingContent: widget.thinkingContent!,
               isStreaming: widget.isThinkingStreaming,
             ),
+          // Image result
+          if (widget.message.imageUrl != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ImageResultWidget(
+                imageUrl: widget.message.imageUrl!,
+                prompt: widget.message.imagePrompt ?? '',
+              ),
+            ),
           // Content - parsed with code blocks
           _buildAiContent(context, isDark, textColor, mutedColor),
+          // Cache indicator
+          if (widget.message.cachedTokens != null && widget.message.cachedTokens! > 0)
+            CacheIndicatorWidget(
+              cachedTokens: widget.message.cachedTokens!,
+              totalInputTokens: widget.message.totalInputTokens ?? 0,
+              provider: widget.message.provider ?? widget.message.model ?? '',
+            ),
           // Action row
           Padding(
             padding: const EdgeInsets.only(top: 8),

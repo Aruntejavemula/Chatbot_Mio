@@ -16,6 +16,17 @@ class MessageModel {
   final String? thinkingContent;
   @JsonKey(name: 'has_thinking')
   final bool hasThinking;
+  final String? provider;
+  @JsonKey(name: 'cached_tokens')
+  final int? cachedTokens;
+  @JsonKey(name: 'total_input_tokens')
+  final int? totalInputTokens;
+  @JsonKey(name: 'output_tokens')
+  final int? outputTokens;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'image_prompt')
+  final String? imagePrompt;
 
   const MessageModel({
     required this.id,
@@ -28,6 +39,12 @@ class MessageModel {
     required this.createdAt,
     this.thinkingContent,
     this.hasThinking = false,
+    this.provider,
+    this.cachedTokens,
+    this.totalInputTokens,
+    this.outputTokens,
+    this.imageUrl,
+    this.imagePrompt,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -46,6 +63,12 @@ class MessageModel {
     DateTime? createdAt,
     String? thinkingContent,
     bool? hasThinking,
+    String? provider,
+    int? cachedTokens,
+    int? totalInputTokens,
+    int? outputTokens,
+    String? imageUrl,
+    String? imagePrompt,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -58,6 +81,12 @@ class MessageModel {
       createdAt: createdAt ?? this.createdAt,
       thinkingContent: thinkingContent ?? this.thinkingContent,
       hasThinking: hasThinking ?? this.hasThinking,
+      provider: provider ?? this.provider,
+      cachedTokens: cachedTokens ?? this.cachedTokens,
+      totalInputTokens: totalInputTokens ?? this.totalInputTokens,
+      outputTokens: outputTokens ?? this.outputTokens,
+      imageUrl: imageUrl ?? this.imageUrl,
+      imagePrompt: imagePrompt ?? this.imagePrompt,
     );
   }
 }
