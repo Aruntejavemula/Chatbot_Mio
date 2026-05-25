@@ -32,6 +32,18 @@ class AuthService extends ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> microsoftSignIn(String idToken) async {
+    try {
+      final response = await post<Map<String, dynamic>>(
+        '/auth/microsoft',
+        data: {'identity_token': idToken},
+      );
+      return response.data ?? {};
+    } on DioException {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await post('/auth/signout');
