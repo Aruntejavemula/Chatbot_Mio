@@ -835,7 +835,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Basic \u20B999/mo \u00B7 Pro \u20B9299/mo',
+            'Basic ${RegionService.getPriceDisplay(_userCountry, 'basic', false)} \u00B7 Pro ${RegionService.getPriceDisplay(_userCountry, 'pro', false)}',
             style: GoogleFonts.dmSans(
               fontSize: 14,
               color: isDark

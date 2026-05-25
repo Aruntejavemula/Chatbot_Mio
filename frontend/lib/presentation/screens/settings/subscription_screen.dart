@@ -116,7 +116,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Basic \u20B999/mo \u00B7 Pro \u20B9299/mo',
+                'Basic ${RegionService.getPriceDisplay(_country, 'basic', false)} \u00B7 Pro ${RegionService.getPriceDisplay(_country, 'pro', false)}',
                 style: GoogleFonts.dmSans(
                   fontSize: 14,
                   color: isDark
@@ -328,7 +328,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     return GestureDetector(
       onTap: () async {
         final uri = Uri.parse(
-          'https://mio.app/subscribe?plan=pro&country=$_country',
+          'https://mio.app/subscribe?country=$_country',
         );
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
