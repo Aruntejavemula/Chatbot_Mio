@@ -448,6 +448,11 @@ async def stream_message(
         logger.error(f"Error fetching history: {str(e)}")
         messages = [{"role": "user", "content": body.content}]
 
+    # TODO: If body.project_id is set, fetch the project's system_prompt
+    # and prepend it to the messages list before sending to the AI provider.
+    # Example: project = get_project(body.project_id)
+    #          messages.insert(0, {"role": "system", "content": project.system_prompt})
+
     # Get zero_fluff setting
     try:
         settings_result = (
@@ -626,17 +631,21 @@ async def dispatch_background_agent(
 
 
 @router.get("/chats")
-async def get_chats(current_user: dict = Depends(get_current_user)) -> list[dict]:
+async def get_chats(
+    current_user: dict = Depends(get_current_user),
+    project_id: Optional[str] = None,
+) -> list[dict]:
     """Get all chats for current user, ordered by most recent."""
     try:
         supabase = get_supabase_client()
-        result = (
+        query = (
             supabase.table("chats")
             .select("*")
             .eq("user_id", current_user["id"])
-            .order("updated_at", desc=True)
-            .execute()
         )
+        # TODO: If project_id is provided, filter chats by project_id
+        # e.g. query = query.eq("project_id", project_id)
+        result = query.order("updated_at", desc=True).execute()
         return result.data if result.data else []
     except Exception as e:
         logger.error(f"Error fetching chats: {str(e)}")

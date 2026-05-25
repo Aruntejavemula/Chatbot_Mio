@@ -95,6 +95,16 @@ class CostService:
                     daily_total,
                     EMERGENCY_USD,
                 )
+                # TODO: Send admin alert email when emergency threshold is hit
+                # e.g. await email_service.send_admin_alert(
+                #     subject=f"EMERGENCY: user {user_id} cost ${daily_total:.2f}",
+                #     body=f"User {user_id} has exceeded the emergency spending threshold."
+                # )
+                logger.critical(
+                    "Admin alert would be sent: user=%s exceeded emergency threshold ($%.2f)",
+                    user_id,
+                    daily_total,
+                )
             elif daily_total >= HARD_BLOCK_USD:
                 status = "blocked"
                 logger.warning(

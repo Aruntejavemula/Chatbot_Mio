@@ -49,6 +49,7 @@ class MemoryService:
         self,
         memories: list[dict[str, Any]],
         user_id: str,
+        project_id: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """Save extracted memories to storage.
 
@@ -58,12 +59,13 @@ class MemoryService:
         Args:
             memories: List of memory dicts with at least a 'content' key.
             user_id: The ID of the user to save memories for.
+            project_id: Optional project ID to scope memories to a project.
 
         Returns:
             List of saved memory records with IDs and timestamps.
         """
         try:
-            logger.info("Saving %d memories for user=%s", len(memories), user_id)
+            logger.info("Saving %d memories for user=%s project=%s", len(memories), user_id, project_id)
             saved: list[dict[str, Any]] = []
             if user_id not in self._memories:
                 self._memories[user_id] = []
@@ -74,6 +76,7 @@ class MemoryService:
                     "user_id": user_id,
                     "content": memory.get("content", ""),
                     "category": memory.get("category", "general"),
+                    "project_id": project_id,
                     "created_at": datetime.utcnow().isoformat(),
                 }
                 self._memories[user_id].append(record)
@@ -89,25 +92,32 @@ class MemoryService:
         user_id: str,
         category: Optional[str] = None,
         limit: int = 50,
+        project_id: Optional[str] = None,
     ) -> list[dict[str, Any]]:
         """Retrieve stored memories for a user.
 
-        Fetches memories from storage, optionally filtered by category.
+        Fetches memories from storage, optionally filtered by category
+        and/or project.
 
         Args:
             user_id: The ID of the user whose memories to retrieve.
             category: Optional category filter (e.g., 'preference', 'fact').
             limit: Maximum number of memories to return.
+            project_id: Optional project ID to filter memories by project scope.
 
         Returns:
             List of memory records.
         """
         try:
-            logger.info("Fetching memories for user=%s (category=%s, limit=%d)", user_id, category, limit)
+            logger.info("Fetching memories for user=%s (category=%s, limit=%d, project_id=%s)", user_id, category, limit, project_id)
             user_memories = self._memories.get(user_id, [])
 
             if category:
                 user_memories = [m for m in user_memories if m.get("category") == category]
+
+            # TODO: Placeholder - filter by project_id when project-scoped memory is implemented
+            if project_id:
+                user_memories = [m for m in user_memories if m.get("project_id") == project_id]
 
             return user_memories[:limit]
         except Exception as e:

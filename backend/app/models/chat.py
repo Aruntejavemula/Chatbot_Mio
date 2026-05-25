@@ -45,6 +45,7 @@ class MessageCreate(BaseModel):
     model: str = Field(..., description="AI model to use")
     provider: str = Field(..., description="AI provider to use")
     use_our_tokens: bool = Field(default=False, description="Use platform tokens")
+    project_id: Optional[str] = Field(None, description="Optional project ID for scoped context")
 
 
 class MessageResponse(BaseModel):

@@ -162,4 +162,17 @@ class EmailService:
             return False
 
 
+    async def send_admin_alert(self, subject: str, body: str) -> None:
+        """Send an alert to the admin team.
+
+        Logs the alert details. In production this would send an email
+        to the configured admin address.
+
+        Args:
+            subject: Alert subject line.
+            body: Alert body content.
+        """
+        logger.warning("ADMIN ALERT [%s]: %s", subject, body)
+
+
 email_service = EmailService()

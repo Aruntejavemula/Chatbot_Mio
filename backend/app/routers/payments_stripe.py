@@ -96,6 +96,9 @@ async def create_checkout(
             cancel_url=f"{FRONTEND_URL}/subscription?cancelled=true",
             metadata={"user_id": user_id, "plan": body.plan},
             allow_promotion_codes=True,
+            automatic_tax={"enabled": True},
+            billing_address_collection="required",
+            customer_update={"address": "auto"},
         )
 
         logger.info(f"Stripe checkout created for user {user_id}, plan: {body.plan}")
