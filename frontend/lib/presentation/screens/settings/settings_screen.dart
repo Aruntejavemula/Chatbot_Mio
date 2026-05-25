@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
@@ -246,7 +247,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     Color? iconColor,
     Color? titleColor,
   }) {
-    return InkWell(
+    return _AnimatedTile(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -413,6 +414,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AnimatedTile extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _AnimatedTile({
+    required this.child,
+    this.onTap,
+  });
+
+  @override
+  State<_AnimatedTile> createState() => _AnimatedTileState();
+}
+
+class _AnimatedTileState extends State<_AnimatedTile> {
+  double _scale = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _scale = 0.97);
+      },
+      onTapUp: (_) {
+        setState(() => _scale = 1.0);
+        widget.onTap?.call();
+      },
+      onTapCancel: () {
+        setState(() => _scale = 1.0);
+      },
+      child: AnimatedScale(
+        scale: _scale,
+        duration: MioAnimations.fast,
+        curve: MioAnimations.curve,
+        child: widget.child,
       ),
     );
   }

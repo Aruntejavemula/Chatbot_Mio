@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 
 enum LoadingState { idle, thinking, responding, streaming }
 
@@ -33,6 +34,9 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   late Animation<double> _dot1Animation;
   late Animation<double> _dot2Animation;
   late Animation<double> _dot3Animation;
+  late Animation<double> _dot1Scale;
+  late Animation<double> _dot2Scale;
+  late Animation<double> _dot3Scale;
   late Animation<double> _wordFadeAnimation;
   late Animation<Offset> _wordSlideAnimation;
 
@@ -61,6 +65,16 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     );
     _dot3Animation = Tween<double>(begin: 0, end: -6).animate(
       CurvedAnimation(parent: _dot3Controller, curve: Curves.easeInOut),
+    );
+
+    _dot1Scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _dot1Controller, curve: MioAnimations.curve),
+    );
+    _dot2Scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _dot2Controller, curve: MioAnimations.curve),
+    );
+    _dot3Scale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _dot3Controller, curve: MioAnimations.curve),
     );
 
     _wordFadeController = AnimationController(
@@ -128,14 +142,14 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
       _dot1Controller.repeat(reverse: true);
     }
     if (!_dot2Controller.isAnimating) {
-      Future.delayed(const Duration(milliseconds: 200), () {
+      Future.delayed(const Duration(milliseconds: 150), () {
         if (mounted && !_dot2Controller.isAnimating) {
           _dot2Controller.repeat(reverse: true);
         }
       });
     }
     if (!_dot3Controller.isAnimating) {
-      Future.delayed(const Duration(milliseconds: 400), () {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && !_dot3Controller.isAnimating) {
           _dot3Controller.repeat(reverse: true);
         }
@@ -206,7 +220,10 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
             offset: Offset(0, _dot1Animation.value),
             child: child,
           ),
-          child: _buildDot(),
+          child: ScaleTransition(
+            scale: _dot1Scale,
+            child: _buildDot(),
+          ),
         ),
         const SizedBox(width: 6),
         AnimatedBuilder(
@@ -215,7 +232,10 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
             offset: Offset(0, _dot2Animation.value),
             child: child,
           ),
-          child: _buildDot(),
+          child: ScaleTransition(
+            scale: _dot2Scale,
+            child: _buildDot(),
+          ),
         ),
         const SizedBox(width: 6),
         AnimatedBuilder(
@@ -224,7 +244,10 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
             offset: Offset(0, _dot3Animation.value),
             child: child,
           ),
-          child: _buildDot(),
+          child: ScaleTransition(
+            scale: _dot3Scale,
+            child: _buildDot(),
+          ),
         ),
       ],
     );

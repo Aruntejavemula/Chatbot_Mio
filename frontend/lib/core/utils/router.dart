@@ -16,6 +16,7 @@ import '../../presentation/screens/settings/usage_screen.dart';
 import '../../presentation/screens/projects/project_list_screen.dart';
 import '../../presentation/screens/projects/project_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
+import 'animations.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -35,6 +36,30 @@ class AppRoutes {
   static const projects = '/projects';
   static const projectDetail = '/projects/:projectId';
   static const projectNewChat = '/projects/:projectId/new-chat';
+}
+
+Page<void> _buildTransitionPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: MioAnimations.standard,
+    reverseTransitionDuration: MioAnimations.standard,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: MioAnimations.curve,
+        )),
+        child: child,
+      );
+    },
+  );
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -68,71 +93,114 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const SplashScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.welcome,
-        builder: (context, state) => const WelcomeScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const WelcomeScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const OnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.chat,
-        builder: (context, state) => const ChatScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ChatScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.chatDetail,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final chatId = state.pathParameters['chatId'];
-          return ChatScreen(chatId: chatId);
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: ChatScreen(chatId: chatId),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.apiKeys,
-        builder: (context, state) => const ApiKeysScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ApiKeysScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.subscription,
-        builder: (context, state) => const SubscriptionScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const SubscriptionScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.devices,
-        builder: (context, state) => const DevicesScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const DevicesScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.usage,
-        builder: (context, state) => const UsageScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const UsageScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.storage,
-        builder: (context, state) => const StorageScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const StorageScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.projects,
-        builder: (context, state) => const ProjectListScreen(),
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ProjectListScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.projectDetail,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final projectId = state.pathParameters['projectId']!;
-          return ProjectScreen(projectId: projectId);
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: ProjectScreen(projectId: projectId),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.projectNewChat,
-        builder: (context, state) {
-          return const ChatScreen(chatId: null);
-        },
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ChatScreen(chatId: null),
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

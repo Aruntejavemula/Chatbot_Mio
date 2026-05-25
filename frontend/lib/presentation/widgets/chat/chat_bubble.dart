@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/animations.dart';
 import '../../../data/models/message_model.dart';
 import 'artifact_viewer.dart';
 
@@ -29,14 +30,22 @@ class _ChatBubbleState extends State<ChatBubble>
   bool _isCopied = false;
   final Set<int> _copiedCodeBlocks = {};
   late AnimationController _fadeController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: MioAnimations.standard,
     );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: MioAnimations.curve,
+    ));
     _fadeController.forward();
   }
 
@@ -82,9 +91,12 @@ class _ChatBubbleState extends State<ChatBubble>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeController,
-      child: _isUser ? _buildUserBubble(context) : _buildAiBubble(context),
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeController,
+        child: _isUser ? _buildUserBubble(context) : _buildAiBubble(context),
+      ),
     );
   }
 

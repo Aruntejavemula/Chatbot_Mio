@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -45,14 +46,14 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     super.initState();
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
+      duration: MioAnimations.standard,
     );
     _slideAnimation = Tween<Offset>(
       begin: const Offset(-1, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeOut,
+      curve: MioAnimations.curve,
     ));
   }
 
