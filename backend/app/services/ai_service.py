@@ -56,6 +56,57 @@ PROVIDER_CONFIGS = {
         "chat_endpoint": "/chat/completions",
         "format": "openai",
     },
+    "mistral": {
+        "base_url": "https://api.mistral.ai/v1",
+        "chat_endpoint": "/chat/completions",
+        "format": "openai",
+    },
+    "cohere": {
+        "base_url": "https://api.cohere.ai/v1",
+        "chat_endpoint": "/chat",
+        "format": "cohere",
+    },
+    "perplexity": {
+        "base_url": "https://api.perplexity.ai",
+        "chat_endpoint": "/chat/completions",
+        "format": "openai",
+    },
+    "huggingface": {
+        "base_url": "https://api-inference.huggingface.co",
+        "chat_endpoint": "/models/{model}",
+        "format": "huggingface",
+    },
+    "ollama": {
+        "base_url": "http://localhost:11434",
+        "chat_endpoint": "/api/chat",
+        "format": "ollama",
+    },
+    "lmstudio": {
+        "base_url": "http://localhost:1234/v1",
+        "chat_endpoint": "/chat/completions",
+        "format": "openai",
+    },
+    "azure_openai": {
+        "base_url": "",
+        "chat_endpoint": "/openai/deployments/{model}/chat/completions",
+        "format": "azure",
+        "api_version": "2024-02-15-preview",
+    },
+    "vertex_ai": {
+        "base_url": "https://us-central1-aiplatform.googleapis.com",
+        "chat_endpoint": "",
+        "format": "vertex",
+    },
+    "aws_bedrock": {
+        "base_url": "",
+        "chat_endpoint": "",
+        "format": "bedrock",
+    },
+    "custom": {
+        "base_url": "",
+        "chat_endpoint": "/chat/completions",
+        "format": "openai",
+    },
 }
 
 
@@ -110,6 +161,28 @@ class AIService:
                     config["base_url"], config["chat_endpoint"], model, messages, api_key, max_tokens
                 ):
                     yield chunk
+            elif fmt == "cohere":
+                async for chunk in self._stream_cohere_format(
+                    config["base_url"], config["chat_endpoint"], model, messages, api_key, max_tokens
+                ):
+                    yield chunk
+            elif fmt == "ollama":
+                async for chunk in self._stream_ollama_format(
+                    config["base_url"], config["chat_endpoint"], model, messages, api_key, max_tokens
+                ):
+                    yield chunk
+            elif fmt == "huggingface":
+                async for chunk in self._stream_huggingface_format(
+                    config["base_url"], config["chat_endpoint"], model, messages, api_key, max_tokens
+                ):
+                    yield chunk
+            elif fmt == "azure":
+                async for chunk in self._stream_azure_format(
+                    config["base_url"], config["chat_endpoint"], model, messages, api_key, max_tokens, config.get("api_version", "2024-02-15-preview")
+                ):
+                    yield chunk
+            elif fmt in ("vertex", "bedrock"):
+                yield f'data: {json.dumps({"type": "error", "error": f"{fmt.title()} requires server-side credentials configuration. Contact support to enable."})}\n\n'
         except Exception as e:
             logger.error(f"Stream error for {provider}/{model}: {str(e)}")
             yield f'data: {json.dumps({"type": "error", "error": str(e)})}\n\n'
@@ -302,6 +375,251 @@ class AIService:
                         if usage_meta:
                             tokens_input = usage_meta.get("promptTokenCount", 0)
                             tokens_output = usage_meta.get("candidatesTokenCount", 0)
+                    except json.JSONDecodeError:
+                        continue
+
+        yield f'data: {json.dumps({"type": "done", "tokens": {"input": tokens_input, "output": tokens_output}})}\n\n'
+
+    async def _stream_cohere_format(
+        self,
+        base_url: str,
+        endpoint: str,
+        model: str,
+        messages: list[dict],
+        api_key: str,
+        max_tokens: int,
+    ) -> AsyncGenerator[str, None]:
+        """Handle Cohere streaming API."""
+        url = f"{base_url}{endpoint}"
+
+        # Cohere uses message + chat_history format
+        chat_history = []
+        latest_message = ""
+        system_message = ""
+
+        for msg in messages:
+            if msg["role"] == "system":
+                system_message += msg["content"] + "\n"
+            elif msg["role"] == "user":
+                if latest_message:
+                    chat_history.append({"role": "USER", "message": latest_message})
+                latest_message = msg["content"]
+            elif msg["role"] == "assistant":
+                if latest_message:
+                    chat_history.append({"role": "USER", "message": latest_message})
+                    latest_message = ""
+                chat_history.append({"role": "CHATBOT", "message": msg["content"]})
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": model,
+            "message": latest_message,
+            "chat_history": chat_history,
+            "stream": True,
+            "max_tokens": max_tokens,
+        }
+        if system_message:
+            body["preamble"] = system_message.strip()
+
+        tokens_input = 0
+        tokens_output = 0
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream("POST", url, headers=headers, json=body) as response:
+                if response.status_code != 200:
+                    error_text = ""
+                    async for chunk in response.aiter_text():
+                        error_text += chunk
+                    yield f'data: {json.dumps({"type": "error", "error": f"API error {response.status_code}: {error_text[:200]}"})}\n\n'
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        event_type = data.get("event_type", "")
+                        if event_type == "text-generation":
+                            text = data.get("text", "")
+                            if text:
+                                yield f'data: {json.dumps({"type": "text", "content": text})}\n\n'
+                        elif event_type == "stream-end":
+                            token_count = data.get("response", {}).get("meta", {}).get("tokens", {})
+                            tokens_input = token_count.get("input_tokens", 0)
+                            tokens_output = token_count.get("output_tokens", 0)
+                    except json.JSONDecodeError:
+                        continue
+
+        yield f'data: {json.dumps({"type": "done", "tokens": {"input": tokens_input, "output": tokens_output}})}\n\n'
+
+    async def _stream_ollama_format(
+        self,
+        base_url: str,
+        endpoint: str,
+        model: str,
+        messages: list[dict],
+        api_key: str,
+        max_tokens: int,
+    ) -> AsyncGenerator[str, None]:
+        """Handle Ollama streaming API (JSON lines, not SSE)."""
+        url = f"{base_url}{endpoint}"
+
+        body = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "options": {"num_predict": max_tokens},
+        }
+
+        tokens_input = 0
+        tokens_output = 0
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream("POST", url, json=body) as response:
+                if response.status_code != 200:
+                    error_text = ""
+                    async for chunk in response.aiter_text():
+                        error_text += chunk
+                    yield f'data: {json.dumps({"type": "error", "error": f"Ollama error {response.status_code}: {error_text[:200]}"})}\n\n'
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        if data.get("done", False):
+                            tokens_input = data.get("prompt_eval_count", 0)
+                            tokens_output = data.get("eval_count", 0)
+                        else:
+                            content = data.get("message", {}).get("content", "")
+                            if content:
+                                yield f'data: {json.dumps({"type": "text", "content": content})}\n\n'
+                    except json.JSONDecodeError:
+                        continue
+
+        yield f'data: {json.dumps({"type": "done", "tokens": {"input": tokens_input, "output": tokens_output}})}\n\n'
+
+    async def _stream_huggingface_format(
+        self,
+        base_url: str,
+        endpoint: str,
+        model: str,
+        messages: list[dict],
+        api_key: str,
+        max_tokens: int,
+    ) -> AsyncGenerator[str, None]:
+        """Handle HuggingFace Inference API streaming."""
+        formatted_endpoint = endpoint.replace("{model}", model)
+        url = f"{base_url}{formatted_endpoint}"
+
+        # Format as conversation
+        prompt = ""
+        for msg in messages:
+            if msg["role"] == "system":
+                prompt += f"<|system|>\n{msg['content']}\n"
+            elif msg["role"] == "user":
+                prompt += f"<|user|>\n{msg['content']}\n"
+            elif msg["role"] == "assistant":
+                prompt += f"<|assistant|>\n{msg['content']}\n"
+        prompt += "<|assistant|>\n"
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": max_tokens,
+                "stream": True,
+                "return_full_text": False,
+            },
+            "stream": True,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream("POST", url, headers=headers, json=body) as response:
+                if response.status_code != 200:
+                    error_text = ""
+                    async for chunk in response.aiter_text():
+                        error_text += chunk
+                    yield f'data: {json.dumps({"type": "error", "error": f"HuggingFace error {response.status_code}: {error_text[:200]}"})}\n\n'
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line or not line.startswith("data:"):
+                        continue
+                    data_str = line[5:].strip()
+                    if not data_str:
+                        continue
+                    try:
+                        data = json.loads(data_str)
+                        token_text = data.get("token", {}).get("text", "")
+                        if token_text:
+                            yield f'data: {json.dumps({"type": "text", "content": token_text})}\n\n'
+                    except json.JSONDecodeError:
+                        continue
+
+        yield f'data: {json.dumps({"type": "done", "tokens": {"input": 0, "output": 0}})}\n\n'
+
+    async def _stream_azure_format(
+        self,
+        base_url: str,
+        endpoint: str,
+        model: str,
+        messages: list[dict],
+        api_key: str,
+        max_tokens: int,
+        api_version: str = "2024-02-15-preview",
+    ) -> AsyncGenerator[str, None]:
+        """Handle Azure OpenAI streaming API."""
+        formatted_endpoint = endpoint.replace("{model}", model)
+        url = f"{base_url}{formatted_endpoint}"
+
+        headers = {
+            "api-key": api_key,
+            "Content-Type": "application/json",
+        }
+        params = {"api-version": api_version}
+        body = {
+            "messages": messages,
+            "stream": True,
+            "max_tokens": max_tokens,
+        }
+
+        tokens_input = 0
+        tokens_output = 0
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream("POST", url, headers=headers, params=params, json=body) as response:
+                if response.status_code != 200:
+                    error_text = ""
+                    async for chunk in response.aiter_text():
+                        error_text += chunk
+                    yield f'data: {json.dumps({"type": "error", "error": f"Azure error {response.status_code}: {error_text[:200]}"})}\n\n'
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line or not line.startswith("data: "):
+                        continue
+                    data_str = line[6:]
+                    if data_str.strip() == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        if "usage" in data:
+                            tokens_input = data["usage"].get("prompt_tokens", 0)
+                            tokens_output = data["usage"].get("completion_tokens", 0)
+                        choices = data.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content")
+                            if content:
+                                yield f'data: {json.dumps({"type": "text", "content": content})}\n\n'
                     except json.JSONDecodeError:
                         continue
 

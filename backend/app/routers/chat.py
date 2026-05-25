@@ -13,6 +13,7 @@ from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate, MessageResponse
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
+from app.utils.constants import SUPPORTED_PROVIDERS
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,13 @@ router = APIRouter()
 
 ai_service = AIService()
 encryption_service = EncryptionService()
+
+
+@router.get("/providers")
+async def get_providers() -> list[dict]:
+    """Get list of supported AI providers and their models. No auth required."""
+    return SUPPORTED_PROVIDERS
+
 
 STORAGE_TYPE_BY_PLAN = {
     "free": "local",
