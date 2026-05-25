@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
@@ -151,6 +152,42 @@ class ChatService extends ApiService {
         );
       }
       return data['improved_prompt'] as String;
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Uint8List> exportChatMarkdown(String chatId) async {
+    try {
+      final response = await dio.get<List<int>>(
+        '/export/chat/$chatId/markdown',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data ?? []);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Uint8List> exportChatPdf(String chatId) async {
+    try {
+      final response = await dio.get<List<int>>(
+        '/export/chat/$chatId/pdf',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data ?? []);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Uint8List> exportAllChats() async {
+    try {
+      final response = await dio.get<List<int>>(
+        '/export/all/markdown',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data ?? []);
     } on DioException {
       rethrow;
     }

@@ -12,6 +12,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/file_upload_widget.dart';
+import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
@@ -176,6 +177,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildTopBar(bool isDark) {
+    final messages = ref.watch(messagesProvider);
+
     return Container(
       height: AppSizes.topBarHeight,
       decoration: BoxDecoration(
@@ -214,6 +217,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
               ),
             ),
+            // Export button (only when messages exist)
+            if (messages.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    ExportMenuWidget.showExportSheet(
+                      context: context,
+                      chatId: widget.chatId ?? '',
+                      userPlan: 'free',
+                    );
+                  },
+                  child: Icon(
+                    Icons.download_outlined,
+                    size: 20,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                  ),
+                ),
+              ),
             const Spacer(),
             // Ghost mascot pill button
             GestureDetector(

@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "S41 - Cloud Storage Sync UI: Add icloud_storage to pubspec.yaml, create storage_screen.dart and sync_service.dart. Add route and settings tile.",
+  "status": "pending",
+  "steps": [
+    "Update frontend/pubspec.yaml: add icloud_storage: ^2.1.0 under dependencies",
+    "Add route to frontend/lib/core/utils/router.dart: static const storage = '/settings/storage' in AppRoutes. Add GoRoute for the path pointing to StorageScreen. Add import.",
+    "Add tile in frontend/lib/presentation/screens/settings/settings_screen.dart: Icons.cloud_outlined, title 'Storage & Sync', navigating to AppRoutes.storage.",
+    "Create frontend/lib/data/services/sync_service.dart: class SyncService with methods: Future<void> initialize(String plan, String? provider) - if free use local only, if basic use chosen provider, if pro Supabase handles. Future<void> saveChat(String chatId, Map<String, dynamic> data, String provider) - switch on provider (google_drive, icloud, onedrive, default local). Future<Map<String, dynamic>?> loadChat(String chatId, String provider). Future<void> saveToDrive(String chatId, Map<String, dynamic> data) - placeholder for googleapis. Future<void> saveToICloud(String chatId, Map<String, dynamic> data) - placeholder for icloud_storage. Future<void> saveToOneDrive(String chatId, Map<String, dynamic> data) - placeholder for MS Graph API. Future<void> saveLocally(String chatId, Map<String, dynamic> data) - use FlutterSecureStorage with key chat_{chatId}.",
+    "Create frontend/lib/presentation/screens/settings/storage_screen.dart: ConsumerStatefulWidget. AppBar: 'Storage & Sync'. SingleChildScrollView padding 16px. Current status card: bgSecondary, borderDefault, radiusLarge, 16px padding. Row with Icons.cloud_done_outlined persian, 'Currently syncing to:', Spacer, Badge with provider name or 'None'. Gap 20px. For Free users: upgrade card with persian border, 'Sync across devices', upgrade text, 'Upgrade' button persian. For Basic users: 'Choose your sync provider' text, three provider tiles (Google Drive with green circle 'G', iCloud with blue circle Apple icon - show only on iOS/macOS using Platform check, OneDrive with Microsoft icon). Each tile: bgSecondary, borderDefault, radiusLarge, 16px padding, Row with circle avatar 40px, gap 12px, Column with name and subtitle, Spacer, check_circle persian if selected else 'Connect' button. Warning below with info_outline icon. For Pro users: info card with cloud_done persian, 'Real-time sync active' text. Need a state variable for current plan and selected provider."
+  ],
+  "acceptance_criteria": [
+    "pubspec.yaml contains icloud_storage: ^2.1.0",
+    "storage_screen.dart exists with StorageScreen widget",
+    "sync_service.dart exists with SyncService class and all required methods",
+    "AppRoutes.storage is defined and routed",
+    "Settings screen has Storage & Sync tile",
+    "Storage screen shows different UI based on user plan (free/basic/pro)",
+    "No dynamic types, proper null safety, error handling",
+    "flutter analyze passes with no errors"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ to confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
