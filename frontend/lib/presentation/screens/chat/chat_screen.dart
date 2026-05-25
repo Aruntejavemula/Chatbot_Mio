@@ -3,6 +3,7 @@ import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -265,6 +266,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
 
   Widget _buildTopBar(bool isDark, {bool showPermanentSidebar = false}) {
     final messages = ref.watch(messagesProvider);
+    final currentChat = ref.watch(currentChatProvider);
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textMuted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+
+    final bool isEmptyState = widget.chatId == null && currentChat == null && messages.isEmpty;
 
     return Container(
       height: AppSizes.topBarHeight,
@@ -281,73 +287,405 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       child: SafeArea(
         bottom: false,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Hamburger pill button (only for phone/tablet-portrait)
             if (!showPermanentSidebar)
-              GestureDetector(
-                onTap: () => setState(() => _isSidebarOpen = true),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-                    border: Border.all(
-                      color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-                      width: 1,
+              IconButton(
+                onPressed: () => setState(() => _isSidebarOpen = true),
+                icon: Icon(
+                  Icons.menu_rounded,
+                  size: 20,
+                  color: textMuted,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (isEmptyState)
+                    Text(
+                      'Mio',
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  else ...[
+                    Text(
+                      currentChat?.title ?? 'New Chat',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.projectId != null && widget.projectId!.isNotEmpty)
+                      Text(
+                        'Project',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          color: AppColors.persian,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+            if (!isEmptyState) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: GestureDetector(
+                        onTap: () {
+                          ExportMenuWidget.showExportSheet(
+                            context: context,
+                            chatId: widget.chatId!,
+                            userPlan: 'free',
+                          );
+                        },
+                        child: Icon(
+                          Icons.download_outlined,
+                          size: 20,
+                          color: textMuted,
+                        ),
+                      ),
+                    ),
+                  if (messages.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: showPermanentSidebar
+                          ? TextButton(
+                              onPressed: _shareChat,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Share',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: textMuted,
+                                ),
+                              ),
+                            )
+                          : GestureDetector(
+                              onTap: _shareChat,
+                              child: Icon(
+                                Icons.ios_share_outlined,
+                                size: 20,
+                                color: textMuted,
+                              ),
+                            ),
+                    ),
+                  GestureDetector(
+                    onTap: () => _showMoreOptionsSheet(isDark),
+                    child: Icon(
+                      Icons.more_horiz_rounded,
+                      size: 20,
+                      color: textMuted,
                     ),
                   ),
-                  child: Icon(
-                    Icons.menu,
-                    size: 20,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shareChat() {
+    final messages = ref.read(messagesProvider);
+    if (messages.isEmpty) return;
+    final buffer = StringBuffer('Chat from Mio\n\n');
+    for (final msg in messages) {
+      final role = msg.role == 'user' ? 'You' : 'AI';
+      buffer.writeln('$role: ${msg.content}\n');
+    }
+    Share.share(buffer.toString());
+  }
+
+  void _showMoreOptionsSheet(bool isDark) {
+    final borderColor = isDark ? AppColors.darkBorderDefault : AppColors.borderDefault;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.edit_outlined, color: textColor),
+                title: Text(
+                  'Rename chat',
+                  style: GoogleFonts.dmSans(fontSize: 15, color: textColor),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showRenameDialog(isDark);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete_sweep_outlined, color: textColor),
+                title: Text(
+                  'Clear chat',
+                  style: GoogleFonts.dmSans(fontSize: 15, color: textColor),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showClearConfirmDialog(isDark);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.add_outlined, color: textColor),
+                title: Text(
+                  'New chat',
+                  style: GoogleFonts.dmSans(fontSize: 15, color: textColor),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.go(AppRoutes.chat);
+                },
+              ),
+              Divider(color: borderColor),
+              ListTile(
+                leading: const Icon(Icons.delete_outlined, color: AppColors.error),
+                title: Text(
+                  'Delete chat',
+                  style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.error),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showDeleteConfirmDialog(isDark);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRenameDialog(bool isDark) {
+    final currentChat = ref.read(currentChatProvider);
+    final controller = TextEditingController(text: currentChat?.title ?? '');
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final bgColor = isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: bgColor,
+          title: Text(
+            'Rename chat',
+            style: GoogleFonts.dmSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: GoogleFonts.dmSans(fontSize: 15, color: textColor),
+            decoration: InputDecoration(
+              hintText: 'Chat title',
+              hintStyle: GoogleFonts.dmSans(
+                fontSize: 15,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                 ),
               ),
-            // Export button (only when messages exist and chatId is available)
-            if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: GestureDetector(
-                  onTap: () {
-                    ExportMenuWidget.showExportSheet(
-                      context: context,
-                      chatId: widget.chatId!,
-                      userPlan: 'free',
+            ),
+            TextButton(
+              onPressed: () async {
+                final newTitle = controller.text.trim();
+                if (newTitle.isEmpty || widget.chatId == null) return;
+                try {
+                  final chatService = ref.read(chatServiceProvider);
+                  await chatService.updateChatTitle(widget.chatId!, newTitle);
+                  final chat = ref.read(currentChatProvider);
+                  if (chat != null) {
+                    ref.read(currentChatProvider.notifier).state =
+                        chat.copyWith(title: newTitle);
+                  }
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to rename chat: $e')),
                     );
-                  },
-                  child: Icon(
-                    Icons.download_outlined,
-                    size: 20,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            const Spacer(),
-            // Ghost mascot pill button
-            GestureDetector(
-              onTap: () => context.go(AppRoutes.settings),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-                    width: 1,
-                  ),
-                ),
-                // TODO: Replace with mascot image
-                child: const Center(
-                  child: PenguinMascot(size: 28, animate: false),
+                  }
+                }
+              },
+              child: Text(
+                'Save',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.persian,
                 ),
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
+    );
+  }
+
+  void _showClearConfirmDialog(bool isDark) {
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final bgColor = isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: bgColor,
+          title: Text(
+            'Clear all messages?',
+            style: GoogleFonts.dmSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          content: Text(
+            'This will remove all messages from this chat.',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                ref.read(messagesProvider.notifier).state = [];
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                'Delete',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmDialog(bool isDark) {
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final bgColor = isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: bgColor,
+          title: Text(
+            'Delete this chat?',
+            style: GoogleFonts.dmSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+          content: Text(
+            'This action cannot be undone.',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (widget.chatId == null) return;
+                try {
+                  final chatService = ref.read(chatServiceProvider);
+                  await chatService.deleteChat(widget.chatId!);
+                  final chats = ref.read(chatsProvider);
+                  ref.read(chatsProvider.notifier).state =
+                      chats.where((c) => c.id != widget.chatId).toList();
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (mounted) context.go(AppRoutes.chat);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete chat: $e')),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                'Delete',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

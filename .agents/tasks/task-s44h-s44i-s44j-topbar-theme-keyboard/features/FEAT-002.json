@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "S44H - Top Bar Redesign All Platforms: Completely rewrite _buildTopBar in chat_screen.dart to support mobile, tablet landscape, and desktop layouts. Add share button, more options button with bottom sheet (rename, clear, new, delete), center title/project display, and adapt icons/layout per platform.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Rewrite the _buildTopBar method in frontend/lib/presentation/screens/chat/chat_screen.dart. MOBILE top bar (56px height, AppColors.bgPrimary bg, 1px bottom border AppColors.borderDefault, no elevation): Left side - IconButton with Icons.menu_rounded (20px, textMuted) shown only on phone + tablet portrait. Center (Expanded Column): chat title or 'New Chat' (DM Sans 15px w600 textPrimary, max 1 line ellipsis), and if projectId is set, show project name (DM Sans 11px AppColors.persian, max 1 line ellipsis). Right side (Row gap 4): Export button (Icons.download_outlined 20px textMuted, show when messages.length > 0), Share button (Icons.ios_share_outlined 20px textMuted, show when messages.length > 0, on tap: Share.share formatted chat text), More button (Icons.more_horiz_rounded 20px textMuted, on tap: show _buildMoreOptionsSheet).",
     "TABLET LANDSCAPE + DESKTOP top bar: Same structure but no hamburger icon (showPermanentSidebar is true). Add a Text 'Share' button (DM Sans 13px w500 textMuted) instead of icon for share. Optionally show model name subtitle if there is enough space.",
