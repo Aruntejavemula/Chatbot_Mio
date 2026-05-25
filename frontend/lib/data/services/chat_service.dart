@@ -240,4 +240,34 @@ class ChatService extends ApiService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> createShareLink(String chatId) async {
+    try {
+      final response = await post<Map<String, dynamic>>(
+        '/chat/chats/$chatId/share',
+      );
+      return response.data ?? {};
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getSharedChat(String slug) async {
+    try {
+      final response = await get<Map<String, dynamic>>(
+        '/chat/shared/$slug',
+      );
+      return response.data ?? {};
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> revokeShareLink(String chatId) async {
+    try {
+      await delete('/chat/chats/$chatId/share');
+    } on DioException {
+      rethrow;
+    }
+  }
 }

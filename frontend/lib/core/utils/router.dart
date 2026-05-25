@@ -14,9 +14,11 @@ import '../../presentation/screens/settings/subscription_screen.dart';
 import '../../presentation/screens/settings/connectors_screen.dart';
 import '../../presentation/screens/settings/connector_detail_screen.dart';
 import '../../presentation/screens/settings/memory_screen.dart';
+import '../../presentation/screens/settings/referral_screen.dart';
 import '../../presentation/screens/settings/scheduled_screen.dart';
 import '../../presentation/screens/settings/storage_screen.dart';
 import '../../presentation/screens/settings/usage_screen.dart';
+import '../../presentation/screens/shared/shared_chat_screen.dart';
 import '../../presentation/screens/projects/project_list_screen.dart';
 import '../../presentation/screens/projects/project_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
@@ -44,6 +46,8 @@ class AppRoutes {
   static const projects = '/projects';
   static const projectDetail = '/projects/:projectId';
   static const projectNewChat = '/projects/:projectId/new-chat';
+  static const referral = '/settings/referral';
+  static const sharedChat = '/shared/:slug';
 }
 
 Page<void> _buildTransitionPage({
@@ -86,7 +90,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ];
 
       if (!isAuthenticated) {
-        if (publicRoutes.contains(location)) {
+        if (publicRoutes.contains(location) ||
+            location.startsWith('/shared/')) {
           return null;
         }
         return AppRoutes.welcome;
@@ -241,6 +246,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           return _buildTransitionPage(
             key: state.pageKey,
             child: ChatScreen(chatId: null, projectId: projectId),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.referral,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ReferralScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sharedChat,
+        pageBuilder: (context, state) {
+          final slug = state.pathParameters['slug']!;
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: SharedChatScreen(slug: slug),
           );
         },
       ),
