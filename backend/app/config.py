@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Search
     BRAVE_SEARCH_API_KEY: str = ""
 
+    # OpenAI
+    OPENAI_API_KEY: str = ""
+
     # App
     ALLOWED_ORIGINS: str = "http://localhost:8080"
     ENVIRONMENT: str = "development"

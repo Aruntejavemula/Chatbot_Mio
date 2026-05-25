@@ -23,6 +23,7 @@ from app.services.search_service import search_service
 from app.tasks.research_task import run_deep_research
 from app.services.circuit_breaker import circuit_breaker as provider_circuit_breaker
 from app.services.skills.skill_registry import skill_registry
+from app.services.skills.code_runner_skill import CodeRunnerSkill
 from app.utils.constants import SUPPORTED_PROVIDERS
 from app.utils.helpers import check_token_abuse, circuit_breaker
 from app.worker import celery_app
@@ -88,6 +89,12 @@ class AgentRequest(BaseModel):
     content: str = Field(..., description="User message / task to execute", min_length=1, max_length=10000)
     provider: str = Field(..., description="AI provider to use")
     model: str = Field(..., description="Model identifier")
+
+
+class ExecuteCodeRequest(BaseModel):
+    """Request model for code execution."""
+    code: str = Field(..., description="Code to execute", min_length=1)
+    language: str = Field(default="python", description="Programming language")
 
 
 PROMPT_MAKER_SYSTEM = (
@@ -536,6 +543,25 @@ async def stream_message(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.post("/execute-code")
+async def execute_code(
+    body: ExecuteCodeRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Execute code using the CodeRunnerSkill.
+
+    Args:
+        body: Request with code and language.
+        current_user: Authenticated user.
+
+    Returns:
+        Execution result with stdout, stderr, and success status.
+    """
+    code_runner = CodeRunnerSkill()
+    result = await code_runner.execute({"code": body.code, "language": body.language})
+    return result
 
 
 @router.get("/chats")

@@ -17,6 +17,7 @@ from app.routers import (
     settings,
     payments_stripe,
     payments_razorpay,
+    voice,
     webhooks,
 )
 
@@ -51,6 +52,7 @@ app.include_router(payments_razorpay.router, prefix="/payments/razorpay", tags=[
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(connectors.router, prefix="/connectors", tags=["Connectors"])
 app.include_router(memory.router, prefix="/memory", tags=["Memory"])
+app.include_router(voice.router, prefix="/voice", tags=["Voice"])
 
 
 @app.get("/health")
