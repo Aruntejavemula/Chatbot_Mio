@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "test",
   "description": "S100D + S100E + S100F + S100G + S100H: Backend tests and CI/CD on branch feature/backend-setup. Create the branch from current state, set up backend/ directory structure (copying app/ code), add pytest dependencies, create unit tests (cost_service, calculator_skill, web_scraper_skill, encryption_service, skill_registry), integration tests (health, auth, rate_limiting, connectors), security tests (headers, input_validation), e2e tests (web_app with playwright), and GitHub Actions CI/CD workflows.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create and checkout branch feature/backend-setup from current HEAD",
     "Create backend/ directory structure: backend/app/ (copy from app/), backend/tests/, backend/requirements.txt",
