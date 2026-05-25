@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import projects, voice
+from app.routers import auth, chat, projects, voice
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,6 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(chat.router, prefix="/chat", tags=["chat"])
 app.include_router(voice.router, prefix="/voice", tags=["voice"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
 
