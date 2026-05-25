@@ -11,6 +11,7 @@ from app.routers import (
     export,
     files,
     keys,
+    memory,
     tokens,
     devices,
     settings,
@@ -49,6 +50,7 @@ app.include_router(payments_stripe.router, prefix="/payments/stripe", tags=["Pay
 app.include_router(payments_razorpay.router, prefix="/payments/razorpay", tags=["Payments - Razorpay"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(connectors.router, prefix="/connectors", tags=["Connectors"])
+app.include_router(memory.router, prefix="/memory", tags=["Memory"])
 
 
 @app.get("/health")

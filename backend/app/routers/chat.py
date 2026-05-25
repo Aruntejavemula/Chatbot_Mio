@@ -16,6 +16,7 @@ from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.middleware.security_middleware import security_middleware
 from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate, MessageResponse
 from app.routers.keys import get_decrypted_key
+from app.services.agent_service import agent_service
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.services.search_service import search_service
@@ -79,6 +80,14 @@ class DeepResearchRequest(BaseModel):
     query: str = Field(..., description="Research topic or question")
     chat_id: str = Field(..., description="Chat ID to save research report to")
     num_searches: int = Field(default=3, description="Number of search iterations", ge=1, le=5)
+
+
+class AgentRequest(BaseModel):
+    """Request model for agent execution."""
+    chat_id: str = Field(..., description="Chat ID for context")
+    content: str = Field(..., description="User message / task to execute", min_length=1, max_length=10000)
+    provider: str = Field(..., description="AI provider to use")
+    model: str = Field(..., description="Model identifier")
 
 
 PROMPT_MAKER_SYSTEM = (
@@ -750,3 +759,74 @@ async def deep_research(
     )
     logger.info("Deep research task dispatched for user=%s, task_id=%s", user_id, task.id)
     return {"task_id": task.id, "status": "processing"}
+
+
+@router.post("/agent")
+async def run_agent(
+    body: AgentRequest,
+    current_user: dict = Depends(get_current_user),
+) -> StreamingResponse:
+    """Run the agent for multi-step task execution.
+
+    Streams SSE events as the agent iterates through tool calls and
+    generates responses. Supports up to 10 iterations per request.
+
+    Args:
+        body: Agent request with chat_id, content, provider, and model.
+        current_user: Authenticated user.
+
+    Returns:
+        Streaming response with SSE events (agent_step, text, done, agent_error).
+    """
+    user_id = current_user["id"]
+
+    if not body.content or not body.content.strip():
+        raise HTTPException(status_code=400, detail="Message content is required")
+    if not body.provider:
+        raise HTTPException(status_code=400, detail="Provider is required")
+    if not body.model:
+        raise HTTPException(status_code=400, detail="Model is required")
+
+    supabase = get_supabase_client()
+
+    # Get plan and API key
+    plan = await _get_user_plan(supabase, user_id)
+    api_key = await _get_api_key(supabase, user_id, body.provider)
+
+    # Build messages from chat history
+    try:
+        history_result = (
+            supabase.table("messages")
+            .select("role, content")
+            .eq("chat_id", body.chat_id)
+            .order("created_at", desc=False)
+            .limit(20)
+            .execute()
+        )
+        messages = history_result.data if history_result.data else []
+    except Exception as e:
+        logger.error(f"Error fetching history for agent: {str(e)}")
+        messages = []
+
+    # Add current user message
+    messages.append({"role": "user", "content": body.content})
+
+    async def generate():
+        async for event in agent_service.run(
+            messages=messages,
+            provider=body.provider,
+            model=body.model,
+            api_key=api_key,
+            user_id=user_id,
+            plan=plan,
+        ):
+            yield event
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
