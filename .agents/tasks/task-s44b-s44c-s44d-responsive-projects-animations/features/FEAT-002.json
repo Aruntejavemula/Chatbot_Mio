@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S44C - Projects Feature Backend: Create projects SQL schema and FastAPI projects router with CRUD endpoints (Pro plan only, auth required, rate limited)",
+  "status": "pending",
+  "steps": [
+    "Create supabase/schema_projects.sql at the project root with: CREATE TABLE projects (id UUID PK default gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, name TEXT NOT NULL, color TEXT DEFAULT '#CC5801', system_prompt TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()), ALTER TABLE chats ADD COLUMN project_id UUID REFERENCES projects(id) ON DELETE SET NULL, CREATE INDEX idx_projects_user_id ON projects(user_id). Use IF NOT EXISTS / IF NOT EXISTS patterns.",
+    "Create app/routers/projects.py with: POST /projects (auth required, Pro only, body: name/color/system_prompt, insert into projects, return project), GET /projects (auth required, Pro only, return all projects for user ordered by created_at DESC), PATCH /projects/{project_id} (auth required, Pro only, owner only, update name/color/system_prompt), DELETE /projects/{project_id} (auth required, Pro only, owner only, delete project - chats become project_id=NULL), GET /projects/{project_id}/chats (auth required, Pro only, owner only, return chats where project_id matches ordered by updated_at DESC). Follow the pattern in app/routers/voice.py: use APIRouter, Depends(get_current_user), Depends(rate_limit(...)), Pydantic request/response models, logging, docstrings, type hints on every function, no print statements.",
+    "Update app/main.py: import projects router and include it with prefix='/projects' and tags=['projects'], following the existing pattern for voice router."
+  ],
+  "acceptance_criteria": [
+    "supabase/schema_projects.sql exists with proper CREATE TABLE, ALTER TABLE, and CREATE INDEX statements",
+    "app/routers/projects.py exists with all 5 endpoints, proper auth/rate-limit dependencies, Pydantic models, logging, type hints",
+    "app/main.py includes the projects router with prefix='/projects'",
+    "Python code passes basic syntax check (python -c 'import ast; ast.parse(open(\"app/routers/projects.py\").read())')"
+  ],
+  "verification": [
+    "Run: python -c \"import ast; ast.parse(open('app/routers/projects.py').read())\" && python -c \"import ast; ast.parse(open('app/main.py').read())\""
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

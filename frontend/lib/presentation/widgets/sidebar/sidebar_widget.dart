@@ -16,12 +16,14 @@ class SidebarWidget extends ConsumerStatefulWidget {
   final bool isOpen;
   final VoidCallback onClose;
   final VoidCallback onNewChat;
+  final bool permanent;
 
   const SidebarWidget({
     super.key,
     required this.isOpen,
     required this.onClose,
     required this.onNewChat,
+    this.permanent = false,
   });
 
   @override
@@ -126,11 +128,11 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
+        final isDesktop = widget.permanent || constraints.maxWidth >= 768;
 
         if (isDesktop) {
           return _buildSidebarContent(
-            width: AppSizes.sidebarWidth,
+            width: widget.permanent ? constraints.maxWidth : AppSizes.sidebarWidth,
             bgSecondary: bgSecondary,
             bgTertiary: bgTertiary,
             borderDefault: borderDefault,

@@ -17,6 +17,8 @@ import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/sidebar/sidebar_widget.dart';
+import '../../../core/utils/responsive.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
@@ -135,58 +137,94 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          GestureDetector(
-            onTap: () {
-              if (_isModelDropdownOpen) {
-                setState(() => _isModelDropdownOpen = false);
-              }
-              FocusScope.of(context).unfocus();
-            },
-            child: Column(
-              children: [
-                // Top bar
-                _buildTopBar(isDark),
-                // Model selector bar
-                _buildModelSelectorBar(isDark),
-                // BYOK banner
-                if (!_hasApiKeys && _selectedModel == 'Think now')
-                  _buildByokBanner(isDark),
-                // Chat messages area
-                Expanded(
-                  child: Container(
-                    color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-                    child: messages.isEmpty && !isStreaming
-                        ? _buildEmptyState(isDark)
-                        : _buildMessagesList(
-                            isDark, messages, isStreaming, streamingText, loadingWordIndex),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool showPermanentSidebar =
+              Responsive.isDesktop(context) ||
+              (Responsive.isTablet(context) && Responsive.isLandscape(context));
+          final double sidebarWidth =
+              Responsive.isDesktop(context) ? 300.0 : AppSizes.sidebarWidth;
+
+          return Row(
+            children: [
+              // Permanent sidebar for desktop / tablet-landscape
+              if (showPermanentSidebar)
+                SizedBox(
+                  width: sidebarWidth,
+                  child: SidebarWidget(
+                    isOpen: true,
+                    permanent: true,
+                    onClose: () {},
+                    onNewChat: () => context.go(AppRoutes.chat),
                   ),
                 ),
-                // Input bar
-                if (tokenCap != null)
-                  TokenCapBanner(
-                    capType: (tokenCap['cap_type'] as String?) ?? '',
-                    used: (tokenCap['used'] as int?) ?? 0,
-                    limit: (tokenCap['limit'] as int?) ?? 1,
-                    resetsIn: (tokenCap['resets_in'] as String?) ?? '',
-                    onAddKey: () => context.go(AppRoutes.apiKeys),
-                  ),
-                if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
-                _buildInputBar(isDark),
-              ],
-            ),
-          ),
-          // Model dropdown overlay
-          if (_isModelDropdownOpen) _buildModelDropdown(isDark),
-          // Sidebar overlay
-          if (_isSidebarOpen) _buildSidebar(isDark),
-        ],
+              // Chat area
+              Expanded(
+                child: Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        if (_isModelDropdownOpen) {
+                          setState(() => _isModelDropdownOpen = false);
+                        }
+                        FocusScope.of(context).unfocus();
+                      },
+                      child: Column(
+                        children: [
+                          // Top bar
+                          _buildTopBar(isDark, showPermanentSidebar: showPermanentSidebar),
+                          // Model selector bar
+                          _buildModelSelectorBar(isDark),
+                          // BYOK banner
+                          if (!_hasApiKeys && _selectedModel == 'Think now')
+                            _buildByokBanner(isDark),
+                          // Chat messages area
+                          Expanded(
+                            child: Container(
+                              color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
+                              child: messages.isEmpty && !isStreaming
+                                  ? _buildEmptyState(isDark)
+                                  : _buildMessagesList(
+                                      isDark, messages, isStreaming, streamingText, loadingWordIndex),
+                            ),
+                          ),
+                          // Input bar
+                          if (tokenCap != null)
+                            TokenCapBanner(
+                              capType: (tokenCap['cap_type'] as String?) ?? '',
+                              used: (tokenCap['used'] as int?) ?? 0,
+                              limit: (tokenCap['limit'] as int?) ?? 1,
+                              resetsIn: (tokenCap['resets_in'] as String?) ?? '',
+                              onAddKey: () => context.go(AppRoutes.apiKeys),
+                            ),
+                          if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
+                          _buildInputBar(isDark),
+                        ],
+                      ),
+                    ),
+                    // Model dropdown overlay
+                    if (_isModelDropdownOpen) _buildModelDropdown(isDark),
+                    // Sidebar drawer overlay (phone / tablet-portrait only)
+                    if (!showPermanentSidebar && _isSidebarOpen)
+                      SidebarWidget(
+                        isOpen: _isSidebarOpen,
+                        onClose: () => setState(() => _isSidebarOpen = false),
+                        onNewChat: () {
+                          setState(() => _isSidebarOpen = false);
+                          context.go(AppRoutes.chat);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTopBar(bool isDark) {
+  Widget _buildTopBar(bool isDark, {bool showPermanentSidebar = false}) {
     final messages = ref.watch(messagesProvider);
 
     return Container(
@@ -206,27 +244,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Hamburger pill button
-            GestureDetector(
-              onTap: () => setState(() => _isSidebarOpen = true),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-                    width: 1,
+            // Hamburger pill button (only for phone/tablet-portrait)
+            if (!showPermanentSidebar)
+              GestureDetector(
+                onTap: () => setState(() => _isSidebarOpen = true),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.menu,
+                    size: 20,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
-                child: Icon(
-                  Icons.menu,
-                  size: 20,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                ),
               ),
-            ),
             // Export button (only when messages exist and chatId is available)
             if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
               Padding(
@@ -828,62 +867,4 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildSidebar(bool isDark) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _isSidebarOpen = false),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: Colors.black.withValues(alpha: 0.3),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: AppSizes.sidebarWidth,
-          child: Container(
-            color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-            padding: const EdgeInsets.all(16),
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Chats',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Sidebar content coming soon',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => setState(() => _isSidebarOpen = false),
-                    child: Text(
-                      'Close',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

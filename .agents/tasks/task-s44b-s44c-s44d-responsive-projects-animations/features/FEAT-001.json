@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S44B - iPad + Tablet Responsive Layout: Create Responsive utility class, update chat_screen.dart with LayoutBuilder for phone/tablet/desktop modes, and implement chat_list_screen.dart with split-panel layout for tablet landscape + desktop",
+  "status": "in_progress",
+  "steps": [
+    "Create frontend/lib/core/utils/responsive.dart with Responsive class containing static methods: isPhone (width < 600), isTablet (600 <= width < 1100), isDesktop (width >= 1100), isLandscape (orientation == landscape). Use BuildContext parameter with MediaQuery.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: Replace the existing Stack-based sidebar overlay with a LayoutBuilder approach. Phone portrait: sidebar hidden (use drawer via existing sidebar_widget.dart), full width chat area. Tablet portrait: same as phone (drawer). Tablet landscape: sidebar always visible at 280px width, chat area takes remaining width, no drawer. Desktop: sidebar always visible at 300px width, chat area flex 1. Import and use the Responsive class and the existing SidebarWidget from widgets/sidebar/sidebar_widget.dart. Remove the inline _buildSidebar method and _isSidebarOpen state for desktop/tablet-landscape modes.",
+    "Implement frontend/lib/presentation/screens/chat/chat_list_screen.dart: For phone and tablet portrait, show a full-screen list of chats (similar to sidebar chat list). For tablet landscape + desktop: show as left panel at 320px width, right side shows selected chat. If no chat is selected, show empty state with PenguinMascot centered above text 'Select a chat to continue' in DM Sans 15px textMuted color. Use ConsumerStatefulWidget pattern. Import from existing repositories (chatsProvider, currentChatProvider) and existing ChatItem widget."
+  ],
+  "acceptance_criteria": [
+    "frontend/lib/core/utils/responsive.dart exists with Responsive class and all 4 static methods",
+    "chat_screen.dart uses LayoutBuilder to switch between phone/drawer mode and tablet-landscape/desktop permanent sidebar mode",
+    "chat_list_screen.dart implements split-panel layout with 320px left panel and empty state on the right",
+    "flutter analyze passes with no errors on all new/modified files"
+  ],
+  "verification": [
+    "Run: cd frontend && flutter pub get && flutter analyze --no-fatal-infos"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
