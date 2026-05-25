@@ -93,7 +93,8 @@ class AuthRepository {
       await _authService.saveTokenSecurely(token);
       final user =
           UserModel.fromJson(response['user'] as Map<String, dynamic>);
-      _ref.read(currentUserProvider.notifier).state = user;
+      // Don't set currentUser here - user must verify email first.
+      // Token is saved for the resend-verification call.
       return user;
     } catch (e) {
       rethrow;
