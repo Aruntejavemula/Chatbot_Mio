@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,6 +32,7 @@ import '../../widgets/common/ghost_mascot.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../data/services/notification_service.dart';
+import '../../widgets/settings/ollama_setup_sheet.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
@@ -69,6 +71,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     {'provider': 'Anthropic', 'model': 'Claude 3.5 Haiku', 'color': const Color(0xFFD97757)},
     {'provider': 'Google', 'model': 'Gemini 2.5 Pro', 'color': const Color(0xFF4285F4)},
     {'provider': 'DeepSeek', 'model': 'DeepSeek R1', 'color': const Color(0xFF4D6BFE)},
+    {'provider': 'Ollama', 'model': 'Ollama (Local)', 'color': const Color(0xFF0EA5E9)},
   ];
 
   List<Map<String, dynamic>> get _filteredModels {
@@ -998,12 +1001,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 ),
                 for (final model in entry.value)
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
                         _selectedModel = model['model'] as String;
                         _selectedProvider = model['provider'] as String;
                         _isModelDropdownOpen = false;
                       });
+                      if (model['provider'] == 'Ollama') {
+                        try {
+                          const storage = FlutterSecureStorage();
+                          final savedUrl = await storage.read(key: 'ollama_url');
+                          if (savedUrl == null || savedUrl.isEmpty) {
+                            if (!mounted) return;
+                            await OllamaSetupSheet.show(context);
+                          }
+                        } catch (_) {
+                          if (!mounted) return;
+                          await OllamaSetupSheet.show(context);
+                        }
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

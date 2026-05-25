@@ -10,6 +10,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/settings/ollama_setup_sheet.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -769,26 +770,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 16,
-                color: isDark
-                    ? AppColors.darkTextMuted
-                    : AppColors.textMuted,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Or use Ollama locally',
-                style: GoogleFonts.dmSans(
-                  fontSize: 13,
+          GestureDetector(
+            onTap: () => OllamaSetupSheet.show(context),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
                   color: isDark
                       ? AppColors.darkTextMuted
                       : AppColors.textMuted,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Text(
+                  'Or use Ollama locally',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.persian,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
