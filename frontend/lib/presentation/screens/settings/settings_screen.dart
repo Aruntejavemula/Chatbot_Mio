@@ -151,7 +151,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Icons.chevron_right,
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
-            onTap: () => debugPrint('open privacy'),
+            onTap: () => context.go(AppRoutes.privacy),
             isDark: isDark,
           ),
           _buildTile(
@@ -161,7 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Icons.chevron_right,
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
-            onTap: () => debugPrint('open terms'),
+            onTap: () => context.go(AppRoutes.terms),
             isDark: isDark,
           ),
         ],

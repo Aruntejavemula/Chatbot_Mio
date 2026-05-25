@@ -18,6 +18,8 @@ import '../../presentation/screens/settings/referral_screen.dart';
 import '../../presentation/screens/settings/scheduled_screen.dart';
 import '../../presentation/screens/settings/storage_screen.dart';
 import '../../presentation/screens/settings/usage_screen.dart';
+import '../../presentation/screens/legal/privacy_screen.dart';
+import '../../presentation/screens/legal/terms_screen.dart';
 import '../../presentation/screens/shared/shared_chat_screen.dart';
 import '../../presentation/screens/projects/project_list_screen.dart';
 import '../../presentation/screens/projects/project_screen.dart';
@@ -47,6 +49,8 @@ class AppRoutes {
   static const projectDetail = '/projects/:projectId';
   static const projectNewChat = '/projects/:projectId/new-chat';
   static const referral = '/settings/referral';
+  static const privacy = '/legal/privacy';
+  static const terms = '/legal/terms';
   static const sharedChat = '/shared/:slug';
 }
 
@@ -254,6 +258,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _buildTransitionPage(
           key: state.pageKey,
           child: const ReferralScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const PrivacyScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.terms,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const TermsScreen(),
         ),
       ),
       GoRoute(
