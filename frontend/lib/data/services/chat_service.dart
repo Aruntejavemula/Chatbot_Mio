@@ -9,6 +9,8 @@ import '../models/message_model.dart';
 import 'api_service.dart';
 
 class ChatService extends ApiService {
+  Map<String, Object?>? lastCapWarning;
+
   Future<List<ChatModel>> getChats() async {
     try {
       final response = await get<List<dynamic>>('/chats');
@@ -59,6 +61,7 @@ class ChatService extends ApiService {
     required String provider,
     bool useOurTokens = false,
   }) async* {
+    lastCapWarning = null;
     try {
       final response = await dio.post<ResponseBody>(
         '/chat/stream',
@@ -101,6 +104,12 @@ class ChatService extends ApiService {
                   requestOptions: RequestOptions(path: '/chat/stream'),
                   error: json['error'] as String,
                 );
+              }
+
+              if (json.containsKey('type') &&
+                  json['type'] == 'cap_warning') {
+                lastCapWarning = Map<String, Object?>.from(json);
+                continue;
               }
 
               if (json.containsKey('content')) {

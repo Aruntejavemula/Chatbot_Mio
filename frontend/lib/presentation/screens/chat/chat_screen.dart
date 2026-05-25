@@ -14,6 +14,7 @@ import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
+import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
 
@@ -121,6 +122,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final isStreaming = ref.watch(isStreamingProvider);
     final streamingText = ref.watch(streamingTextProvider);
     final loadingWordIndex = ref.watch(loadingWordIndexProvider);
+    final tokenCap = ref.watch(tokenCapProvider);
     ref.watch(chatsProvider);
     ref.watch(currentChatProvider);
     ref.watch(isAuthenticatedProvider);
@@ -162,6 +164,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 // Input bar
+                if (tokenCap != null)
+                  TokenCapBanner(
+                    capType: (tokenCap['cap_type'] as String?) ?? '',
+                    used: (tokenCap['used'] as int?) ?? 0,
+                    limit: (tokenCap['limit'] as int?) ?? 1,
+                    resetsIn: (tokenCap['resets_in'] as String?) ?? '',
+                    onAddKey: () => context.go(AppRoutes.apiKeys),
+                  ),
                 if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
                 _buildInputBar(isDark),
               ],

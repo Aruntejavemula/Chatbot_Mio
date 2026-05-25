@@ -40,6 +40,10 @@ final loadingWordIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
 
+final tokenCapProvider = StateProvider<Map<String, Object?>?>((ref) {
+  return null;
+});
+
 class ChatRepository {
   final Ref _ref;
 
@@ -121,6 +125,11 @@ class ChatRepository {
       await for (final chunk in stream) {
         buffer.write(chunk);
         _ref.read(streamingTextProvider.notifier).state = buffer.toString();
+      }
+
+      final capWarning = _chatService.lastCapWarning;
+      if (capWarning != null) {
+        _ref.read(tokenCapProvider.notifier).state = capWarning;
       }
 
       final aiMessage = MessageModel(
