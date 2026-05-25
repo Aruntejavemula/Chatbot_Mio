@@ -1,0 +1,7 @@
+{
+  "task_id": "task-s44h-s44i-s44j-topbar-theme-keyboard",
+  "task_description": "Implement S44H (Top Bar Redesign All Platforms), S44I (Light/Dark Theme Polish), and S44J (Keyboard + Touch Enhancements) for the Mio Flutter chat app. Updates chat_screen.dart top bar with responsive layout and action buttons, refreshes the color system and theme definitions, and adds keyboard shortcuts, haptics, long-press menus, and scroll-to-bottom behavior.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

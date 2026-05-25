@@ -1,0 +1,32 @@
+{
+  "project_type": "Flutter multi-platform chat app with FastAPI backend",
+  "language": "Dart (Flutter)",
+  "build_system": "Flutter SDK with pubspec.yaml",
+  "test_framework": "flutter_test (no existing widget tests to maintain)",
+  "build_command": "cd frontend && flutter pub get && flutter analyze",
+  "test_command": "cd frontend && flutter test (no tests currently)",
+  "verification_instructions": "Run flutter analyze to check for compilation errors. Verify no errors. Read back all modified files.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && flutter pub get",
+  "environment_constraints": "No Flutter SDK may be available in sandbox - use AST validation via dart analyze or direct file inspection. share_plus already in pubspec.yaml.",
+  "contribution_requirements": "Never work on main branch. Strict null safety, no dynamic types. Separate UI from business logic. DM Sans body, DM Serif Display headings. Persian Orange #CC5801 sparingly. Error handling on every function. No commented-out code. Constants instead of magic numbers.",
+  "key_patterns": "Responsive breakpoints via Responsive utility class (isPhone <600, isTablet 600-1100, isDesktop >=1100). State management via Riverpod StateProvider. Theme handled via AppTheme.light/dark with ThemeMode from themeProvider. AnimatedBuilder used for animations (it's the Flutter 3.12 replacement for AnimatedWidget). Chat service has updateChatTitle and deleteChat methods already. share_plus already imported in export_menu_widget.dart. AppColors uses static const Color fields, light prefix-free, dark prefix 'dark'. ChatBubble already has copy, retry, and fade animations.",
+  "relevant_files": [
+    "frontend/lib/presentation/screens/chat/chat_screen.dart",
+    "frontend/lib/presentation/widgets/chat/chat_bubble.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/core/theme/app_theme.dart",
+    "frontend/lib/core/theme/light_theme.dart",
+    "frontend/lib/core/theme/dark_theme.dart",
+    "frontend/lib/main.dart",
+    "frontend/lib/core/utils/responsive.dart",
+    "frontend/lib/core/constants/app_sizes.dart",
+    "frontend/lib/core/utils/animations.dart",
+    "frontend/lib/data/services/chat_service.dart",
+    "frontend/lib/data/repositories/chat_repository.dart",
+    "frontend/lib/data/repositories/settings_repository.dart",
+    "frontend/lib/presentation/widgets/chat/export_menu_widget.dart",
+    "frontend/lib/core/utils/router.dart"
+  ],
+  "directory_structure": "frontend/lib/core/ (constants, theme, utils), frontend/lib/data/ (models, services, repositories), frontend/lib/presentation/ (screens, widgets, providers)"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "S44J - Keyboard + Touch Enhancements: Add desktop Enter-to-send (Shift+Enter for newline), auto-focus on desktop, haptic feedback on mobile, message long-press context menu, and scroll-to-bottom button with auto-scroll behavior.",
+  "status": "pending",
+  "steps": [
+    "KEYBOARD BEHAVIOR in chat_screen.dart: Verify resizeToAvoidBottomInset: true is already set (it is). Add Enter-to-send for desktop: Wrap the TextField in the input bar with a KeyboardListener (or use onKeyEvent on the TextField's FocusNode). Detect Platform.isMacOS || Platform.isWindows || Platform.isLinux. If desktop and user presses Enter without Shift held, call _sendMessage() and consume the event. If Shift+Enter, allow newline. On mobile/tablet, Enter = newline as current behavior. Import dart:io for Platform. Also add auto-focus: in initState or didChangeDependencies, if Platform is desktop, request focus on _focusNode after frame.",
+    "HAPTIC FEEDBACK (mobile only): Import package:flutter/services.dart (already imported in chat_bubble.dart, add to chat_screen.dart). Add HapticFeedback.mediumImpact() on send button tap (inside _sendMessage, guarded by Platform.isIOS || Platform.isAndroid). Add HapticFeedback.lightImpact() on panel open/close (_togglePanel). Add HapticFeedback.heavyImpact() in chat_bubble.dart on long press (new). Add HapticFeedback.heavyImpact() when tokenCap warning appears (in the build method where tokenCap != null is first set). Add HapticFeedback.mediumImpact() when showing error snackbars. All guarded by Platform.isIOS || Platform.isAndroid.",
+    "MESSAGE LONG PRESS in chat_bubble.dart: Add GestureDetector with onLongPress around each bubble. On long press: HapticFeedback.heavyImpact() (mobile only), then show a bottom sheet context menu. Bottom sheet: background AppColors.bgSecondary, border radius top 20px, padding 16px. Options: 'Copy' (Icons.copy_outlined, copies message.content to clipboard, shows snackbar 'Copied'), 'Share' (Icons.ios_share_outlined, calls Share.share(message.content), shown only if content not empty). If AI message: 'Regenerate' (Icons.refresh_outlined, callback to parent). If user message: 'Edit & Resend' (Icons.edit_outlined, callback to parent). Add onRegenerate and onEditResend callback parameters to ChatBubble widget. Import share_plus.",
+    "SCROLL BEHAVIOR in chat_screen.dart: Add a _showScrollButton bool state. Add a scroll listener in initState that checks _scrollController.offset vs maxScrollExtent. If user scrolled up >200px from bottom, set _showScrollButton = true. Otherwise false. Add a scroll-to-bottom floating button in the Stack: Positioned bottom-right, 16px from right, 16px above input bar. Container 40x40, AppColors.bgSecondary bg, 1px borderDefault border, 20px radius (circle), subtle shadow, Icons.keyboard_arrow_down_rounded 20px textSecondary. Wrap in FadeTransition (AnimationController 200ms). On tap: scroll to bottom with 300ms easeOutCubic animation. AUTO SCROLL: In the existing _scrollToBottom call (triggered when messages change), check if user is within 100px of bottom before auto-scrolling. If scrolled up >100px, do not auto-scroll, show button instead."
+  ],
+  "acceptance_criteria": [
+    "On desktop (macOS/Windows/Linux), pressing Enter sends message, Shift+Enter creates newline",
+    "On mobile/tablet, Enter creates newline, send button sends",
+    "Desktop auto-focuses the input field on screen load",
+    "Haptic feedback triggers on: send (medium), panel toggle (light), long press (heavy), token warning (heavy), error snackbar (medium) - only on iOS/Android",
+    "Long pressing a message shows context menu with Copy, Share, and conditionally Regenerate or Edit & Resend",
+    "Scroll-to-bottom button appears when scrolled 200px+ up from bottom",
+    "Button fades in/out with 200ms animation",
+    "Tapping button scrolls to bottom with 300ms easeOutCubic",
+    "Auto-scroll only happens when user is within 100px of bottom",
+    "No compilation errors"
+  ],
+  "verification": [
+    "Read back chat_screen.dart to verify keyboard handling, scroll button, haptics",
+    "Read back chat_bubble.dart to verify long press menu and callbacks",
+    "Verify all new imports (dart:io, share_plus, services.dart) are present",
+    "Verify ChatBubble constructor has new optional callback parameters"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
