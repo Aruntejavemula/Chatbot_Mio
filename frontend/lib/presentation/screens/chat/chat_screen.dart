@@ -30,6 +30,7 @@ import '../../widgets/common/funny_snackbar.dart';
 import '../../widgets/common/ghost_mascot.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../data/services/notification_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
@@ -40,7 +41,7 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStateMixin {
+class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isSidebarOpen = false;
   bool _isModelDropdownOpen = false;
   String _selectedModel = 'Think now';
@@ -57,6 +58,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   late AnimationController _sendButtonAnimController;
   bool _isPanelOpen = false;
   bool _showScrollButton = false;
+  AppLifecycleState _appLifecycleState = AppLifecycleState.resumed;
   late AnimationController _scrollButtonAnimController;
   late Animation<double> _scrollButtonFadeAnimation;
 
@@ -99,6 +101,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _inputController = TextEditingController();
     _focusNode = FocusNode();
     _scrollController = ScrollController();
@@ -129,12 +132,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _inputController.dispose();
     _focusNode.dispose();
     _scrollController.dispose();
     _sendButtonAnimController.dispose();
     _scrollButtonAnimController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLifecycleState = state;
   }
 
   void _togglePanel() {
@@ -217,6 +226,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     ref.listen<Map<String, Object?>?>(tokenCapProvider, (prev, next) {
       if (prev == null && next != null && _isMobile) {
         HapticFeedback.heavyImpact();
+      }
+    });
+
+    ref.listen<bool>(isStreamingProvider, (previous, current) {
+      if (previous == true && current == false) {
+        if (_appLifecycleState == AppLifecycleState.paused ||
+            _appLifecycleState == AppLifecycleState.inactive) {
+          NotificationService.showTaskComplete('AI Response');
+        }
       }
     });
 
