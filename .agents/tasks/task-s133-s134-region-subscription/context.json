@@ -1,0 +1,26 @@
+{
+  "project_type": "Flutter mobile/desktop app with Riverpod state management",
+  "language": "Dart",
+  "build_system": "Flutter SDK with pubspec.yaml, flutter pub get / flutter build",
+  "test_framework": "flutter_test with mocktail for mocking",
+  "build_command": "cd frontend && flutter pub get && flutter analyze",
+  "test_command": "cd frontend && flutter test",
+  "verification_instructions": "Run flutter analyze to check for static analysis errors, then flutter test for unit tests",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && flutter pub get",
+  "environment_constraints": "OPEN_INTERNET - full network access. Flutter SDK available. No device for running app but can do static analysis.",
+  "contribution_requirements": "Never work on main branch. Strict null safety. No dynamic types. Separate UI from business logic. Services handle all API calls. Clean architecture: core/constants, core/utils, data/services, presentation/screens.",
+  "key_patterns": "Services use static methods or singletons (see ConnectivityService). FlutterSecureStorage used for caching secure data. Google Fonts (DM Sans body, DM Serif Display headings). AppColors for all colors (persian = #CC5801). AppSizes for spacing/radii. ConsumerStatefulWidget for Riverpod screens.",
+  "relevant_files": [
+    "frontend/lib/core/utils/connectivity_service.dart",
+    "frontend/lib/core/utils/region_service.dart (to create)",
+    "frontend/lib/presentation/screens/settings/subscription_screen.dart",
+    "frontend/lib/presentation/screens/auth/onboarding_screen.dart",
+    "frontend/lib/presentation/screens/auth/welcome_screen.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/core/constants/app_constants.dart",
+    "frontend/lib/core/constants/app_sizes.dart",
+    "frontend/lib/presentation/widgets/common/ghost_mascot.dart"
+  ],
+  "directory_structure": "frontend/lib/core/utils/ - utility services. frontend/lib/core/constants/ - app-wide constants. frontend/lib/presentation/screens/settings/ - settings screens. frontend/lib/presentation/screens/auth/ - auth flow screens. frontend/lib/presentation/widgets/common/ - shared widgets."
+}

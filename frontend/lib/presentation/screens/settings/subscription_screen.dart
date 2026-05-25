@@ -4,8 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/region_service.dart';
+import '../../widgets/common/ghost_mascot.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -15,10 +16,23 @@ class SubscriptionScreen extends ConsumerStatefulWidget {
 }
 
 class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
-  static const String _stripePortalUrl =
-      'https://billing.stripe.com/p/login/placeholder';
-
+  String _country = 'US';
+  // ignore: prefer_final_fields
+  bool _isSubscribed = false;
+  // ignore: prefer_final_fields
+  String _subscribedVia = '';
   bool _isAnnual = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegion();
+  }
+
+  Future<void> _loadRegion() async {
+    final country = await RegionService.getRegion();
+    if (mounted) setState(() => _country = country);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,79 +58,355 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.paddingCard),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCurrentPlanCard(isDark),
-            const SizedBox(height: 24),
+      body: _buildBody(isDark),
+    );
+  }
+
+  Widget _buildBody(bool isDark) {
+    if (RegionService.isIndian(_country)) {
+      return _isSubscribed
+          ? _buildIndianSubscribed(isDark)
+          : _buildIndianNotSubscribed(isDark);
+    }
+    return _isSubscribed
+        ? _buildGlobalSubscribed(isDark)
+        : _buildGlobalNotSubscribed(isDark);
+  }
+
+  Widget _buildIndianNotSubscribed(bool isDark) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.paddingCard),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 48),
+              const PenguinMascot(size: 80, animate: true),
+              const SizedBox(height: 24),
+              Text(
+                'Subscribe to Mio',
+                style: GoogleFonts.dmSerifDisplay(
+                  fontSize: 28,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'To subscribe, visit:',
+                style: GoogleFonts.dmSans(
+                  fontSize: 16,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              SelectableText(
+                'mio.app/subscribe',
+                style: GoogleFonts.dmSerifDisplay(
+                  fontSize: 22,
+                  color: AppColors.persian,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Basic \u20B999/mo \u00B7 Pro \u20B9299/mo',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Annual plans available on our website.',
+                style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIndianSubscribed(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.paddingCard),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCurrentPlanCard(isDark),
+          const SizedBox(height: 16),
+          Text(
+            'Manage your subscription at mio.app/account',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalNotSubscribed(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.paddingCard),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCurrentPlanCard(isDark),
+          const SizedBox(height: 24),
+          if (RegionService.hasAnnualOption(_country)) ...[
             _buildBillingToggle(isDark),
             const SizedBox(height: 16),
-            _buildPlanCard(
-              isDark: isDark,
-              name: 'Free',
-              price: '\$0 / month',
-              annualSubtitle: null,
-              savingsText: null,
-              features: [
-                _FeatureItem('BYOK support', true),
-                _FeatureItem('1 device', true),
-                _FeatureItem('20 messages per day', true),
-                _FeatureItem('Cloud sync', false),
-                _FeatureItem('All models', false),
-                _FeatureItem('Included tokens', false),
-              ],
-              buttonText: 'Current Plan',
-              isCurrentPlan: true,
-              borderColor: isDark
-                  ? AppColors.darkBorderDefault
-                  : AppColors.borderDefault,
+          ],
+          _buildPlanCard(
+            isDark: isDark,
+            name: 'Basic',
+            price: RegionService.getPriceDisplay(
+              _country, 'basic', _isAnnual,
             ),
-            const SizedBox(height: 12),
-            _buildPlanCard(
-              isDark: isDark,
-              name: 'Basic',
-              price: _isAnnual ? '\$${AppConstants.basicAnnualPrice} / year' : '\$${AppConstants.basicMonthlyPrice} / month',
-              annualSubtitle: _isAnnual ? '(\$4.17/mo)' : null,
-              savingsText: _isAnnual ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
-              features: [
-                _FeatureItem('BYOK support', true),
-                _FeatureItem('2 devices', true),
-                _FeatureItem('100 messages per day', true),
-                _FeatureItem('Google Drive sync', true),
-                _FeatureItem('All models', true),
-                _FeatureItem('Encrypted storage', true),
-              ],
-              buttonText: 'Upgrade to Basic',
-              borderColor: AppColors.persian,
-              onButtonPressed: () => debugPrint('upgrade to basic'),
+            features: [
+              _FeatureItem('BYOK support', true),
+              _FeatureItem('2 devices', true),
+              _FeatureItem('100 messages per day', true),
+              _FeatureItem('Google Drive sync', true),
+              _FeatureItem('All models', true),
+              _FeatureItem('Encrypted storage', true),
+            ],
+            borderColor: isDark
+                ? AppColors.darkBorderDefault
+                : AppColors.borderDefault,
+          ),
+          const SizedBox(height: 12),
+          _buildPlanCard(
+            isDark: isDark,
+            name: 'Pro',
+            price: RegionService.getPriceDisplay(
+              _country, 'pro', _isAnnual,
             ),
-            const SizedBox(height: 12),
-            _buildPlanCard(
-              isDark: isDark,
-              name: 'Pro',
-              price: _isAnnual ? '\$${AppConstants.proAnnualPrice} / year' : '\$${AppConstants.proMonthlyPrice} / month',
-              annualSubtitle: _isAnnual ? '(\$8.33/mo)' : null,
-              savingsText: _isAnnual ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
-              features: [
-                _FeatureItem('Everything in Basic', true),
-                _FeatureItem('5 devices', true),
-                _FeatureItem('Unlimited messages', true),
-                _FeatureItem('Full cloud sync', true),
-                _FeatureItem('3M tokens per month', true),
-                _FeatureItem('Skills and connectors', true),
-                _FeatureItem('Memory', true),
-                _FeatureItem('Export chats', true),
-              ],
-              buttonText: 'Upgrade to Pro',
-              borderColor: AppColors.persian,
-              isPro: true,
-              onButtonPressed: () => debugPrint('upgrade to pro'),
+            features: [
+              _FeatureItem('Everything in Basic', true),
+              _FeatureItem('5 devices', true),
+              _FeatureItem('Unlimited messages', true),
+              _FeatureItem('Full cloud sync', true),
+              _FeatureItem('3M tokens per month', true),
+              _FeatureItem('Skills and connectors', true),
+              _FeatureItem('Memory', true),
+              _FeatureItem('Export chats', true),
+            ],
+            borderColor: AppColors.persian,
+            isPro: true,
+          ),
+          const SizedBox(height: 24),
+          _buildAppStoreOption(isDark),
+          const SizedBox(height: 12),
+          _buildWebsiteOption(isDark),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalSubscribed(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.paddingCard),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCurrentPlanCard(isDark),
+          const SizedBox(height: 16),
+          Text(
+            _getManagementText(),
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
-            const SizedBox(height: 32),
-            _buildManageSection(isDark),
-            const SizedBox(height: 32),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getManagementText() {
+    switch (_subscribedVia) {
+      case 'stripe':
+      case 'razorpay':
+        return 'Manage at mio.app/account';
+      case 'apple':
+        return 'Manage in App Store Settings';
+      case 'google':
+        return 'Manage in Play Store Subscriptions';
+      default:
+        return 'Manage at mio.app/account';
+    }
+  }
+
+  Widget _buildAppStoreOption(bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Coming soon \u2014 use website option for now'),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+          border: Border.all(
+            color: isDark
+                ? AppColors.darkBorderDefault
+                : AppColors.borderDefault,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.phone_iphone,
+              size: 24,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'App Store / Play Store',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    RegionService.getPriceDisplay(_country, 'pro', _isAnnual),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebsiteOption(bool isDark) {
+    return GestureDetector(
+      onTap: () async {
+        final uri = Uri.parse(
+          'https://mio.app/subscribe?plan=pro&country=$_country',
+        );
+        try {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open browser')),
+            );
+          }
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.persian.withValues(alpha: 0.1),
+          border: Border.all(
+            color: AppColors.persian,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.language,
+              size: 24,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Subscribe via Website',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Save more with website pricing',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.persian,
+                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+              ),
+              child: Text(
+                'BEST DEAL',
+                style: GoogleFonts.dmSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -247,14 +537,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     required bool isDark,
     required String name,
     required String price,
-    required String? annualSubtitle,
-    required String? savingsText,
     required List<_FeatureItem> features,
-    required String buttonText,
     required Color borderColor,
-    bool isCurrentPlan = false,
     bool isPro = false,
-    VoidCallback? onButtonPressed,
   }) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.paddingScreen),
@@ -277,25 +562,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       : AppColors.textPrimary,
                 ),
               ),
-              if (savingsText != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.persian.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-                  ),
-                  child: Text(
-                    savingsText,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.persian,
-                    ),
-                  ),
-                ),
-              ],
               if (isPro) ...[
                 const Spacer(),
                 Container(
@@ -317,31 +583,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               ],
             ],
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 150),
-            child: Column(
-              key: ValueKey<String>(price),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  price,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    color:
-                        isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                  ),
-                ),
-                if (annualSubtitle != null)
-                  Text(
-                    annualSubtitle,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextMuted
-                          : AppColors.textMuted,
-                    ),
-                  ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            price,
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 12),
@@ -371,236 +618,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   ],
                 ),
               )),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: isCurrentPlan
-                ? ElevatedButton(
-                    onPressed: null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.darkBgTertiary
-                          : AppColors.bgTertiary,
-                      disabledBackgroundColor: isDark
-                          ? AppColors.darkBgTertiary
-                          : AppColors.bgTertiary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.radiusFull),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      buttonText,
-                      style: GoogleFonts.dmSans(
-                        fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? AppColors.darkTextMuted
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  )
-                : isPro
-                    ? ElevatedButton(
-                        onPressed: onButtonPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.persian,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusFull),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          buttonText,
-                          style: GoogleFonts.dmSans(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : OutlinedButton(
-                        onPressed: onButtonPressed,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: AppColors.persian,
-                            width: 2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppSizes.radiusFull),
-                          ),
-                        ),
-                        child: Text(
-                          buttonText,
-                          style: GoogleFonts.dmSans(
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.persian,
-                          ),
-                        ),
-                      ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildManageSection(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'MANAGE',
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ),
-        _buildManageTile(
-          icon: Icons.receipt_long_outlined,
-          title: 'Manage Subscription',
-          subtitle: 'Open Stripe billing portal',
-          isDark: isDark,
-          onTap: _openStripePortal,
-        ),
-        const SizedBox(height: 4),
-        _buildManageTile(
-          icon: Icons.cancel_outlined,
-          title: 'Cancel Subscription',
-          isDark: isDark,
-          titleColor: AppColors.error,
-          iconColor: AppColors.error,
-          onTap: () => _showCancelDialog(isDark),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildManageTile({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required bool isDark,
-    Color? titleColor,
-    Color? iconColor,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: iconColor ??
-                  (isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.textSecondary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: titleColor ??
-                          (isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.textPrimary),
-                    ),
-                  ),
-                  if (subtitle != null)
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.darkTextMuted
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openStripePortal() async {
-    try {
-      final uri = Uri.parse(_stripePortalUrl);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open billing portal')),
-        );
-      }
-    }
-  }
-
-  void _showCancelDialog(bool isDark) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor:
-            isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-        title: Text(
-          'Cancel Subscription',
-          style: GoogleFonts.dmSans(
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.',
-          style: GoogleFonts.dmSans(
-            color:
-                isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(
-              'Keep Subscription',
-              style: GoogleFonts.dmSans(
-                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              debugPrint('cancel subscription confirmed');
-            },
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.dmSans(
-                color: AppColors.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );

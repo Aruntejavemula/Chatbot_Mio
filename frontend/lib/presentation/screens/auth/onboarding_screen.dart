@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/region_service.dart';
 import '../../../core/utils/router.dart';
 import '../../widgets/common/ghost_mascot.dart';
 import '../../widgets/settings/ollama_setup_sheet.dart';
@@ -28,7 +29,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
   bool _isKeyVisible = false;
   bool _isAnnualOnboarding = false;
+  String _userCountry = 'US';
   final Set<String> _selectedPreferences = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegion();
+  }
+
+  Future<void> _loadRegion() async {
+    final country = await RegionService.getRegion();
+    if (mounted) setState(() => _userCountry = country);
+  }
 
   @override
   void dispose() {
@@ -798,6 +811,64 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildPagePricing(bool isDark) {
+    if (RegionService.isIndian(_userCountry)) {
+      return _buildPagePricingIndian(isDark);
+    }
+    return _buildPagePricingGlobal(isDark);
+  }
+
+  Widget _buildPagePricingIndian(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 60),
+          const PenguinMascot(size: 60),
+          const SizedBox(height: 16),
+          Text(
+            'Subscribe at mio.app',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 22,
+              color: AppColors.persian,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Basic \u20B999/mo \u00B7 Pro \u20B9299/mo',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Annual plans on our website',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No payment needed in app',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPagePricingGlobal(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -826,8 +897,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          _buildOnboardingBillingToggle(isDark),
-          const SizedBox(height: 16),
+          if (RegionService.hasAnnualOption(_userCountry))
+            _buildOnboardingBillingToggle(isDark),
+          if (RegionService.hasAnnualOption(_userCountry))
+            const SizedBox(height: 16),
           _buildPlanCard(
             isDark: isDark,
             title: 'Free',
@@ -839,7 +912,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _buildPlanCard(
             isDark: isDark,
             title: 'Basic',
-            price: _isAnnualOnboarding ? '\$${AppConstants.basicAnnualPrice}/yr' : '\$${AppConstants.basicMonthlyPrice}/mo',
+            price: RegionService.getPriceDisplay(
+              _userCountry, 'basic', _isAnnualOnboarding,
+            ),
             features: [
               '100K tokens/day',
               '3 devices',
@@ -848,13 +923,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'All providers',
             ],
             isHighlighted: false,
-            savingsText: _isAnnualOnboarding ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
+            savingsText: _isAnnualOnboarding && RegionService.hasAnnualOption(_userCountry)
+                ? 'Save ${AppConstants.annualSavingsPercent}%'
+                : null,
           ),
           const SizedBox(height: 12),
           _buildPlanCard(
             isDark: isDark,
             title: 'Pro',
-            price: _isAnnualOnboarding ? '\$${AppConstants.proAnnualPrice}/yr' : '\$${AppConstants.proMonthlyPrice}/mo',
+            price: RegionService.getPriceDisplay(
+              _userCountry, 'pro', _isAnnualOnboarding,
+            ),
             features: [
               'Unlimited*',
               '10 devices',
@@ -865,7 +944,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'Image Gen',
             ],
             isHighlighted: true,
-            savingsText: _isAnnualOnboarding ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
+            savingsText: _isAnnualOnboarding && RegionService.hasAnnualOption(_userCountry)
+                ? 'Save ${AppConstants.annualSavingsPercent}%'
+                : null,
           ),
           const SizedBox(height: 24),
         ],
