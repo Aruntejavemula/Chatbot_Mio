@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "S44J - Keyboard + Touch Enhancements: Add desktop Enter-to-send (Shift+Enter for newline), auto-focus on desktop, haptic feedback on mobile, message long-press context menu, and scroll-to-bottom button with auto-scroll behavior.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "KEYBOARD BEHAVIOR in chat_screen.dart: Verify resizeToAvoidBottomInset: true is already set (it is). Add Enter-to-send for desktop: Wrap the TextField in the input bar with a KeyboardListener (or use onKeyEvent on the TextField's FocusNode). Detect Platform.isMacOS || Platform.isWindows || Platform.isLinux. If desktop and user presses Enter without Shift held, call _sendMessage() and consume the event. If Shift+Enter, allow newline. On mobile/tablet, Enter = newline as current behavior. Import dart:io for Platform. Also add auto-focus: in initState or didChangeDependencies, if Platform is desktop, request focus on _focusNode after frame.",
     "HAPTIC FEEDBACK (mobile only): Import package:flutter/services.dart (already imported in chat_bubble.dart, add to chat_screen.dart). Add HapticFeedback.mediumImpact() on send button tap (inside _sendMessage, guarded by Platform.isIOS || Platform.isAndroid). Add HapticFeedback.lightImpact() on panel open/close (_togglePanel). Add HapticFeedback.heavyImpact() in chat_bubble.dart on long press (new). Add HapticFeedback.heavyImpact() when tokenCap warning appears (in the build method where tokenCap != null is first set). Add HapticFeedback.mediumImpact() when showing error snackbars. All guarded by Platform.isIOS || Platform.isAndroid.",
@@ -28,5 +28,5 @@
     "Verify ChatBubble constructor has new optional callback parameters"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Flutter SDK not available in sandbox, so flutter analyze could not be run. Verification done via file inspection - brace/parenthesis/bracket balancing confirmed, imports verified (dart:io, flutter/services.dart, share_plus). All four parts implemented: (1) Enter-to-send on desktop with Focus onKeyEvent, (2) haptic feedback on send/panel toggle/token cap warning/error snackbars, (3) long-press context menu in chat_bubble.dart with Copy/Share/Regenerate/Edit&Resend, (4) scroll-to-bottom button with fade animation and auto-scroll only when near bottom."
 }
