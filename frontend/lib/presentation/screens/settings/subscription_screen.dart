@@ -17,6 +17,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   static const String _stripePortalUrl =
       'https://billing.stripe.com/p/login/placeholder';
 
+  bool _isAnnual = false;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -48,10 +50,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           children: [
             _buildCurrentPlanCard(isDark),
             const SizedBox(height: 24),
+            _buildBillingToggle(isDark),
+            const SizedBox(height: 16),
             _buildPlanCard(
               isDark: isDark,
               name: 'Free',
               price: '\$0 / month',
+              annualSubtitle: null,
+              savingsText: null,
               features: [
                 _FeatureItem('BYOK support', true),
                 _FeatureItem('1 device', true),
@@ -70,7 +76,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             _buildPlanCard(
               isDark: isDark,
               name: 'Basic',
-              price: '\$4.99 / month',
+              price: _isAnnual ? '\$49.99 / year' : '\$4.99 / month',
+              annualSubtitle: _isAnnual ? '(\$4.17/mo)' : null,
+              savingsText: _isAnnual ? 'Save 17%' : null,
               features: [
                 _FeatureItem('BYOK support', true),
                 _FeatureItem('2 devices', true),
@@ -87,7 +95,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             _buildPlanCard(
               isDark: isDark,
               name: 'Pro',
-              price: '\$9.99 / month',
+              price: _isAnnual ? '\$99.99 / year' : '\$9.99 / month',
+              annualSubtitle: _isAnnual ? '(\$8.33/mo)' : null,
+              savingsText: _isAnnual ? 'Save 17%' : null,
               features: [
                 _FeatureItem('Everything in Basic', true),
                 _FeatureItem('5 devices', true),
@@ -109,6 +119,61 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBillingToggle(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Monthly',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: !_isAnnual
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () => setState(() => _isAnnual = !_isAnnual),
+          child: Container(
+            width: 56,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: AnimatedAlign(
+              alignment:
+                  _isAnnual ? Alignment.centerRight : Alignment.centerLeft,
+              duration: const Duration(milliseconds: 150),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: AppColors.persian,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'Annual',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: _isAnnual
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+      ],
     );
   }
 
@@ -177,6 +242,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     required bool isDark,
     required String name,
     required String price,
+    required String? annualSubtitle,
+    required String? savingsText,
     required List<_FeatureItem> features,
     required String buttonText,
     required Color borderColor,
@@ -205,6 +272,25 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       : AppColors.textPrimary,
                 ),
               ),
+              if (savingsText != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.persian.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                  ),
+                  child: Text(
+                    savingsText,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.persian,
+                    ),
+                  ),
+                ),
+              ],
               if (isPro) ...[
                 const Spacer(),
                 Container(
@@ -226,11 +312,31 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               ],
             ],
           ),
-          Text(
-            price,
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 150),
+            child: Column(
+              key: ValueKey<String>(price),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  price,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    color:
+                        isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                  ),
+                ),
+                if (annualSubtitle != null)
+                  Text(
+                    annualSubtitle,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 12),

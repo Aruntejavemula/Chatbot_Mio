@@ -25,6 +25,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   int _currentPage = 0;
   bool _isKeyVisible = false;
+  bool _isAnnualOnboarding = false;
   final Set<String> _selectedPreferences = {};
 
   @override
@@ -821,7 +822,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          _buildOnboardingBillingToggle(isDark),
+          const SizedBox(height: 16),
           _buildPlanCard(
             isDark: isDark,
             title: 'Free',
@@ -833,7 +836,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _buildPlanCard(
             isDark: isDark,
             title: 'Basic',
-            price: '\$4.99/mo',
+            price: _isAnnualOnboarding ? '\$49.99/yr' : '\$4.99/mo',
             features: [
               '100K tokens/day',
               '3 devices',
@@ -842,12 +845,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'All providers',
             ],
             isHighlighted: false,
+            savingsText: _isAnnualOnboarding ? 'Save 17%' : null,
           ),
           const SizedBox(height: 12),
           _buildPlanCard(
             isDark: isDark,
             title: 'Pro',
-            price: '\$9.99/mo',
+            price: _isAnnualOnboarding ? '\$99.99/yr' : '\$9.99/mo',
             features: [
               'Unlimited*',
               '10 devices',
@@ -858,10 +862,67 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'Image Gen',
             ],
             isHighlighted: true,
+            savingsText: _isAnnualOnboarding ? 'Save 17%' : null,
           ),
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  Widget _buildOnboardingBillingToggle(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Monthly',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: !_isAnnualOnboarding
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () => setState(() => _isAnnualOnboarding = !_isAnnualOnboarding),
+          child: Container(
+            width: 56,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: AnimatedAlign(
+              alignment: _isAnnualOnboarding
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              duration: const Duration(milliseconds: 150),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: AppColors.persian,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'Annual',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: _isAnnualOnboarding
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+      ],
     );
   }
 
@@ -871,6 +932,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     required String price,
     required List<String> features,
     required bool isHighlighted,
+    String? savingsText,
   }) {
     return Container(
       width: double.infinity,
@@ -893,24 +955,54 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.dmSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (savingsText != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.persian.withValues(alpha: 0.1),
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.radiusFull),
+                      ),
+                      child: Text(
+                        savingsText,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.persian,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              Text(
-                price,
-                style: GoogleFonts.dmSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.textPrimary,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: Text(
+                  price,
+                  key: ValueKey<String>(price),
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
