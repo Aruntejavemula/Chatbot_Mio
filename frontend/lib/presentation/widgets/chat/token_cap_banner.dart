@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/funny_warnings.dart';
 
@@ -26,13 +27,13 @@ class TokenCapBanner extends StatelessWidget {
   String get displayName {
     switch (capType) {
       case 'five_hour':
-        return '5-hour (40K)';
+        return AppConstants.fiveHourCapDisplay;
       case 'daily':
-        return 'Daily (100K)';
+        return AppConstants.dailyCapDisplay;
       case 'weekly':
-        return 'Weekly (500K)';
+        return AppConstants.weeklyCapDisplay;
       case 'monthly':
-        return 'Monthly (2M)';
+        return AppConstants.monthlyCapDisplay;
       default:
         return capType;
     }

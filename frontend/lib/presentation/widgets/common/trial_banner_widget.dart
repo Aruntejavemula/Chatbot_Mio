@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 
@@ -18,7 +19,6 @@ class TrialBannerWidget extends ConsumerStatefulWidget {
 }
 
 class _TrialBannerWidgetState extends ConsumerState<TrialBannerWidget> {
-  static const int _trialDurationDays = 14;
   static const String _trialStartDateKey = 'trial_start_date';
 
   _TrialState _state = _TrialState.loading;
@@ -50,10 +50,10 @@ class _TrialBannerWidgetState extends ConsumerState<TrialBannerWidget> {
       }
 
       final elapsed = DateTime.now().difference(trialStart).inDays;
-      final remaining = _trialDurationDays - elapsed;
+      final remaining = AppConstants.trialDurationDays - elapsed;
 
       setState(() {
-        _daysElapsed = elapsed.clamp(0, _trialDurationDays);
+        _daysElapsed = elapsed.clamp(0, AppConstants.trialDurationDays);
         _daysRemaining = remaining;
         _state = remaining > 0 ? _TrialState.active : _TrialState.expired;
       });
@@ -81,7 +81,7 @@ class _TrialBannerWidgetState extends ConsumerState<TrialBannerWidget> {
   }
 
   Widget _buildActiveBanner(bool isDark) {
-    final progress = _daysElapsed / _trialDurationDays;
+    final progress = _daysElapsed / AppConstants.trialDurationDays;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -140,7 +140,7 @@ class _TrialBannerWidgetState extends ConsumerState<TrialBannerWidget> {
             ),
             const SizedBox(height: 4),
             Text(
-              '\$9.99/month after trial',
+              '\$${AppConstants.proMonthlyPrice}/month after trial',
               style: GoogleFonts.dmSans(
                 fontSize: 13,
                 color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,

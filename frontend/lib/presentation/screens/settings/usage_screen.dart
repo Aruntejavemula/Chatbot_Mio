@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../data/repositories/chat_repository.dart';
 
@@ -26,7 +27,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
     super.initState();
     _loadUsage();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 60),
+      Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
       (_) => _loadUsage(),
     );
   }
@@ -133,13 +134,13 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
 
   Widget _buildContent(bool isDark) {
     final fiveHourUsed = _getInt('five_hour_used');
-    final fiveHourLimit = _getInt('five_hour_limit', defaultValue: 40000);
+    final fiveHourLimit = _getInt('five_hour_limit', defaultValue: AppConstants.freeTokenCap5Hour);
     final dailyUsed = _getInt('daily_used');
-    final dailyLimit = _getInt('daily_limit', defaultValue: 100000);
+    final dailyLimit = _getInt('daily_limit', defaultValue: AppConstants.basicTokenCapDaily);
     final weeklyUsed = _getInt('weekly_used');
-    final weeklyLimit = _getInt('weekly_limit', defaultValue: 500000);
+    final weeklyLimit = _getInt('weekly_limit', defaultValue: AppConstants.proTokenCapWeekly);
     final monthlyUsed = _getInt('monthly_used');
-    final monthlyLimit = _getInt('monthly_limit', defaultValue: 2000000);
+    final monthlyLimit = _getInt('monthly_limit', defaultValue: AppConstants.proTokenCapMonthly);
     final estimatedCost = _getDouble('estimated_cost');
     final tokensSaved = _getInt('tokens_saved');
     final currentModel = _getString('current_model', defaultValue: 'GPT-4o');

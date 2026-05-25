@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../repositories/chat_repository.dart';
 import '../services/chat_service.dart';
 
@@ -13,7 +14,7 @@ class UsageState {
 
   const UsageState({
     this.dailyUsed = 0,
-    this.dailyLimit = 100000,
+    this.dailyLimit = AppConstants.defaultDailyTokenLimit,
     this.isLoading = true,
     this.error,
   });
@@ -42,7 +43,7 @@ class UsageNotifier extends StateNotifier<UsageState> {
   UsageNotifier(this._chatService) : super(const UsageState()) {
     refresh();
     _refreshTimer = Timer.periodic(
-      const Duration(seconds: 60),
+      Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
       (_) => refresh(),
     );
   }
@@ -55,7 +56,7 @@ class UsageNotifier extends StateNotifier<UsageState> {
       final response = await _chatService.getTokenUsage();
       final dailyUsed = _extractInt(response, 'daily_used');
       final dailyLimit = _extractInt(response, 'daily_limit',
-          defaultValue: 100000);
+          defaultValue: AppConstants.defaultDailyTokenLimit);
       state = UsageState(
         dailyUsed: dailyUsed,
         dailyLimit: dailyLimit,

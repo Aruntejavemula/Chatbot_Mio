@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 
 enum SelectedFileType { image, document, code }
@@ -51,7 +52,6 @@ class FileUploadWidget extends StatefulWidget {
 }
 
 class _FileUploadWidgetState extends State<FileUploadWidget> {
-  static const int maxFileSizeBytes = 10 * 1024 * 1024;
   final ImagePicker _imagePicker = ImagePicker();
 
   void _showFileUploadSheet(BuildContext context) {
@@ -202,7 +202,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File too large. Maximum size is 10MB')),
@@ -227,7 +227,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File too large. Maximum size is 10MB')),
@@ -266,7 +266,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       final pickedFile = result.files.first;
       final filePath = pickedFile.path;
       if (filePath != null) {
-        if (pickedFile.size > maxFileSizeBytes) {
+        if (pickedFile.size > AppConstants.maxFileSizeBytes) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('File too large. Maximum size is 10MB')),
@@ -297,7 +297,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('File too large. Maximum size is 10MB')),

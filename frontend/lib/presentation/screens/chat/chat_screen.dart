@@ -1141,38 +1141,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       controller: _scrollController,
       reverse: false,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      cacheExtent: 500,
+      addAutomaticKeepAlives: false,
       itemCount: messages.length + (isStreaming ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
           final message = messages[index];
           final isUser = message.role == 'user';
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSizes.gapMessage),
-            child: Align(
-              alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.8 : 0.85),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isUser
-                      ? (isDark ? AppColors.darkUserBubble : AppColors.userBubble)
-                      : Colors.transparent,
-                  borderRadius: isUser
-                      ? const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                          bottomRight: Radius.circular(4),
-                          bottomLeft: Radius.circular(20),
-                        )
-                      : null,
-                ),
-                child: Text(
-                  message.content,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 15,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          return RepaintBoundary(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSizes.gapMessage),
+              child: Align(
+                alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.8 : 0.85),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isUser
+                        ? (isDark ? AppColors.darkUserBubble : AppColors.userBubble)
+                        : Colors.transparent,
+                    borderRadius: isUser
+                        ? const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(4),
+                            bottomLeft: Radius.circular(20),
+                          )
+                        : null,
+                  ),
+                  child: Text(
+                    message.content,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
@@ -76,9 +77,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             _buildPlanCard(
               isDark: isDark,
               name: 'Basic',
-              price: _isAnnual ? '\$49.99 / year' : '\$4.99 / month',
+              price: _isAnnual ? '\$${AppConstants.basicAnnualPrice} / year' : '\$${AppConstants.basicMonthlyPrice} / month',
               annualSubtitle: _isAnnual ? '(\$4.17/mo)' : null,
-              savingsText: _isAnnual ? 'Save 17%' : null,
+              savingsText: _isAnnual ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
               features: [
                 _FeatureItem('BYOK support', true),
                 _FeatureItem('2 devices', true),
@@ -95,9 +96,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             _buildPlanCard(
               isDark: isDark,
               name: 'Pro',
-              price: _isAnnual ? '\$99.99 / year' : '\$9.99 / month',
+              price: _isAnnual ? '\$${AppConstants.proAnnualPrice} / year' : '\$${AppConstants.proMonthlyPrice} / month',
               annualSubtitle: _isAnnual ? '(\$8.33/mo)' : null,
-              savingsText: _isAnnual ? 'Save 17%' : null,
+              savingsText: _isAnnual ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
               features: [
                 _FeatureItem('Everything in Basic', true),
                 _FeatureItem('5 devices', true),

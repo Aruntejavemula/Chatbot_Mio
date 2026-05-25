@@ -579,6 +579,8 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
 
     return ListView.builder(
       padding: EdgeInsets.zero,
+      cacheExtent: 500,
+      addAutomaticKeepAlives: false,
       itemCount: groupedChats.fold<int>(
         0,
         (sum, entry) => sum + 1 + entry.value.length,
@@ -604,18 +606,20 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
 
           if (index < currentIndex + entry.value.length) {
             final chat = entry.value[index - currentIndex];
-            return ChatItem(
-              chat: chat,
-              isSelected: chat.id == currentChat?.id,
-              onTap: () {
-                ref.read(currentChatProvider.notifier).state = chat;
-                if (isMobile) {
-                  widget.onClose();
-                }
-              },
-              onDelete: () {
-                ref.read(chatRepositoryProvider).deleteChat(chat.id);
-              },
+            return RepaintBoundary(
+              child: ChatItem(
+                chat: chat,
+                isSelected: chat.id == currentChat?.id,
+                onTap: () {
+                  ref.read(currentChatProvider.notifier).state = chat;
+                  if (isMobile) {
+                    widget.onClose();
+                  }
+                },
+                onDelete: () {
+                  ref.read(chatRepositoryProvider).deleteChat(chat.id);
+                },
+              ),
             );
           }
           currentIndex += entry.value.length;

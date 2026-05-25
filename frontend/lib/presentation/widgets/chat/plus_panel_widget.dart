@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../common/funny_snackbar.dart';
 import '../common/permission_dialog.dart';
@@ -33,7 +34,6 @@ class PlusPanelWidget extends StatefulWidget {
 }
 
 class _PlusPanelWidgetState extends State<PlusPanelWidget> {
-  static const int _maxFileSizeBytes = 10 * 1024 * 1024;
   final ImagePicker _imagePicker = ImagePicker();
   final Set<String> _activeSkills = {};
 
@@ -426,7 +426,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > _maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;
@@ -453,7 +453,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       final pickedFile = result.files.first;
       final filePath = pickedFile.path;
       if (filePath != null) {
-        if (pickedFile.size > _maxFileSizeBytes) {
+        if (pickedFile.size > AppConstants.maxFileSizeBytes) {
           if (!mounted) return;
           FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
           return;
@@ -487,7 +487,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > _maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;
@@ -515,7 +515,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
-      if (size > _maxFileSizeBytes) {
+      if (size > AppConstants.maxFileSizeBytes) {
         if (!mounted) return;
         FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;

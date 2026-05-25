@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../widgets/common/ghost_mascot.dart';
@@ -801,7 +802,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           const SizedBox(height: 60),
           Text(
-            '14 days free.',
+            '${AppConstants.trialDurationDays} days free.',
             style: GoogleFonts.dmSerifDisplay(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -836,7 +837,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _buildPlanCard(
             isDark: isDark,
             title: 'Basic',
-            price: _isAnnualOnboarding ? '\$49.99/yr' : '\$4.99/mo',
+            price: _isAnnualOnboarding ? '\$${AppConstants.basicAnnualPrice}/yr' : '\$${AppConstants.basicMonthlyPrice}/mo',
             features: [
               '100K tokens/day',
               '3 devices',
@@ -845,13 +846,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'All providers',
             ],
             isHighlighted: false,
-            savingsText: _isAnnualOnboarding ? 'Save 17%' : null,
+            savingsText: _isAnnualOnboarding ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
           ),
           const SizedBox(height: 12),
           _buildPlanCard(
             isDark: isDark,
             title: 'Pro',
-            price: _isAnnualOnboarding ? '\$99.99/yr' : '\$9.99/mo',
+            price: _isAnnualOnboarding ? '\$${AppConstants.proAnnualPrice}/yr' : '\$${AppConstants.proMonthlyPrice}/mo',
             features: [
               'Unlimited*',
               '10 devices',
@@ -862,7 +863,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               'Image Gen',
             ],
             isHighlighted: true,
-            savingsText: _isAnnualOnboarding ? 'Save 17%' : null,
+            savingsText: _isAnnualOnboarding ? 'Save ${AppConstants.annualSavingsPercent}%' : null,
           ),
           const SizedBox(height: 24),
         ],
