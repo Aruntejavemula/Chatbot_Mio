@@ -176,6 +176,8 @@ STORAGE_TYPE_BY_PLAN = {
     "pro": "cloud",
 }
 
-# Token limits for Pro users using our tokens
-DAILY_TOKEN_LIMIT = 100_000
-MONTHLY_TOKEN_LIMIT = 3_000_000
+# Token caps for Pro users using our tokens
+FIVE_HOUR_TOKEN_CAP = 40_000
+DAILY_TOKEN_CAP = 100_000
+WEEKLY_TOKEN_CAP = 500_000
+MONTHLY_TOKEN_CAP = 2_000_000

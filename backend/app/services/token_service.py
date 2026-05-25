@@ -17,8 +17,8 @@ class TokenService:
     }
 
     MONTHLY_LIMITS = {
-        "premium": 3000000,
-        "middle": 3000000,
+        "premium": 2000000,
+        "middle": 2000000,
         "value": 2000000,
     }
 
@@ -115,7 +115,7 @@ class TokenService:
             return True, ""
 
         daily_limit = self.DAILY_LIMITS.get(plan, 0)
-        monthly_limit = self.MONTHLY_LIMITS.get(country_bucket, 3000000)
+        monthly_limit = self.MONTHLY_LIMITS.get(country_bucket, 2000000)
 
         today = date.today().isoformat()
 
@@ -274,7 +274,7 @@ class TokenService:
             logger.error(f"Supabase error in get_usage_summary: {str(e)}")
 
         daily_limit = self.DAILY_LIMITS.get(plan, 0)
-        monthly_limit = self.MONTHLY_LIMITS.get(country_bucket, 3000000)
+        monthly_limit = self.MONTHLY_LIMITS.get(country_bucket, 2000000)
 
         # Calculate next reset time (1st of next month)
         now = datetime.now()

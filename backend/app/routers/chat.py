@@ -24,6 +24,33 @@ router = APIRouter()
 ai_service = AIService()
 encryption_service = EncryptionService()
 
+# Cost rates per token (input_cost, output_cost) in USD
+COST_RATES = {
+    "deepseek-chat": {"input": 0.00000014, "output": 0.00000028},
+    "deepseek-reasoner": {"input": 0.00000055, "output": 0.0000022},
+    "moonshot-v1-8k": {"input": 0.000001, "output": 0.000001},
+    "gemini-2.5-flash": {"input": 0.00000015, "output": 0.0000006},
+    "gpt-4o-mini": {"input": 0.00000015, "output": 0.0000006},
+    "gpt-4o": {"input": 0.0000025, "output": 0.00001},
+    "claude-haiku-4-5-20251001": {"input": 0.0000008, "output": 0.000004},
+    "claude-sonnet-4-5": {"input": 0.000003, "output": 0.000015},
+}
+
+# Context window sizes per model
+MODEL_CONTEXT_LIMITS = {
+    "gpt-4o": 128000,
+    "gpt-4o-mini": 128000,
+    "claude-sonnet-4-5": 200000,
+    "claude-haiku-4-5-20251001": 200000,
+    "deepseek-chat": 64000,
+    "deepseek-reasoner": 64000,
+    "gemini-2.5-pro": 1000000,
+    "gemini-2.5-flash": 1000000,
+    "moonshot-v1-8k": 8000,
+    "moonshot-v1-32k": 32000,
+    "moonshot-v1-128k": 128000,
+}
+
 
 @router.get("/providers")
 async def get_providers() -> list[dict]:

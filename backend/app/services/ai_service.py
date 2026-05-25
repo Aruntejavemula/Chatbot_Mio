@@ -209,6 +209,9 @@ class AIService:
             "max_tokens": max_tokens,
         }
 
+        if "deepseek" in base_url:
+            body["cache_prompt"] = True
+
         tokens_input = 0
         tokens_output = 0
 
@@ -275,7 +278,7 @@ class AIService:
             "max_tokens": max_tokens,
         }
         if system_content:
-            body["system"] = system_content.strip()
+            body["system"] = [{"type": "text", "text": system_content.strip(), "cache_control": {"type": "ephemeral"}}]
 
         tokens_input = 0
         tokens_output = 0
