@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import voice
+from app.routers import projects, voice
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,5 +25,6 @@ app.add_middleware(
 )
 
 app.include_router(voice.router, prefix="/voice", tags=["voice"])
+app.include_router(projects.router, prefix="/projects", tags=["projects"])
 
 logger.info("Mio API initialized")
