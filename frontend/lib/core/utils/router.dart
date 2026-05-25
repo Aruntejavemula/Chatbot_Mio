@@ -197,10 +197,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.projectNewChat,
-        pageBuilder: (context, state) => _buildTransitionPage(
-          key: state.pageKey,
-          child: const ChatScreen(chatId: null),
-        ),
+        pageBuilder: (context, state) {
+          final projectId = state.pathParameters['projectId'];
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: ChatScreen(chatId: null, projectId: projectId),
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

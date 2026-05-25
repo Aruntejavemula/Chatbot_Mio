@@ -408,7 +408,21 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
                       backgroundColor: Colors.transparent,
                       builder: (sheetContext) => CreateProjectSheet(
                         onCreated: (name, color, systemPrompt) {
-                          // Placeholder: would call service and refresh
+                          // Add the project to local state for immediate UI feedback.
+                          // This will be replaced with a service call once the backend is wired.
+                          final newProject = ProjectModel(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            userId: '',
+                            name: name,
+                            color: color,
+                            systemPrompt: systemPrompt,
+                            createdAt: DateTime.now(),
+                            updatedAt: DateTime.now(),
+                          );
+                          ref.read(projectsProvider.notifier).state = [
+                            newProject,
+                            ...ref.read(projectsProvider),
+                          ];
                         },
                       ),
                     );

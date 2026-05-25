@@ -22,7 +22,8 @@ import '../../../core/utils/responsive.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
-  const ChatScreen({super.key, this.chatId});
+  final String? projectId;
+  const ChatScreen({super.key, this.chatId, this.projectId});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();

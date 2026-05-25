@@ -1,11 +1,12 @@
 """Projects router for organizing chats into collections (Pro plan feature)."""
 
 import logging
+import re
 from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.middleware.auth import get_current_user
 from app.middleware.rate_limit import rate_limit
@@ -31,6 +32,14 @@ class ProjectCreateRequest(BaseModel):
     color: str = Field(default=DEFAULT_PROJECT_COLOR, max_length=7)
     system_prompt: str = Field(default="", max_length=5000)
 
+    @field_validator("color")
+    @classmethod
+    def validate_hex_color(cls, value: str) -> str:
+        """Validate that color is a valid hex color string (#RRGGBB)."""
+        if not re.match(r"^#[0-9a-fA-F]{6}$", value):
+            raise ValueError("color must be a valid hex color (e.g. #CC5801)")
+        return value
+
 
 class ProjectUpdateRequest(BaseModel):
     """Request model for updating a project."""
@@ -38,6 +47,14 @@ class ProjectUpdateRequest(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     color: str | None = Field(default=None, max_length=7)
     system_prompt: str | None = Field(default=None, max_length=5000)
+
+    @field_validator("color")
+    @classmethod
+    def validate_hex_color(cls, value: str | None) -> str | None:
+        """Validate that color is a valid hex color string (#RRGGBB)."""
+        if value is not None and not re.match(r"^#[0-9a-fA-F]{6}$", value):
+            raise ValueError("color must be a valid hex color (e.g. #CC5801)")
+        return value
 
 
 class ProjectResponse(BaseModel):
@@ -81,7 +98,12 @@ def _check_pro_plan(current_user: dict[str, Any]) -> None:
     Raises:
         HTTPException: If the user does not have a Pro plan (403).
     """
-    # Placeholder: In production, check user's subscription tier from database
+    # NOTE: The auth middleware (app/middleware/auth.py) currently returns only
+    # {"user_id": token[:8]} and does not include a "plan" field. Once the
+    # database is connected, the auth middleware must be updated to fetch and
+    # include the user's subscription plan in the returned dict so this gate
+    # can function correctly. Until then, all requests will default to "free"
+    # and receive a 403 response.
     plan = current_user.get("plan", "free")
     if plan != "pro":
         logger.warning(
@@ -275,6 +297,10 @@ async def update_project(
     #     .single() \
     #     .execute()
 
+    # TODO: Replace with actual Supabase query once the database client is wired.
+    # This placeholder always returns None, making the endpoint always 404.
+    # The code below (ownership check, update logic, response) will become
+    # reachable once this line returns real query results.
     # Placeholder: Simulate project not found check
     project_data: dict[str, Any] | None = None  # Would come from DB query
 
@@ -377,6 +403,10 @@ async def delete_project(
     #     .single() \
     #     .execute()
 
+    # TODO: Replace with actual Supabase query once the database client is wired.
+    # This placeholder always returns None, making the endpoint always 404.
+    # The code below (ownership check, delete operation) will become
+    # reachable once this line returns real query results.
     # Placeholder: Simulate project not found check
     project_data: dict[str, Any] | None = None  # Would come from DB query
 
