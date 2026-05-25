@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
@@ -76,6 +77,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   }
 
   bool get _isDesktop {
+    if (kIsWeb) return false;
     try {
       return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
     } catch (_) {
@@ -84,6 +86,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   }
 
   bool get _isMobile {
+    if (kIsWeb) return false;
     try {
       return Platform.isIOS || Platform.isAndroid;
     } catch (_) {
@@ -140,12 +143,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
-    if (_isMobile) HapticFeedback.mediumImpact();
-    _inputController.clear();
-    setState(() {
-      _hasText = false;
-      _selectedFiles = [];
-    });
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       if (_isMobile) HapticFeedback.mediumImpact();
@@ -161,6 +158,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       );
       return;
     }
+    if (_isMobile) HapticFeedback.mediumImpact();
+    _inputController.clear();
+    setState(() {
+      _hasText = false;
+      _selectedFiles = [];
+    });
     // TODO: Create chat if needed, then send message
     // For now just print
     debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider');
@@ -644,6 +647,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
               onPressed: () async {
                 final newTitle = controller.text.trim();
                 if (newTitle.isEmpty || widget.chatId == null) return;
+                final navigator = Navigator.of(dialogContext);
                 try {
                   final chatService = ref.read(chatServiceProvider);
                   await chatService.updateChatTitle(widget.chatId!, newTitle);
@@ -652,7 +656,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     ref.read(currentChatProvider.notifier).state =
                         chat.copyWith(title: newTitle);
                   }
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (dialogContext.mounted) navigator.pop();
                 } catch (e) {
                   if (mounted) {
                     if (_isMobile) HapticFeedback.mediumImpact();

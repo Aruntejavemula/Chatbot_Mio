@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -495,7 +496,7 @@ class _ChatBubbleState extends State<ChatBubble>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     try {
-      if (Platform.isIOS || Platform.isAndroid) {
+      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
         HapticFeedback.heavyImpact();
       }
     } catch (_) {}
