@@ -57,6 +57,9 @@ dependencies:
   url_launcher: ^6.3.0
   google_fonts: ^6.2.1
   json_annotation: ^4.9.0
+  record: ^5.1.2
+  permission_handler: ^11.3.1
+  just_audio: ^0.9.40
 
 dev_dependencies:
   flutter_test:

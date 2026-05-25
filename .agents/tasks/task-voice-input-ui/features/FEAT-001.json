@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create VoiceInputWidget for chat screen with full recording UI states (idle, recording with waveform animation, processing, error), integrated recording logic using the record package, and transcription via backend POST /voice/transcribe. Update chat_screen.dart to replace the mic GestureDetector with VoiceInputWidget. Add record, permission_handler, and just_audio to pubspec.yaml dependencies.",
+  "status": "in_progress",
+  "steps": [
+    "Add dependencies to frontend/pubspec.yaml under 'dependencies': record: ^5.1.2, permission_handler: ^11.3.1, just_audio: ^0.9.40",
+    "Create frontend/lib/data/services/voice_service.dart - a service class that uses ApiService (or Dio directly) to POST multipart form data to /voice/transcribe and return the transcript string. Follow the pattern in api_service.dart. Include proper error handling.",
+    "Create frontend/lib/presentation/widgets/chat/voice_input_widget.dart as ConsumerStatefulWidget with onTranscript and onCancel callbacks. Implement 4 states: idle (mic button Icons.mic_none 22px AppColors.textMuted), recording (Row with Cancel text button, 5-bar waveform animation using AnimationController cycling bar heights 4-24px in 300ms with AppColors.persian, stop circle button 36px red #EF4444 with Icons.stop white 18px, and timer text below counting up in 0:00 format DM Sans 12px AppColors.textMuted), processing (Row centered with SizedBox 16px CircularProgressIndicator stroke 2 AppColors.persian + 8px gap + 'Transcribing...' DM Sans 14px AppColors.textMuted), error (error message + retry button). Use permission_handler for mic permission request. Use record package (AudioRecorder) for recording to temp file. On stop: post to voice service and call onTranscript with result.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: import VoiceInputWidget, replace the GestureDetector wrapping Icons.mic_none (lines showing 'mic pressed' debugPrint) with VoiceInputWidget(onTranscript: (text) { setState(() { _inputController.text = text; _hasText = text.isNotEmpty; }); }, onCancel: () {}). Keep the conditional if (!_hasText) to only show VoiceInputWidget when input is empty."
+  ],
+  "acceptance_criteria": [
+    "frontend/pubspec.yaml contains record: ^5.1.2, permission_handler: ^11.3.1, just_audio: ^0.9.40 in dependencies",
+    "frontend/lib/data/services/voice_service.dart exists with a transcribe method that sends multipart POST to /voice/transcribe",
+    "frontend/lib/presentation/widgets/chat/voice_input_widget.dart exists as ConsumerStatefulWidget with idle/recording/processing/error states",
+    "VoiceInputWidget has waveform animation with 5 bars, timer, cancel and stop buttons in recording state",
+    "chat_screen.dart uses VoiceInputWidget instead of the debugPrint mic GestureDetector",
+    "No dynamic types, strict null safety, no commented-out code, no print statements"
+  ],
+  "verification": [
+    "Verify Dart files have no syntax errors by checking structure (no Flutter SDK available)",
+    "Verify pubspec.yaml is valid YAML with correct dependency entries"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

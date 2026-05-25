@@ -10,6 +10,7 @@ import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -705,13 +706,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const SizedBox(width: 8),
             // Mic button (only when no text)
             if (!_hasText) ...[
-              GestureDetector(
-                onTap: () => debugPrint('mic pressed'),
-                child: Icon(
-                  Icons.mic_none,
-                  size: 22,
-                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                ),
+              VoiceInputWidget(
+                onTranscript: (text) {
+                  setState(() {
+                    _inputController.text = text;
+                    _hasText = text.isNotEmpty;
+                  });
+                },
+                onCancel: () {},
               ),
               const SizedBox(width: 8),
             ],
