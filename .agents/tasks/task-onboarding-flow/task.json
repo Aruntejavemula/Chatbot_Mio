@@ -1,0 +1,7 @@
+{
+  "task_id": "task-onboarding-flow",
+  "task_description": "Add onboarding flow: update router.dart with /onboarding route, update splash_screen.dart with first-launch detection via flutter_secure_storage, and create a full 5-page onboarding screen",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

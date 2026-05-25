@@ -1,0 +1,16 @@
+{
+  "project_type": "Flutter mobile app (greenfield)",
+  "language": "Dart",
+  "build_system": "Flutter SDK + pub",
+  "test_framework": "flutter_test (default)",
+  "build_command": "flutter pub get",
+  "test_command": "flutter analyze",
+  "verification_instructions": "1. Run flutter pub get in frontend/ to verify dependencies resolve. 2. Run flutter analyze to check for issues. 3. Verify folder structure exists.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "1. Install Flutter SDK (latest stable) via git clone. 2. Add flutter/bin to PATH. 3. Run flutter create with specified org and name. 4. Update pubspec.yaml with dependencies.",
+  "environment_constraints": "Flutter SDK not pre-installed - must install from git. Java 25 available. Network mode is OPEN_INTERNET so all package installs are possible. Amazon Linux 2023 x86_64.",
+  "contribution_requirements": "Work on feature/project-setup branch. Do not merge to main. Commit all changes when done.",
+  "key_patterns": "Greenfield project - no existing patterns. Using Riverpod for state management, GoRouter for navigation, Dio for HTTP.",
+  "relevant_files": ["README.md"],
+  "directory_structure": "Currently only README.md at root. Will create frontend/ directory with full Flutter project."
+}

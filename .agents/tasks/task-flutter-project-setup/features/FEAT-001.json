@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Install Flutter SDK, create the Flutter project, install all dependencies, create the full folder structure with placeholder files, and commit everything on feature/project-setup branch.",
+  "status": "completed",
+  "steps": [
+    "Install Flutter SDK latest stable by cloning https://github.com/flutter/flutter.git -b stable into /opt/flutter and add /opt/flutter/bin to PATH",
+    "Run: flutter create --org com.mioapp --project-name mio frontend (from /projects/sandbox/Chatbot_Mio)",
+    "Replace the dependencies and dev_dependencies sections in frontend/pubspec.yaml with the exact versions specified (flutter_riverpod: ^2.5.1, riverpod_annotation: ^2.3.5, go_router: ^14.2.7, dio: ^5.4.3, flutter_secure_storage: ^9.2.2, supabase_flutter: ^2.5.9, google_sign_in: ^6.2.1, sign_in_with_apple: ^6.1.1, cached_network_image: ^3.3.1, flutter_svg: ^2.0.10+1, lottie: ^3.1.0, shimmer: ^3.0.0, intl: ^0.19.0, uuid: ^4.4.0, connectivity_plus: ^6.0.3, package_info_plus: ^8.0.0, device_info_plus: ^10.1.0, crypto: ^3.0.3, encrypt: ^5.0.3, razorpay_flutter: ^1.3.6, stripe_flutter: ^10.1.0, webview_flutter: ^4.8.0, flutter_markdown: ^0.7.3, code_highlight: ^0.4.0, url_launcher: ^6.3.0). Dev dependencies: riverpod_generator: ^2.4.0, build_runner: ^2.4.9, flutter_lints: ^4.0.0, json_serializable: ^6.8.0",
+    "Run flutter pub get in frontend/ to resolve dependencies",
+    "Create the full folder structure under frontend/lib/ with all specified directories and files. Each file should contain only a placeholder comment like: // TODO: Implement <filename>",
+    "The full structure is: core/constants/ (app_colors.dart, app_strings.dart, app_sizes.dart, loading_words.dart), core/theme/ (app_theme.dart, light_theme.dart, dark_theme.dart), core/utils/ (extensions.dart, helpers.dart), data/models/ (user_model.dart, chat_model.dart, message_model.dart, subscription_model.dart, api_key_model.dart, device_model.dart, token_usage_model.dart), data/services/ (api_service.dart, auth_service.dart, chat_service.dart, payment_service.dart, key_service.dart, device_service.dart), data/repositories/ (auth_repository.dart, chat_repository.dart, settings_repository.dart), presentation/screens/splash/ (splash_screen.dart), presentation/screens/auth/ (welcome_screen.dart, login_screen.dart), presentation/screens/chat/ (chat_screen.dart, chat_list_screen.dart), presentation/screens/settings/ (settings_screen.dart, api_keys_screen.dart, subscription_screen.dart, devices_screen.dart), presentation/widgets/chat/ (chat_bubble.dart, chat_input.dart, loading_indicator.dart, streaming_text.dart, typing_word.dart), presentation/widgets/sidebar/ (sidebar_widget.dart, chat_item.dart), presentation/widgets/common/ (primary_button.dart, ghost_mascot.dart, plan_badge.dart, token_progress_bar.dart)",
+    "Commit all changes on feature/project-setup branch with message 'feat: initialize Flutter project with dependencies and folder structure'. Do NOT push."
+  ],
+  "acceptance_criteria": [
+    "Flutter project exists at /projects/sandbox/Chatbot_Mio/frontend/ with org com.mioapp and project name mio",
+    "pubspec.yaml contains all specified dependencies with correct versions",
+    "flutter pub get completes successfully (dependencies resolve)",
+    "All specified directories and files exist under frontend/lib/ with placeholder comments",
+    "All changes are committed on feature/project-setup branch",
+    "main branch is untouched"
+  ],
+  "verification": [
+    "Run 'ls frontend/pubspec.yaml' to confirm project exists",
+    "Run 'flutter pub get' in frontend/ to confirm dependencies resolve",
+    "Run 'find frontend/lib -type f -name \"*.dart\" | wc -l' to confirm all placeholder files exist (should be ~50+ files)",
+    "Run 'git log --oneline -3' to confirm commit exists on feature/project-setup"
+  ],
+  "blocked_reason": null,
+  "findings": "Package substitutions made: 1) 'code_highlight: ^0.4.0' does not exist on pub.dev - replaced with 'highlight_text: ^1.6.1'. 2) 'stripe_flutter: ^10.1.0' does not exist on pub.dev - replaced with 'flutter_stripe: ^11.3.0'. 3) 'encrypt: ^5.0.3' resolved successfully (no change needed). Flutter SDK installed: 3.44.0 stable. Dart SDK: 3.12.0. flutter analyze passed with no issues. 46 .dart files total in frontend/lib/ (45 placeholder files + main.dart)."
+}

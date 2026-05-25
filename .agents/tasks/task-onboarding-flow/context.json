@@ -1,0 +1,25 @@
+{
+  "project_type": "Flutter mobile app with Riverpod state management and GoRouter navigation",
+  "language": "Dart",
+  "build_system": "Flutter SDK at /root/flutter/bin/flutter, pubspec.yaml for dependencies",
+  "test_framework": "flutter_test (dev dependency)",
+  "build_command": "/root/flutter/bin/flutter analyze",
+  "test_command": "/root/flutter/bin/flutter analyze",
+  "verification_instructions": "Run flutter analyze on the frontend directory to ensure no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd frontend && /root/flutter/bin/flutter pub get",
+  "environment_constraints": "OPEN_INTERNET - full network access available. Flutter SDK at /root/flutter/bin/flutter. Working on branch feature/project-setup-v2.",
+  "contribution_requirements": "All work on feature branches only. Never work on main branch. Never expose secrets in frontend. Frontend never calls Supabase directly.",
+  "key_patterns": "ConsumerStatefulWidget with TickerProviderStateMixin for animations. GoRouter for navigation with context.go(). AppColors for theming with isDark check (AppColors.darkX vs AppColors.X). Google Fonts (DM Serif Display for headings, DM Sans for body). AppSizes for spacing/radius constants. flutter_secure_storage already in pubspec.yaml.",
+  "relevant_files": [
+    "frontend/lib/core/utils/router.dart",
+    "frontend/lib/presentation/screens/splash/splash_screen.dart",
+    "frontend/lib/presentation/screens/auth/welcome_screen.dart",
+    "frontend/lib/presentation/screens/auth/onboarding_screen.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/core/constants/app_sizes.dart",
+    "frontend/lib/data/repositories/auth_repository.dart",
+    "frontend/pubspec.yaml"
+  ],
+  "directory_structure": "frontend/lib/core/constants/ - AppColors, AppSizes; frontend/lib/core/utils/ - router.dart; frontend/lib/presentation/screens/ - auth/, chat/, settings/, splash/; frontend/lib/data/repositories/ - auth_repository.dart"
+}
