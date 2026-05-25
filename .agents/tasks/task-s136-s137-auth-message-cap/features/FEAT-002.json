@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "S136 + S137 Frontend: Add email auth screens, update auth_service.dart with new methods, add message count widget, update router, welcome screen, chat screen, sidebar, and app_constants on feature/project-setup-resolved branch",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Ensure on feature/project-setup-resolved branch",
     "Update frontend/lib/data/services/auth_service.dart to add methods: signUpWithEmail(String name, String email, String password) -> Map, signInWithEmail(String email, String password) -> Map, forgotPassword(String email) -> void, resetPassword(String token, String newPassword) -> void, resendVerification(String email) -> void. Follow existing pattern of post() calls with DioException rethrow.",
@@ -48,5 +48,5 @@
     "Run: dart analyze frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All files created/modified successfully. dart analyze shows no errors (only pre-existing warnings/infos). Files created: email_signin_screen.dart, verify_email_screen.dart, forgot_password_screen.dart, reset_password_screen.dart, message_count_widget.dart. Files modified: auth_service.dart (5 new methods), auth_repository.dart (5 new methods), welcome_screen.dart (or divider + email button), router.dart (4 new routes + publicRoutes), app_constants.dart (freeMessageLimit/freeMessageWarning), sidebar_widget.dart (MessageCountWidget for free plan)."
 }
