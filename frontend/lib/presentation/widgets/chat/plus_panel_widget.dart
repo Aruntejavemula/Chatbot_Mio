@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../common/funny_snackbar.dart';
+import '../common/permission_dialog.dart';
 import 'file_upload_widget.dart';
 
 class PlusPanelWidget extends StatefulWidget {
@@ -412,6 +413,9 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickPhoto() async {
+    final allowed = await PermissionDialog.photos(context);
+    if (!allowed) return;
+
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
     );
@@ -467,6 +471,9 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickCamera() async {
+    final allowed = await PermissionDialog.camera(context);
+    if (!allowed) return;
+
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.camera,
     );
@@ -489,6 +496,9 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickScan() async {
+    final allowed = await PermissionDialog.camera(context);
+    if (!allowed) return;
+
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.camera,
     );

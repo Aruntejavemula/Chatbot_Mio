@@ -12,6 +12,7 @@ import 'package:record/record.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_service.dart';
 import '../../../data/services/voice_service.dart';
+import '../common/permission_dialog.dart';
 
 enum _VoiceInputState { idle, recording, processing, error }
 
@@ -85,6 +86,9 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
 
   Future<void> _startRecording() async {
     try {
+      final allowed = await PermissionDialog.microphone(context);
+      if (!allowed) return;
+
       final status = await Permission.microphone.request();
       if (!status.isGranted) {
         if (mounted) {
