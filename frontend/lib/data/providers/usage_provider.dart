@@ -23,12 +23,13 @@ class UsageState {
     int? dailyLimit,
     bool? isLoading,
     String? error,
+    bool clearError = false,
   }) {
     return UsageState(
       dailyUsed: dailyUsed ?? this.dailyUsed,
       dailyLimit: dailyLimit ?? this.dailyLimit,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }

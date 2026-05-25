@@ -885,27 +885,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () => setState(() => _isAnnualOnboarding = !_isAnnualOnboarding),
-          child: Container(
-            width: 56,
-            height: 28,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
-              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: AnimatedAlign(
-              alignment: _isAnnualOnboarding
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              duration: const Duration(milliseconds: 150),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  color: AppColors.persian,
-                  shape: BoxShape.circle,
+        Semantics(
+          toggled: _isAnnualOnboarding,
+          label: 'Billing period toggle',
+          child: GestureDetector(
+            onTap: () => setState(() => _isAnnualOnboarding = !_isAnnualOnboarding),
+            child: Container(
+              width: 56,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: AnimatedAlign(
+                alignment: _isAnnualOnboarding
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                duration: const Duration(milliseconds: 150),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: AppColors.persian,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
