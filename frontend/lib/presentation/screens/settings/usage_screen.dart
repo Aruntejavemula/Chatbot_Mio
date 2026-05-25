@@ -164,6 +164,13 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
             resetLabel: 'tomorrow',
             isDark: isDark,
           ),
+          const SizedBox(height: 12),
+          _buildMilestoneCard(
+            isDark: isDark,
+            dailyUsed: dailyUsed,
+            dailyLimit: dailyLimit,
+          ),
+          const SizedBox(height: 12),
           _buildCapCard(
             name: 'This Week',
             used: weeklyUsed,
@@ -429,6 +436,54 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildMilestoneCard({
+    required bool isDark,
+    required int dailyUsed,
+    required int dailyLimit,
+  }) {
+    final double ratio =
+        dailyLimit > 0 ? (dailyUsed / dailyLimit).clamp(0.0, 1.0) : 0.0;
+    final String milestone = _getMilestoneMessage(ratio);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.bolt,
+            size: 16,
+            color: AppColors.persian,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            milestone,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getMilestoneMessage(double ratio) {
+    if (ratio >= 0.75) {
+      return 'Almost at limit';
+    } else if (ratio >= 0.50) {
+      return 'Heavy usage';
+    } else if (ratio >= 0.25) {
+      return 'Making progress';
+    }
+    return 'Getting started';
   }
 
   Color _getProgressColor(double ratio) {

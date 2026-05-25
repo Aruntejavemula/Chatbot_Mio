@@ -13,6 +13,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../screens/projects/create_project_sheet.dart';
+import '../chat/usage_indicator_widget.dart';
 import 'chat_item.dart';
 
 final projectsProvider = StateProvider<List<ProjectModel>>((ref) => []);
@@ -634,10 +635,18 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
   }) {
     final userName = currentUser?.name;
     final hasName = userName != null && userName.isNotEmpty;
+    final bool isProPlan = true;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (isProPlan) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: const UsageIndicatorWidget(),
+          ),
+          const SizedBox(height: 12),
+        ],
         Divider(
           height: 1,
           thickness: 1,
