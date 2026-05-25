@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
     RAZORPAY_BASIC_PLAN_ID: str = ""
     RAZORPAY_PRO_PLAN_ID: str = ""
+    RAZORPAY_BASIC_ANNUAL_PLAN_ID: str = ""
+    RAZORPAY_PRO_ANNUAL_PLAN_ID: str = ""
 
     # Redis
     UPSTASH_REDIS_URL: str = ""

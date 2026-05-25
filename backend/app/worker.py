@@ -3,6 +3,7 @@
 import logging
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.config import get_settings
 
@@ -24,4 +25,10 @@ celery_app.conf.update(
     task_ack_late=True,
     worker_prefetch_multiplier=1,
     result_expires=3600,
+    beat_schedule={
+        "trial-reminders": {
+            "task": "app.tasks.trial_reminders.send_trial_reminders",
+            "schedule": crontab(hour=9, minute=0),
+        },
+    },
 )

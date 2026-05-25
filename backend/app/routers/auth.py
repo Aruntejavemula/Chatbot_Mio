@@ -498,6 +498,70 @@ async def get_profile(current_user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@router.get("/trial-status")
+async def get_trial_status(current_user: dict = Depends(get_current_user)) -> dict:
+    """
+    Get current user's trial status.
+
+    Returns trial state including whether user is on trial,
+    trial end date, days remaining, and expiration flag.
+
+    Requires authentication.
+    """
+    try:
+        user_id = current_user["id"]
+        supabase = get_supabase_client()
+
+        # Get subscription for user
+        sub_result = (
+            supabase.table("subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+
+        if not sub_result.data:
+            return {
+                "is_trial": False,
+                "trial_end_at": None,
+                "days_remaining": 0,
+                "trial_expired": False,
+            }
+
+        subscription = sub_result.data[0]
+        is_trial = subscription.get("plan") == "trial"
+        trial_end_at = subscription.get("trial_end_at")
+        days_remaining = 0
+        trial_expired = False
+
+        if is_trial and trial_end_at:
+            from datetime import datetime, timezone
+
+            try:
+                end_date = datetime.fromisoformat(
+                    trial_end_at.replace("Z", "+00:00")
+                )
+                now = datetime.now(timezone.utc)
+                delta = (end_date - now).days
+                days_remaining = max(0, delta)
+                trial_expired = delta < 0
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error parsing trial_end_at: {str(e)}")
+
+        return {
+            "is_trial": is_trial,
+            "trial_end_at": trial_end_at,
+            "days_remaining": days_remaining,
+            "trial_expired": trial_expired,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get trial status error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @router.post("/signout")
 async def sign_out(current_user: dict = Depends(get_current_user)) -> dict:
     """
