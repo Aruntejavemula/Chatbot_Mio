@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create the backend voice transcription endpoint. Build the FastAPI backend structure from scratch (app/ directory with routers, config, main.py) and implement POST /voice/transcribe that accepts multipart audio, validates it, and sends to OpenAI Whisper API for transcription. Register the voice router in main.py. Create .env.example and requirements.txt. Add config.py with OPENAI_WHISPER_KEY. Follow RULES.md strictly: auth middleware, rate limiting (30/min), type hints on every function, logging (no print), error handling, Pydantic validation.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create app/__init__.py (empty)",
     "Create app/config.py with pydantic-settings BaseSettings class loading from .env: OPENAI_WHISPER_KEY (str, default empty), plus any other base config (APP_NAME, DEBUG, etc). Use proper type hints.",
@@ -40,5 +40,5 @@
     "Run: python -m py_compile app/middleware/rate_limit.py"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All py_compile checks pass. App imports correctly and route /voice/transcribe is registered. Dependencies (fastapi, pydantic-settings, httpx, python-multipart) already available in the environment."
 }
