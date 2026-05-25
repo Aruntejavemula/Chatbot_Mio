@@ -17,8 +17,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
-    with TickerProviderStateMixin {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   static const int _totalPages = 8;
 
   final PageController _pageController = PageController();
@@ -48,6 +47,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (_currentPage == 4) {
       _savePreferences();
     }
+    if (_currentPage == 5 && _apiKeyController.text.isNotEmpty) {
+      _saveApiKey();
+    }
     if (_currentPage < _totalPages - 1) {
       _goToPage(_currentPage + 1);
     } else {
@@ -64,6 +66,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     await prefs.setString(
       'user_preferences',
       _selectedPreferences.join(','),
+    );
+  }
+
+  Future<void> _saveApiKey() async {
+    const storage = FlutterSecureStorage();
+    await storage.write(
+      key: 'pending_api_key',
+      value: _apiKeyController.text,
     );
   }
 
@@ -101,9 +111,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (index) {
-                      setState(() => _currentPage = index);
-                    },
                     children: [
                       _buildPageHook(isDark),
                       _buildPageProblem(isDark),
@@ -418,20 +425,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Widget _buildPageBYOK(bool isDark) {
-    final providers = <Map<String, dynamic>>[
-      {'label': 'O', 'name': 'OpenAI', 'color': const Color(0xFF10A37F)},
-      {'label': 'A', 'name': 'Anthropic', 'color': const Color(0xFFD97757)},
-      {'label': 'D', 'name': 'DeepSeek', 'color': const Color(0xFF4D6BFE)},
-      {'label': 'G', 'name': 'Gemini', 'color': const Color(0xFF4285F4)},
-      {'label': 'G', 'name': 'Groq', 'color': const Color(0xFFF97316)},
-      {'label': 'M', 'name': 'Mistral', 'color': const Color(0xFF6366F1)},
-      {'label': 'R', 'name': 'OpenRouter', 'color': const Color(0xFF8B5CF6)},
-      {'label': 'O', 'name': 'Ollama', 'color': const Color(0xFF0EA5E9)},
-      {
-        'label': '+',
-        'name': 'More',
-        'color': isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
-      },
+    final providers = <_ProviderInfo>[
+      _ProviderInfo(label: 'O', name: 'OpenAI', color: const Color(0xFF10A37F)),
+      _ProviderInfo(label: 'A', name: 'Anthropic', color: const Color(0xFFD97757)),
+      _ProviderInfo(label: 'D', name: 'DeepSeek', color: const Color(0xFF4D6BFE)),
+      _ProviderInfo(label: 'G', name: 'Gemini', color: const Color(0xFF4285F4)),
+      _ProviderInfo(label: 'G', name: 'Groq', color: const Color(0xFFF97316)),
+      _ProviderInfo(label: 'M', name: 'Mistral', color: const Color(0xFF6366F1)),
+      _ProviderInfo(label: 'R', name: 'OpenRouter', color: const Color(0xFF8B5CF6)),
+      _ProviderInfo(label: 'O', name: 'Ollama', color: const Color(0xFF0EA5E9)),
+      _ProviderInfo(
+        label: '+',
+        name: 'More',
+        color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+      ),
     ];
 
     return SingleChildScrollView(
@@ -463,7 +470,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             itemCount: providers.length,
             itemBuilder: (context, index) {
               final provider = providers[index];
-              final isMore = provider['label'] == '+';
+              final isMore = provider.label == '+';
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -471,12 +478,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: provider['color'] as Color,
+                      color: provider.color,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        provider['label'] as String,
+                        provider.label,
                         style: GoogleFonts.dmSans(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -491,7 +498,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    provider['name'] as String,
+                    provider.name,
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
                       color: isDark
@@ -959,4 +966,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       ),
     );
   }
+}
+
+class _ProviderInfo {
+  final String label;
+  final String name;
+  final Color color;
+
+  const _ProviderInfo({
+    required this.label,
+    required this.name,
+    required this.color,
+  });
 }

@@ -23,6 +23,8 @@ class FunnyWarnings {
       'No internet? Mio is not magic... yet.';
   static const String modelNotSelected =
       'Pick a model first. Mio is not a mind reader.';
+  static const String signInRequired =
+      'Hold up. Sign in first, then we talk.';
   static const String upgradeRequired =
       'That is a pro move. Literally. Upgrade to unlock.';
 }

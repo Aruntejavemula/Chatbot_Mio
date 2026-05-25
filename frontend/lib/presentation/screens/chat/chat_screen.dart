@@ -148,7 +148,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       if (_isMobile) HapticFeedback.mediumImpact();
-      FunnySnackbar.show(context, 'Please sign in to chat', type: SnackbarType.warning);
+      FunnySnackbar.show(context, FunnyWarnings.signInRequired, type: SnackbarType.warning);
       return;
     }
     if (_selectedModel == 'Think now') {

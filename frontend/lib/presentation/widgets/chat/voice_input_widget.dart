@@ -86,8 +86,11 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
 
   Future<void> _startRecording() async {
     try {
-      final allowed = await PermissionDialog.microphone(context);
-      if (!allowed) return;
+      final currentStatus = await Permission.microphone.status;
+      if (!currentStatus.isGranted) {
+        final allowed = await PermissionDialog.microphone(context);
+        if (!allowed) return;
+      }
 
       final status = await Permission.microphone.request();
       if (!status.isGranted) {

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/funny_warnings.dart';
@@ -187,7 +188,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.persian.withOpacity(0.15)
+              ? AppColors.persian.withValues(alpha: 0.15)
               : (isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary),
           border: Border.all(
             color: isActive
@@ -395,7 +396,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Center(
@@ -413,8 +414,11 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickPhoto() async {
-    final allowed = await PermissionDialog.photos(context);
-    if (!allowed) return;
+    final currentStatus = await Permission.photos.status;
+    if (!currentStatus.isGranted) {
+      final allowed = await PermissionDialog.photos(context);
+      if (!allowed) return;
+    }
 
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -471,8 +475,11 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickCamera() async {
-    final allowed = await PermissionDialog.camera(context);
-    if (!allowed) return;
+    final currentStatus = await Permission.camera.status;
+    if (!currentStatus.isGranted) {
+      final allowed = await PermissionDialog.camera(context);
+      if (!allowed) return;
+    }
 
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.camera,
@@ -496,8 +503,11 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   Future<void> _pickScan() async {
-    final allowed = await PermissionDialog.camera(context);
-    if (!allowed) return;
+    final currentStatus = await Permission.camera.status;
+    if (!currentStatus.isGranted) {
+      final allowed = await PermissionDialog.camera(context);
+      if (!allowed) return;
+    }
 
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.camera,
