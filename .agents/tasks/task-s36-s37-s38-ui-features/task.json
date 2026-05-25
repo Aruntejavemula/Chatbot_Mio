@@ -1,0 +1,7 @@
+{
+  "task_id": "task-s36-s37-s38-ui-features",
+  "task_description": "Implement S36 (File Upload UI), S37 (Artifact Viewer), and S38 (Prompt Maker UI) on branch feature/project-setup-resolved. S35 is already complete. All frontend changes on feature/project-setup-resolved branch.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

@@ -10,6 +10,7 @@ import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
 
@@ -33,6 +34,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   late TextEditingController _inputController;
   late FocusNode _focusNode;
   late ScrollController _scrollController;
+  List<SelectedFileInfo> _selectedFiles = [];
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -75,7 +77,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
     _inputController.clear();
-    setState(() => _hasText = false);
+    setState(() {
+      _hasText = false;
+      _selectedFiles = [];
+    });
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -153,6 +158,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 // Input bar
+                if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
                 _buildInputBar(isDark),
               ],
             ),
@@ -635,6 +641,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  Widget _buildFilePreviewBar(bool isDark) {
+    return Container(
+      color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _selectedFiles.asMap().entries.map((entry) {
+          final index = entry.key;
+          final fileInfo = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: FileUploadWidget.buildFilePreview(
+              fileInfo: fileInfo,
+              isDark: isDark,
+              onRemove: () {
+                setState(() {
+                  _selectedFiles.removeAt(index);
+                });
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildInputBar(bool isDark) {
     return Container(
       decoration: BoxDecoration(
@@ -669,13 +701,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Plus button
-            GestureDetector(
-              onTap: () => debugPrint('attach pressed'),
-              child: Icon(
-                Icons.add,
-                size: 22,
-                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-              ),
+            FileUploadWidget(
+              onFilesSelected: (List<SelectedFileInfo> files) {
+                setState(() {
+                  _selectedFiles.addAll(files);
+                });
+              },
+              onFileRemoved: (int index) {
+                setState(() {
+                  _selectedFiles.removeAt(index);
+                });
+              },
             ),
             const SizedBox(width: 8),
             // Text field

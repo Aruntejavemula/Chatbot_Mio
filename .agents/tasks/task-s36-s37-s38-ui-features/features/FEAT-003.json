@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "S38: Prompt Maker UI - Create PromptMakerWidget (sparkle button between + and text input), add makePrompt method to chat_service.dart, integrate into chat_screen.dart. On tap with text: POST /chat/make-prompt and replace input. On tap without text: show tooltip.",
+  "status": "pending",
+  "steps": [
+    "Create frontend/lib/presentation/widgets/chat/prompt_maker_widget.dart with: (a) PromptMakerWidget StatefulWidget with props: currentText (String), onPromptImproved (Function(String)), selectedProvider (String), selectedModel (String), (b) Sparkle button: Icons.auto_awesome 20px, textMuted when no text, persian when input has text, animated subtle pulse when active (AnimationController), padding 4px, (c) On tap with text: show loading indicator on button, call ChatService().makePrompt(), on success call onPromptImproved callback, show toast 'Prompt improved', on error show snackbar, (d) On tap without text: show tooltip 'Type something first'",
+    "Add makePrompt method to frontend/lib/data/services/chat_service.dart: Future<String> makePrompt({required String roughText, required String provider, required String model}) that POSTs to /chat/make-prompt with body {rough_text, provider, model} and returns the improved_prompt string from response",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: (a) Import PromptMakerWidget, (b) In _buildInputBar, add PromptMakerWidget between the + button (now FileUploadWidget) and the TextField, with SizedBox(width: 8) spacing, (c) Pass _inputController.text, _selectedProvider, _selectedModel to it, (d) Handle onPromptImproved callback by updating _inputController.text and setState _hasText"
+  ],
+  "acceptance_criteria": [
+    "prompt_maker_widget.dart exists with sparkle button using Icons.auto_awesome",
+    "Button changes color from textMuted to persian based on whether input has text",
+    "Tapping with text calls makePrompt service and replaces input on success",
+    "Tapping without text shows tooltip",
+    "chat_service.dart has makePrompt method with proper DioException handling",
+    "chat_screen.dart has PromptMakerWidget positioned between + button and TextField",
+    "No dynamic types, strict null safety, proper error handling",
+    "No commented-out code"
+  ],
+  "verification": [
+    "Review prompt_maker_widget.dart for correct structure and styling",
+    "Review chat_service.dart makePrompt method for proper API call pattern",
+    "Review chat_screen.dart for correct widget ordering in input bar",
+    "Run python3 -m py_compile on any backend Python files if modified"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

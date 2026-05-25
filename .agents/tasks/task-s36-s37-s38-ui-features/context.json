@@ -1,0 +1,29 @@
+{
+  "project_type": "Flutter mobile app with FastAPI Python backend",
+  "language": "Dart (frontend), Python (backend)",
+  "build_system": "Flutter pub for frontend, pip/Python for backend. Flutter/Dart not available in sandbox.",
+  "test_framework": "No tests infrastructure set up yet per RULES.md (tests written after features are stable)",
+  "build_command": "flutter analyze (not available in sandbox - use AST validation for Python, code review for Dart)",
+  "test_command": "python3 -m py_compile for Python files. No flutter test available.",
+  "verification_instructions": "1. Run python3 -m py_compile on any new/modified Python files. 2. Review Dart files for strict null safety, no dynamic types, proper imports. 3. Ensure no commented-out code, no print statements in Python.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "Python 3.9 available. Flutter/Dart NOT available in sandbox. pip packages not installed (no network for pip install).",
+  "environment_constraints": "INTEGRATIONS_ONLY network mode. Flutter/Dart SDK not installed. Cannot run flutter pub get, flutter analyze, or flutter test. Python 3.9 available but pip packages (fastapi, pydantic) not installed. Use python3 -m py_compile for syntax validation only. Dart code verified by manual review and AST-like checks.",
+  "contribution_requirements": "Never work on main branch. Strict null safety. No dynamic types. Separate UI from business logic. Services handle API calls. DM Sans body, DM Serif Display headings. Persian Orange #CC5801 used sparingly. No print statements in Python (use logging). Type hints on every Python function. Error handling on every function.",
+  "key_patterns": "Services extend ApiService (for dio instance with auth interceptor). Widgets use ConsumerStatefulWidget with Riverpod. AppColors for all colors (light + dark mode support via isDark bool). GoogleFonts.dmSans for body, GoogleFonts.dmSerifDisplay for headings. Chat screen has _buildInputBar with plus button, voice widget, and send button in a row.",
+  "relevant_files": [
+    "frontend/pubspec.yaml",
+    "frontend/lib/presentation/screens/chat/chat_screen.dart",
+    "frontend/lib/presentation/widgets/chat/chat_bubble.dart",
+    "frontend/lib/presentation/widgets/chat/voice_input_widget.dart",
+    "frontend/lib/data/services/chat_service.dart",
+    "frontend/lib/data/services/api_service.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/core/constants/app_sizes.dart",
+    "frontend/lib/data/models/message_model.dart",
+    "app/main.py",
+    "app/config.py",
+    "app/routers/voice.py"
+  ],
+  "directory_structure": "frontend/lib/core/constants/ - AppColors, AppSizes, AppStrings. frontend/lib/data/services/ - API, auth, chat, voice services. frontend/lib/data/models/ - MessageModel, ChatModel. frontend/lib/presentation/screens/chat/ - chat_screen.dart. frontend/lib/presentation/widgets/chat/ - chat_bubble, voice_input, etc. app/ - FastAPI backend with routers/, middleware/, config.py, main.py."
+}
