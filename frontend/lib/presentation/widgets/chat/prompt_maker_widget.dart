@@ -10,6 +10,7 @@ class PromptMakerWidget extends StatefulWidget {
   final void Function(String improvedPrompt) onPromptImproved;
   final String selectedProvider;
   final String selectedModel;
+  final ChatService chatService;
 
   const PromptMakerWidget({
     super.key,
@@ -18,6 +19,7 @@ class PromptMakerWidget extends StatefulWidget {
     required this.onPromptImproved,
     required this.selectedProvider,
     required this.selectedModel,
+    required this.chatService,
   });
 
   @override
@@ -63,6 +65,8 @@ class _PromptMakerWidgetState extends State<PromptMakerWidget>
   }
 
   Future<void> _onTap() async {
+    if (_isLoading) return;
+
     final currentText = widget.inputController.text.trim();
 
     if (currentText.isEmpty) {
@@ -75,7 +79,7 @@ class _PromptMakerWidgetState extends State<PromptMakerWidget>
     setState(() => _isLoading = true);
 
     try {
-      final improvedPrompt = await ChatService().makePrompt(
+      final improvedPrompt = await widget.chatService.makePrompt(
         roughText: currentText,
         provider: widget.selectedProvider,
         model: widget.selectedModel,

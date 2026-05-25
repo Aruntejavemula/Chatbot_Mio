@@ -10,6 +10,7 @@ import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/voice_input_widget.dart';
@@ -35,6 +36,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   late TextEditingController _inputController;
   late FocusNode _focusNode;
   late ScrollController _scrollController;
+  final ChatService _chatService = ChatService();
   List<SelectedFileInfo> _selectedFiles = [];
 
   final List<Map<String, dynamic>> _availableModels = [
@@ -708,11 +710,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _selectedFiles.addAll(files);
                 });
               },
-              onFileRemoved: (int index) {
-                setState(() {
-                  _selectedFiles.removeAt(index);
-                });
-              },
             ),
             const SizedBox(width: 8),
             // Prompt maker button
@@ -727,6 +724,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
               selectedProvider: _selectedProvider,
               selectedModel: _selectedModel,
+              chatService: _chatService,
             ),
             const SizedBox(width: 8),
             // Text field

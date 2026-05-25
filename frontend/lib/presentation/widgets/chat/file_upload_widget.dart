@@ -38,13 +38,11 @@ class SelectedFileInfo {
 
 class FileUploadWidget extends StatefulWidget {
   final Function(List<SelectedFileInfo>) onFilesSelected;
-  final Function(int index) onFileRemoved;
   final bool isPremium;
 
   const FileUploadWidget({
     super.key,
     required this.onFilesSelected,
-    required this.onFileRemoved,
     this.isPremium = true,
   });
 
@@ -53,6 +51,7 @@ class FileUploadWidget extends StatefulWidget {
 }
 
 class _FileUploadWidgetState extends State<FileUploadWidget> {
+  static const int maxFileSizeBytes = 10 * 1024 * 1024;
   final ImagePicker _imagePicker = ImagePicker();
 
   void _showFileUploadSheet(BuildContext context) {
@@ -203,6 +202,13 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
+      if (size > maxFileSizeBytes) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
+        );
+        return;
+      }
       final selected = SelectedFileInfo(
         name: image.name,
         path: image.path,
@@ -221,6 +227,13 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
+      if (size > maxFileSizeBytes) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
+        );
+        return;
+      }
       final selected = SelectedFileInfo(
         name: image.name,
         path: image.path,
@@ -253,6 +266,13 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
       final pickedFile = result.files.first;
       final filePath = pickedFile.path;
       if (filePath != null) {
+        if (pickedFile.size > maxFileSizeBytes) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File too large. Maximum size is 10MB')),
+          );
+          return;
+        }
         final codeExtensions = ['py', 'js', 'ts', 'dart', 'json', 'yaml'];
         final extension = pickedFile.extension ?? '';
         final fileType = codeExtensions.contains(extension)
@@ -277,6 +297,13 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
     if (image != null) {
       final file = File(image.path);
       final size = await file.length();
+      if (size > maxFileSizeBytes) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
+        );
+        return;
+      }
       final selected = SelectedFileInfo(
         name: image.name,
         path: image.path,
