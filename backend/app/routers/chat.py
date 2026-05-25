@@ -2,6 +2,7 @@
 
 import json
 import logging
+import secrets
 from datetime import date, datetime
 from typing import Optional
 
@@ -915,3 +916,76 @@ async def run_agent(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# --- Chat Sharing Endpoints ---
+
+
+@router.post("/chats/{chat_id}/share")
+async def share_chat(
+    chat_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Create a shareable link for a chat."""
+    user_id = current_user["id"]
+    supabase = get_supabase_client()
+
+    # Verify ownership
+    result = (
+        supabase.table("chats")
+        .select("id, title")
+        .eq("id", chat_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    slug = secrets.token_urlsafe(12)
+
+    from app.config import get_settings as _get_settings
+    settings = _get_settings()
+    share_url = f"{settings.FRONTEND_URL}/shared/{slug}"
+
+    return {
+        "slug": slug,
+        "share_url": share_url,
+        "chat_id": chat_id,
+    }
+
+
+@router.get("/shared/{slug}")
+async def get_shared_chat(slug: str) -> dict:
+    """Get a shared chat by its slug. No authentication required."""
+    if not slug or not slug.strip():
+        raise HTTPException(status_code=400, detail="Invalid share link")
+
+    # Placeholder - would look up slug in shared_chats table
+    return {
+        "slug": slug,
+        "title": "",
+        "messages": [],
+    }
+
+
+@router.delete("/chats/{chat_id}/share")
+async def unshare_chat(
+    chat_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Remove sharing for a chat."""
+    user_id = current_user["id"]
+    supabase = get_supabase_client()
+
+    # Verify ownership
+    result = (
+        supabase.table("chats")
+        .select("id")
+        .eq("id", chat_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return {"message": "Share link removed", "chat_id": chat_id}

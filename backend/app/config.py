@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:8080"
     ENVIRONMENT: str = "development"
 
+    # Admin
+    ADMIN_EMAIL: str = ""
+    FRONTEND_URL: str = "https://mio.app"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

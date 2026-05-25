@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import (
+    admin,
+    analytics,
     auth,
     chat,
     connectors,
@@ -12,6 +14,7 @@ from app.routers import (
     files,
     keys,
     memory,
+    referrals,
     tokens,
     devices,
     scheduled,
@@ -55,6 +58,9 @@ app.include_router(connectors.router, prefix="/connectors", tags=["Connectors"])
 app.include_router(memory.router, prefix="/memory", tags=["Memory"])
 app.include_router(voice.router, prefix="/voice", tags=["Voice"])
 app.include_router(scheduled.router, prefix="/scheduled", tags=["Scheduled Tasks"])
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(referrals.router, prefix="/referrals", tags=["Referrals"])
 
 
 @app.get("/health")
