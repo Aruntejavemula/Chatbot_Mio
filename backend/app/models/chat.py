@@ -1,40 +1,63 @@
-"""Chat models - Pydantic schemas for chat and message data."""
+"""Chat and message models for request/response validation."""
 
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class ChatCreate(BaseModel):
-    """Schema for creating a new chat session."""
+    """Model for creating a new chat."""
 
-    title: Optional[str] = None
-    model: str = "gpt-4"
+    model: str = Field(..., description="AI model name")
+    provider: str = Field(..., description="AI provider name")
 
 
 class ChatResponse(BaseModel):
-    """Schema for chat session response data."""
+    """Model for chat API responses."""
 
-    id: str
-    title: str
-    model: str
-    created_at: str
-    updated_at: str
+    id: str = Field(..., description="Unique chat ID")
+    user_id: str = Field(..., description="Owner user ID")
+    title: str = Field(default="New Chat", description="Chat title")
+    model: str = Field(..., description="AI model used")
+    provider: str = Field(..., description="AI provider used")
+    message_count: int = Field(default=0, description="Number of messages")
+    last_preview: str = Field(default="", description="Preview of last message")
+    storage_type: str = Field(default="local", description="Storage tier: local/drive/cloud")
+    created_at: datetime = Field(..., description="Chat creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+
+    class Config:
+        from_attributes = True
+
+
+class ChatUpdate(BaseModel):
+    """Model for updating a chat."""
+
+    title: Optional[str] = Field(None, description="Updated chat title")
 
 
 class MessageCreate(BaseModel):
-    """Schema for creating a new message."""
+    """Model for creating a new message."""
 
-    content: str
-    role: str = "user"
-    model: str = "gpt-4"
+    chat_id: str = Field(..., description="Parent chat ID")
+    content: str = Field(..., description="Message content")
+    model: str = Field(..., description="AI model to use")
+    provider: str = Field(..., description="AI provider to use")
+    use_our_tokens: bool = Field(default=False, description="Use platform tokens")
 
 
 class MessageResponse(BaseModel):
-    """Schema for message response data."""
+    """Model for message API responses."""
 
-    id: str
-    chat_id: str
-    content: str
-    role: str
-    tokens: int = 0
-    created_at: str
+    id: str = Field(..., description="Unique message ID")
+    chat_id: str = Field(..., description="Parent chat ID")
+    role: str = Field(..., description="Message role: user/assistant/system")
+    content: str = Field(..., description="Message content")
+    tokens_input: Optional[int] = Field(None, description="Input tokens used")
+    tokens_output: Optional[int] = Field(None, description="Output tokens used")
+    model: Optional[str] = Field(None, description="Model that generated response")
+    created_at: datetime = Field(..., description="Message creation timestamp")
+
+    class Config:
+        from_attributes = True

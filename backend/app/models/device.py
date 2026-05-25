@@ -1,24 +1,28 @@
-"""Device models - Pydantic schemas for device registration data."""
+"""Device models for request/response validation."""
 
-from pydantic import BaseModel
-from typing import Optional
+from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
-class DeviceRegister(BaseModel):
-    """Schema for registering a new device."""
+class DeviceCreate(BaseModel):
+    """Model for registering a new device."""
 
-    device_id: str
-    device_name: str
-    platform: str
-    push_token: Optional[str] = None
+    device_id: str = Field(..., description="Unique device identifier hash")
+    device_name: str = Field(..., description="Human-readable device name")
+    device_type: str = Field(..., description="Device type: ios/android/web/desktop")
 
 
 class DeviceResponse(BaseModel):
-    """Schema for device response data."""
+    """Model for device API responses."""
 
-    id: str
-    device_id: str
-    device_name: str
-    platform: str
-    last_active: str
-    created_at: str
+    id: str = Field(..., description="Unique record ID")
+    user_id: str = Field(..., description="Owner user ID")
+    device_id: str = Field(..., description="Unique device identifier hash")
+    device_name: str = Field(..., description="Human-readable device name")
+    device_type: str = Field(..., description="Device type: ios/android/web/desktop")
+    last_seen: datetime = Field(..., description="Last activity timestamp")
+    created_at: datetime = Field(..., description="Registration timestamp")
+
+    class Config:
+        from_attributes = True

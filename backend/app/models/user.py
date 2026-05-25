@@ -1,37 +1,34 @@
-"""User models - Pydantic schemas for user-related data."""
+"""User models for request/response validation."""
 
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class UserCreate(BaseModel):
-    """Schema for creating a new user."""
+    """Model for creating a new user."""
 
-    email: str
-    name: str
-    avatar_url: Optional[str] = None
-    provider: str
+    email: str = Field(..., description="User email address")
+    name: str = Field(..., description="User display name")
+    avatar_url: Optional[str] = Field(None, description="URL to user avatar image")
 
 
 class UserResponse(BaseModel):
-    """Schema for user response data."""
+    """Model for user API responses."""
 
-    id: str
-    email: str
-    name: str
-    avatar_url: Optional[str] = None
-    plan: str = "free"
-    created_at: str
+    id: str = Field(..., description="Unique user ID")
+    email: str = Field(..., description="User email address")
+    name: str = Field(..., description="User display name")
+    avatar_url: Optional[str] = Field(None, description="URL to user avatar image")
+    created_at: datetime = Field(..., description="Account creation timestamp")
+
+    class Config:
+        from_attributes = True
 
 
-class UserProfile(BaseModel):
-    """Schema for user profile data."""
+class UserUpdate(BaseModel):
+    """Model for updating user profile."""
 
-    id: str
-    email: str
-    name: str
-    avatar_url: Optional[str] = None
-    plan: str = "free"
-    tokens_used: int = 0
-    tokens_limit: int = 0
-    device_count: int = 0
+    name: Optional[str] = Field(None, description="Updated display name")
+    avatar_url: Optional[str] = Field(None, description="Updated avatar URL")
