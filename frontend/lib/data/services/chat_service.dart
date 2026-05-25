@@ -8,6 +8,15 @@ import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import 'api_service.dart';
 
+enum ChatStreamEventType { thinking, text, done }
+
+class ChatStreamEvent {
+  final ChatStreamEventType type;
+  final String content;
+
+  const ChatStreamEvent({required this.type, this.content = ''});
+}
+
 class ChatService extends ApiService {
   Map<String, Object?>? lastCapWarning;
 
@@ -54,7 +63,7 @@ class ChatService extends ApiService {
     }
   }
 
-  Stream<String> streamMessage({
+  Stream<ChatStreamEvent> streamMessage({
     required String chatId,
     required String content,
     required String model,
@@ -112,12 +121,33 @@ class ChatService extends ApiService {
                 continue;
               }
 
+              if (json.containsKey('type')) {
+                final eventType = json['type'] as String;
+                if (eventType == 'thinking') {
+                  yield ChatStreamEvent(
+                    type: ChatStreamEventType.thinking,
+                    content: json['content'] as String? ?? '',
+                  );
+                  continue;
+                } else if (eventType == 'text') {
+                  yield ChatStreamEvent(
+                    type: ChatStreamEventType.text,
+                    content: json['content'] as String? ?? '',
+                  );
+                  continue;
+                } else if (eventType == 'done') {
+                  return;
+                }
+              }
+
               if (json.containsKey('content')) {
-                yield json['content'] as String;
+                yield ChatStreamEvent(
+                  type: ChatStreamEventType.text,
+                  content: json['content'] as String,
+                );
               }
             } catch (e) {
               if (e is DioException) rethrow;
-              // Skip malformed JSON chunks
             }
           }
         }

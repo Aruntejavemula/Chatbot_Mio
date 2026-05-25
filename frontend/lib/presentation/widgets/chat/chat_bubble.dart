@@ -14,12 +14,15 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/animations.dart';
 import '../../../data/models/message_model.dart';
 import 'artifact_viewer.dart';
+import 'thinking_block_widget.dart';
 
 class ChatBubble extends StatefulWidget {
   final MessageModel message;
   final bool isLast;
   final VoidCallback? onRegenerate;
   final Function(String)? onEditResend;
+  final String? thinkingContent;
+  final bool isThinkingStreaming;
 
   const ChatBubble({
     super.key,
@@ -27,6 +30,8 @@ class ChatBubble extends StatefulWidget {
     this.isLast = false,
     this.onRegenerate,
     this.onEditResend,
+    this.thinkingContent,
+    this.isThinkingStreaming = false,
   });
 
   @override
@@ -209,6 +214,12 @@ class _ChatBubbleState extends State<ChatBubble>
               ],
             ),
           ),
+          // Thinking block
+          if (widget.thinkingContent != null && widget.thinkingContent!.isNotEmpty)
+            ThinkingBlockWidget(
+              thinkingContent: widget.thinkingContent!,
+              isStreaming: widget.isThinkingStreaming,
+            ),
           // Content - parsed with code blocks
           _buildAiContent(context, isDark, textColor, mutedColor),
           // Action row

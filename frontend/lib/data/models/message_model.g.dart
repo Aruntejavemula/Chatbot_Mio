@@ -15,6 +15,8 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
   tokensOutput: (json['tokensOutput'] as num?)?.toInt(),
   model: json['model'] as String?,
   createdAt: DateTime.parse(json['createdAt'] as String),
+  thinkingContent: json['thinking_content'] as String?,
+  hasThinking: json['has_thinking'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
@@ -27,4 +29,6 @@ Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
       'tokensOutput': instance.tokensOutput,
       'model': instance.model,
       'createdAt': instance.createdAt.toIso8601String(),
+      'thinking_content': instance.thinkingContent,
+      'has_thinking': instance.hasThinking,
     };

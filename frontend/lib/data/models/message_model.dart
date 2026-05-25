@@ -12,6 +12,10 @@ class MessageModel {
   final int? tokensOutput;
   final String? model;
   final DateTime createdAt;
+  @JsonKey(name: 'thinking_content')
+  final String? thinkingContent;
+  @JsonKey(name: 'has_thinking')
+  final bool hasThinking;
 
   const MessageModel({
     required this.id,
@@ -22,6 +26,8 @@ class MessageModel {
     this.tokensOutput,
     this.model,
     required this.createdAt,
+    this.thinkingContent,
+    this.hasThinking = false,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -38,6 +44,8 @@ class MessageModel {
     int? tokensOutput,
     String? model,
     DateTime? createdAt,
+    String? thinkingContent,
+    bool? hasThinking,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -48,6 +56,8 @@ class MessageModel {
       tokensOutput: tokensOutput ?? this.tokensOutput,
       model: model ?? this.model,
       createdAt: createdAt ?? this.createdAt,
+      thinkingContent: thinkingContent ?? this.thinkingContent,
+      hasThinking: hasThinking ?? this.hasThinking,
     );
   }
 }

@@ -25,6 +25,7 @@ import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
+import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/funny_snackbar.dart';
@@ -218,6 +219,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final messages = ref.watch(messagesProvider);
     final isStreaming = ref.watch(isStreamingProvider);
     final streamingText = ref.watch(streamingTextProvider);
+    final streamingThinkingText = ref.watch(streamingThinkingTextProvider);
+    final isThinkingStreaming = ref.watch(isThinkingStreamingProvider);
     final loadingWordIndex = ref.watch(loadingWordIndexProvider);
     final tokenCap = ref.watch(tokenCapProvider);
     ref.watch(chatsProvider);
@@ -297,7 +300,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                               child: messages.isEmpty && !isStreaming
                                   ? _buildEmptyState(isDark)
                                   : _buildMessagesList(
-                                      isDark, messages, isStreaming, streamingText, loadingWordIndex),
+                                      isDark, messages, isStreaming, streamingText, loadingWordIndex,
+                                      streamingThinkingText, isThinkingStreaming),
                             ),
                           ),
                           // Input bar
@@ -1172,6 +1176,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     bool isStreaming,
     String streamingText,
     int loadingWordIndex,
+    String streamingThinkingText,
+    bool isThinkingStreaming,
   ) {
     return ListView.builder(
       controller: _scrollController,
@@ -1207,12 +1213,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                           )
                         : null,
                   ),
-                  child: Text(
-                    message.content,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!isUser &&
+                          message.thinkingContent != null &&
+                          message.thinkingContent!.isNotEmpty)
+                        ThinkingBlockWidget(
+                          thinkingContent: message.thinkingContent!,
+                          isStreaming: false,
+                        ),
+                      Text(
+                        message.content,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 15,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1225,8 +1243,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
           alignment: Alignment.centerLeft,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: streamingText.isEmpty
-                ? Text(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (streamingThinkingText.isNotEmpty)
+                  ThinkingBlockWidget(
+                    thinkingContent: streamingThinkingText,
+                    isStreaming: isThinkingStreaming,
+                  ),
+                if (streamingText.isEmpty && streamingThinkingText.isEmpty)
+                  Text(
                     '${LoadingWords.getWord(loadingWordIndex)}...',
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
@@ -1234,13 +1260,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                       color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                     ),
                   )
-                : Text(
+                else if (streamingText.isNotEmpty)
+                  Text(
                     streamingText,
                     style: GoogleFonts.dmSans(
                       fontSize: 15,
                       color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     ),
                   ),
+              ],
+            ),
           ),
         );
       },

@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement ThinkingBlockWidget, update MessageModel with thinking fields, update ChatService SSE parsing for thinking events, update ChatRepository to maintain thinking buffer state, update ChatBubble to accept and display thinking content, and update ChatScreen to pass thinking data to ChatBubble.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Create frontend/lib/presentation/widgets/chat/thinking_block_widget.dart - A StatefulWidget that takes String thinkingContent and bool isStreaming props. State: bool _isExpanded = false (collapsed by default). Uses TickerProviderStateMixin for animation. Layout: Container with margin bottom 4px, border radius 12px, bgSecondary background, 1px border (borderDefault). Header row (always visible): InkWell that toggles _isExpanded, padding 10h 14v. Row contains: animated thinking icon (rotating sync icon via AnimationController if isStreaming, psychology_outlined icon if done), SizedBox(width:8), Text showing 'Thinking...' if streaming or 'Reasoning' if done in textMuted color using GoogleFonts.dmSans 13px, Spacer, AnimatedRotation of expand_more arrow (0.5 turns when expanded). Collapsible content: AnimatedSize with duration 250ms easeOutCubic curve. When expanded: Container with border top (borderDefault), padding 12h 14v, child is SelectableText with monospace font (GoogleFonts.jetBrainsMono) 13px textMuted color showing thinkingContent. Support both light and dark mode using AppColors. Follow the pattern from chat_bubble.dart for theming.",
+    "Step 2: Update frontend/lib/data/models/message_model.dart - Add two new fields: String? thinkingContent and bool hasThinking (default false). Add @JsonKey annotations as needed. Update the constructor to include these optional fields. Update the copyWith method to include thinkingContent and hasThinking parameters.",
+    "Step 3: Update frontend/lib/data/models/message_model.g.dart - Manually update the generated file to parse 'thinkingContent' (or 'thinking_content' from backend JSON) and 'hasThinking' (or 'has_thinking' from backend JSON). Use @JsonKey(name: 'thinking_content') and @JsonKey(name: 'has_thinking') in the model to map snake_case backend fields to camelCase Dart fields.",
+    "Step 4: Update frontend/lib/data/services/chat_service.dart - Modify the streamMessage method to support a new SSE event type 'thinking'. The SSE format sends JSON objects with 'type' field: {\"type\": \"thinking\", \"content\": \"...\"} for thinking tokens, {\"type\": \"text\", \"content\": \"...\"} for normal text tokens, and {\"type\": \"done\"} for completion. Change the stream return type or add a wrapper class to distinguish thinking chunks from text chunks. A simple approach: yield prefixed strings like 'thinking:...' and 'text:...' or create a sealed class/enum. The cleanest approach for this codebase: create a ChatStreamEvent class with a type (thinking/text/done) and content field. Update the stream to yield ChatStreamEvent objects instead of raw strings. This means changing Stream<String> to Stream<ChatStreamEvent>.",
+    "Step 5: Update frontend/lib/data/repositories/chat_repository.dart - Add two new providers: streamingThinkingTextProvider (StateProvider<String>) and isThinkingStreamingProvider (StateProvider<bool>). In the sendMessage method, maintain a separate _thinkingBuffer alongside the existing text buffer. When receiving ChatStreamEvent of type 'thinking', append to thinking buffer and update streamingThinkingTextProvider. When receiving type 'text', append to text buffer and update streamingTextProvider. Set isThinkingStreamingProvider to true when first thinking event arrives, set to false when first text event arrives (thinking phase is done). When building the final aiMessage, include the thinking content from the thinking buffer in the thinkingContent field and set hasThinking to true if thinking content exists.",
+    "Step 6: Update frontend/lib/presentation/widgets/chat/chat_bubble.dart - Add two new optional props to ChatBubble: String? thinkingContent and bool isThinkingStreaming (default false). In _buildAiBubble, before the content section, check if thinkingContent is not null and not empty: if so, insert a ThinkingBlockWidget(thinkingContent: thinkingContent!, isStreaming: isThinkingStreaming) above the AI content. Import the new thinking_block_widget.dart file.",
+    "Step 7: Update frontend/lib/presentation/screens/chat/chat_screen.dart - In _buildMessagesList, for AI messages (non-user), pass thinkingContent from the message model to a ChatBubble widget (note: the current screen uses inline rendering, so it needs to be updated to use ChatBubble for AI messages, or alternatively pass thinking data inline). For the streaming message at the bottom of the list, pass streamingThinkingText and isThinkingStreaming from the providers. Watch the new providers (streamingThinkingTextProvider and isThinkingStreamingProvider) and pass their values when rendering the streaming bubble. Import ThinkingBlockWidget if rendering it directly in the streaming section."
+  ],
+  "acceptance_criteria": [
+    "ThinkingBlockWidget renders collapsed by default with a header showing icon and label",
+    "ThinkingBlockWidget expands/collapses on tap with animated size transition",
+    "ThinkingBlockWidget shows rotating sync icon during streaming and psychology_outlined when done",
+    "ThinkingBlockWidget label shows 'Thinking...' during streaming, 'Reasoning' when done",
+    "MessageModel has thinkingContent and hasThinking fields with proper JSON deserialization from snake_case backend",
+    "ChatService SSE parsing handles 'thinking' type events and yields them as distinct stream events",
+    "ChatRepository maintains separate thinking buffer and updates streamingThinkingTextProvider",
+    "ChatBubble renders ThinkingBlockWidget above message content when thinkingContent is present",
+    "ChatScreen passes thinking state to the streaming message display",
+    "flutter analyze passes with no errors on the frontend directory"
+  ],
+  "verification": [
+    "Run `flutter analyze --no-fatal-infos` in the frontend/ directory and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
