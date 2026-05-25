@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-001",
+  "type": "test",
+  "description": "S100B + S100C: Frontend unit tests and widget tests on branch feature/project-setup-resolved. Add mocktail dependency, create unit tests for models (MessageModel, ProjectModel, ReferralModel, ScheduledTaskModel), utility tests (CostRates, AppConstants, FunnyWarnings), and widget tests (ChatBubble, FunnySnackbar, LoadingIndicator, TrialBannerWidget, TokenCapBanner).",
+  "status": "in_progress",
+  "steps": [
+    "Ensure we are on branch feature/project-setup-resolved (already checked out)",
+    "Add mocktail: ^1.0.4 to frontend/pubspec.yaml under dev_dependencies",
+    "Create frontend/test/unit/models/message_model_test.dart - Test MessageModel fromJson/toJson/fields. The generated code uses 'chatId' (camelCase) for chatId field, 'createdAt' as ISO string, 'thinking_content' and 'has_thinking' with snake_case JSON keys. At least 3 test cases.",
+    "Create frontend/test/unit/models/project_model_test.dart - Test ProjectModel fromJson/toJson (id, userId mapped to user_id, name, color, systemPrompt mapped to system_prompt, createdAt/updatedAt as ISO strings). At least 3 test cases.",
+    "Create frontend/test/unit/utils/cost_rates_test.dart - Test CostRates.calculateCost with known model rates (e.g. 'gpt-4o') and unknown model (falls back to defaultRate). Test formatCost for values < 0.001 and >= 0.001.",
+    "Create frontend/test/unit/utils/app_constants_test.dart - Test AppConstants values: basicMonthlyPrice==4.99, freeTokenCap5Hour==40000, trialDurationDays==14, etc.",
+    "Create frontend/test/unit/utils/funny_warnings_test.dart - Test all FunnyWarnings static strings are non-empty (tokenWarning, tokenBlocked, deviceLimit, noApiKey, fileTooLarge, rateLimit, voiceError, memoryFull, ollamaNotRunning, connectionError, modelNotSelected, signInRequired, upgradeRequired).",
+    "Create frontend/test/unit/models/scheduled_task_model_test.dart - Test ScheduledTaskModel fromJson with schedule types: 'once' with runAt, 'daily' with runTime, 'weekly' with runDay. Test defaults when fields are null.",
+    "Create frontend/test/unit/models/referral_model_test.dart - Test ReferralModel fromJson and toJson roundtrip. Test defaults when optional JSON fields missing.",
+    "Create frontend/test/widget/chat/chat_bubble_test.dart - Test ChatBubble renders user message (aligned right, shows content), renders AI message (shows model name, content). Test thinking block shows when thinkingContent provided.",
+    "Create frontend/test/widget/common/funny_snackbar_test.dart - Test FunnySnackbar.show() displays message text in a SnackBar. Test different SnackbarType values.",
+    "Create frontend/test/widget/chat/loading_indicator_test.dart - Test LoadingIndicator with different LoadingState values (idle shows nothing, thinking shows dots, responding shows word).",
+    "Create frontend/test/widget/common/trial_banner_test.dart - Test TrialBannerWidget renders (it's a ConsumerStatefulWidget using FlutterSecureStorage - will need to mock). Basic smoke test that widget can be created.",
+    "Create frontend/test/widget/chat/token_cap_banner_test.dart - Test TokenCapBanner at percentage < 0.7 (hidden), between 0.7-1.0 (warning state with warning icon), >= 1.0 (blocked state with block icon and 'Add key' button)."
+  ],
+  "acceptance_criteria": [
+    "mocktail: ^1.0.4 is listed in frontend/pubspec.yaml dev_dependencies",
+    "All 7 unit test files exist under frontend/test/unit/",
+    "All 5 widget test files exist under frontend/test/widget/",
+    "Each test file has at least 3 meaningful test cases",
+    "All imports reference correct paths relative to package:mio/",
+    "flutter test runs successfully in frontend/ directory"
+  ],
+  "verification": [
+    "cd frontend && flutter pub get",
+    "cd frontend && flutter test test/unit/",
+    "cd frontend && flutter test test/widget/"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

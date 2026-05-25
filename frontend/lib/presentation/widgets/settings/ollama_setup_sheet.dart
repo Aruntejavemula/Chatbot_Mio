@@ -417,9 +417,8 @@ class _OllamaSetupSheetState extends State<OllamaSetupSheet> {
             ),
             child: Text(
               'ollama pull llama3',
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.jetBrainsMono(
                 fontSize: 13,
-                fontFamily: 'monospace',
                 color: isDark
                     ? AppColors.darkTextPrimary
                     : AppColors.textPrimary,

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-s100b-s100h-test-suites",
+  "task_description": "Create comprehensive test suites across frontend (Flutter) and backend (FastAPI) with CI/CD. S100B: Frontend unit tests, S100C: Frontend widget tests (both on feature/project-setup-resolved). S100D-S100H: Backend unit/integration/security/e2e tests and GitHub Actions CI/CD (on feature/backend-setup).",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}
