@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Update router.dart to add onboarding route, update splash_screen.dart to add first-launch detection logic, and create the full onboarding_screen.dart with 5-page PageView flow",
+  "status": "completed",
+  "steps": [
+    "Step 1: Update frontend/lib/core/utils/router.dart - Add 'static const onboarding = '/onboarding';' to AppRoutes class. Add import for OnboardingScreen. Add GoRoute for /onboarding that maps to OnboardingScreen(). Also add '/onboarding' to the publicRoutes list in the redirect logic so unauthenticated+first-launch users can access it.",
+    "Step 2: Update frontend/lib/presentation/screens/splash/splash_screen.dart - Import flutter_secure_storage. Modify the _navigate() method: read 'onboarding_complete' key from FlutterSecureStorage. If authenticated AND key is null or 'false' (first launch) -> context.go(AppRoutes.onboarding). If authenticated AND key is 'true' -> context.go(AppRoutes.chat). If not authenticated -> context.go(AppRoutes.welcome).",
+    "Step 3: Create frontend/lib/presentation/screens/auth/onboarding_screen.dart - Full implementation of a 5-page onboarding flow using PageView with ConsumerStatefulWidget. State variables: currentPage (int), selectedProviderIndex (int?), apiKeyController (TextEditingController), isKeyVisible (bool), isTestingKey (bool), isSavingKey (bool), selectedPreferences (Set<String>). PageController for navigation. Floating animation controller (3s easeInOut repeat reverse) for mascot placeholders.",
+    "Step 3a: PAGE 1 - Welcome To Mio: Background AppColors.bgPrimary (dark mode aware). Center column with: mascot placeholder Container 80x80 rounded full with ghost emoji 40px and floating animation, gap 24px, heading 'No fluff. Just answers.' in DM Serif Display 28px bold textPrimary, gap 12px, body text with line breaks in DM Sans 16px textSecondary centered padded 32px horizontal, gap 48px, Next button full width max 320px height 52px bg persian border radius full text white DM Sans 16px w600.",
+    "Step 3b: PAGE 2 - Bring Your Own Key: Icon row of 5 provider circles (OpenAI green 0xFF10A37F 'O', Anthropic orange 0xFFD97757 'A', DeepSeek blue 0xFF4D6BFE 'D', Gemini blue 0xFF4285F4 'G', More gray '+' with textMuted on bgTertiary). Heading 'Your keys. Your models.' DM Serif Display 28px bold. Body text with provider details. Info box with lock icon and AES-256 text. Two buttons: primary 'Add my API key now' goes to page 3, secondary outline 'Skip for now' goes to page 4.",
+    "Step 3c: PAGE 3 - Add First API Key: Heading 'Add your first AI key' DM Serif Display 24px. Subheading 'Tap a provider to get started'. 2-column GridView of 8 providers (OpenAI, Anthropic, Google Gemini, DeepSeek, Kimi, Groq, Together AI, OpenRouter) each as colored circle with initial letter and name. On select show border change to persian. Below grid when selected: text field for API key (obscured with eye toggle, border styling), Test button (outline persian) and Save button (filled persian). Skip for now text at bottom goes to page 4.",
+    "Step 3d: PAGE 4 - What Do You Use AI For: Heading 'What do you mainly use AI for?' DM Serif Display 24px. Subheading. Wrap widget with chips: Coding, Writing, Research, Learning, Business, Creative, Math, Data Analysis, Language learning, General chat. Chips toggle multi-select with selected=persian/white, unselected=bgSecondary/borderDefault/textSecondary. Continue button (always enabled) goes to page 5. Skip text button goes to page 5.",
+    "Step 3e: PAGE 5 - You Are Ready: Larger mascot 100x100 with floating animation. Heading 'You're all set!' DM Serif Display 32px bold. Body text. Primary button 'Start chatting' saves 'onboarding_complete'='true' to flutter_secure_storage then context.go(AppRoutes.chat).",
+    "Step 3f: Page indicator dots at bottom of pages 1-4 (not page 5). Active dot: AppColors.persian 8px. Inactive dot: AppColors.borderDefault 6px. Centered. Back arrow button on pages 2-4 at top-left. Swiping between pages supported. Cannot swipe back from page 1.",
+    "Step 4: Run /root/flutter/bin/flutter pub get in frontend directory.",
+    "Step 5: Run /root/flutter/bin/flutter analyze in frontend directory and fix any issues.",
+    "Step 6: Commit all changes on feature/project-setup-v2 branch with message 'feat: add onboarding flow with 5-page PageView, router update, and splash redirect logic'. Do NOT touch main branch."
+  ],
+  "acceptance_criteria": [
+    "AppRoutes class in router.dart contains 'static const onboarding = '/onboarding';'",
+    "GoRouter routes list includes a GoRoute for AppRoutes.onboarding that builds OnboardingScreen",
+    "splash_screen.dart _navigate() checks flutter_secure_storage for 'onboarding_complete' key and routes to /onboarding on first authenticated launch",
+    "onboarding_screen.dart exists at frontend/lib/presentation/screens/auth/onboarding_screen.dart",
+    "Onboarding has 5 pages using PageView with all specified content",
+    "Page indicator dots shown on pages 1-4, not on page 5",
+    "Page 5 saves 'onboarding_complete'='true' and navigates to /chat",
+    "flutter analyze passes with no errors",
+    "All changes committed on feature/project-setup-v2 branch"
+  ],
+  "verification": [
+    "Run '/root/flutter/bin/flutter analyze' in frontend/ and confirm no errors",
+    "Run 'git log --oneline -3' to confirm commit on feature/project-setup-v2",
+    "Run 'git branch --show-current' to confirm still on feature/project-setup-v2"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK located at /opt/flutter/bin/flutter (not /root/flutter/bin/flutter). flutter analyze passes with no issues. All changes committed on feature/project-setup-v2."
+}

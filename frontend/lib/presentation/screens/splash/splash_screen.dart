@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -82,10 +83,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  void _navigate() {
+  void _navigate() async {
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (isAuthenticated) {
-      context.go(AppRoutes.chat);
+      const storage = FlutterSecureStorage();
+      final value = await storage.read(key: 'onboarding_complete');
+      if (!mounted) return;
+      if (value == null || value != 'true') {
+        context.go(AppRoutes.onboarding);
+      } else {
+        context.go(AppRoutes.chat);
+      }
     } else {
       context.go(AppRoutes.welcome);
     }
