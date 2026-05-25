@@ -15,6 +15,7 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
+import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
@@ -47,6 +48,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   List<SelectedFileInfo> _selectedFiles = [];
   late AnimationController _sendButtonAnimController;
   double _sendButtonScale = 1.0;
+  bool _isPanelOpen = false;
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -93,6 +95,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _scrollController.dispose();
     _sendButtonAnimController.dispose();
     super.dispose();
+  }
+
+  void _togglePanel() {
+    setState(() => _isPanelOpen = !_isPanelOpen);
   }
 
   void _sendMessage() {
@@ -213,6 +219,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                               onAddKey: () => context.go(AppRoutes.apiKeys),
                             ),
                           if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
+                          PlusPanelWidget(
+                            isOpen: _isPanelOpen,
+                            onToggle: _togglePanel,
+                            userPlan: 'free', // TODO: wire to actual user plan
+                            connectedProviders: const [], // TODO: wire to actual data
+                            onFilesSelected: (List<SelectedFileInfo> files) {
+                              setState(() {
+                                _selectedFiles.addAll(files);
+                                _isPanelOpen = false;
+                              });
+                            },
+                          ),
                           _buildInputBar(isDark),
                         ],
                       ),
@@ -789,13 +807,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Plus button
-            FileUploadWidget(
-              onFilesSelected: (List<SelectedFileInfo> files) {
-                setState(() {
-                  _selectedFiles.addAll(files);
-                });
-              },
+            // Plus button with rotation
+            GestureDetector(
+              onTap: _togglePanel,
+              child: AnimatedRotation(
+                turns: _isPanelOpen ? 0.125 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                child: Icon(
+                  Icons.add,
+                  size: 22,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             // Prompt maker button
