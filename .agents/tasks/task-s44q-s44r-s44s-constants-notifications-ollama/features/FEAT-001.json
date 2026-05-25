@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "S44Q - Create app_constants.dart with all pricing, token caps, device limits, trial, file limits, UI, and cost protection constants. Then replace all hardcoded values across the frontend with AppConstants references. Add performance optimizations: RepaintBoundary on chat bubbles and sidebar items, ListView.builder with cacheExtent/addAutomaticKeepAlives, const widgets where possible, verify dispose() calls.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create frontend/lib/core/constants/app_constants.dart with the following constant groups: (1) PRICING: basicMonthly=4.99, basicAnnual=49.99, proMonthly=9.99, proAnnual=99.99, annualSavingsPercent=17, (2) TOKEN CAPS: freeTokenCap5Hour=40000, basicTokenCapDaily=100000, proTokenCapWeekly=500000, proTokenCapMonthly=2000000, (3) DEVICE LIMITS: freeDevices=1, basicDevices=3, proDevices=10, (4) TRIAL: trialDurationDays=14, (5) FILE LIMITS: maxFileSizeBytes=10*1024*1024, (6) UI: usageRefreshIntervalSeconds=60, (7) COST PROTECTION: defaultDailyLimit=100000. Include display name helpers for token caps (40K, 100K, 500K, 2M).",
     "Update frontend/lib/presentation/screens/settings/subscription_screen.dart: Replace hardcoded prices '$4.99', '$49.99', '$9.99', '$99.99' with AppConstants references. Import app_constants.dart.",
@@ -32,5 +32,5 @@
     "Check no hardcoded values remain: grep -rn '10 \\* 1024 \\* 1024\\|4\\.99\\|49\\.99\\|9\\.99\\|99\\.99\\|40000\\|100000\\|500000\\|2000000' frontend/lib/ --include='*.dart' | grep -v app_constants.dart | grep -v '.agents'"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All steps completed successfully. Constants file created with all groups. All hardcoded values replaced across 9 files. Performance optimizations (RepaintBoundary, cacheExtent, addAutomaticKeepAlives) applied to chat_screen.dart and sidebar_widget.dart. Network is INTEGRATIONS_ONLY so flutter analyze could not be run, but all changes are syntactically correct based on manual review. The UsageState const constructor with AppConstants.defaultDailyTokenLimit works because it is a static const int (compile-time constant)."
 }
