@@ -7,6 +7,7 @@ from app.config import get_settings
 from app.routers import (
     auth,
     chat,
+    files,
     keys,
     tokens,
     devices,
@@ -36,6 +37,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+app.include_router(files.router, prefix="/files", tags=["Files"])
 app.include_router(keys.router, prefix="/keys", tags=["Keys"])
 app.include_router(tokens.router, prefix="/tokens", tags=["Tokens"])
 app.include_router(devices.router, prefix="/devices", tags=["Devices"])
