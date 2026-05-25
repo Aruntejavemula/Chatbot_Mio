@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Funny Warnings System: Create a centralized funny warning messages utility and a custom FunnySnackbar widget. Update token_cap_banner.dart, chat_screen.dart input area, plus_panel_widget.dart, and devices_screen.dart to use FunnyWarnings messages and FunnySnackbar.show() instead of plain SnackBars.",
+  "status": "in_progress",
+  "steps": [
+    "Create frontend/lib/core/utils/funny_warnings.dart with a FunnyWarnings class containing static const String fields for all warning categories: tokenWarning (e.g. 'Whoa, you talk more than my ex. Token limit incoming.'), tokenBlocked (e.g. 'You hit the wall. Even Mio needs a break.'), deviceLimit (e.g. 'One device at a time. Mio is loyal like that.'), noApiKey (e.g. 'No API key? Mio can not read minds... yet.'), fileTooLarge (e.g. 'That file is chonkier than 10MB. Mio says nope.'), rateLimit (e.g. 'Slow down speed racer. Rate limit hit.'), voiceError (e.g. 'Mio can not hear you. Mic permission needed.'), memoryFull (e.g. 'Brain full. Clear some chats maybe?'), ollamaNotRunning (e.g. 'Ollama is sleeping. Wake it up first.'), connectionError (e.g. 'No internet? Mio is not magic... yet.'), modelNotSelected (e.g. 'Pick a model first. Mio is not a mind reader.'), upgradeRequired (e.g. 'That is a pro move. Literally. Upgrade to unlock.')",
+    "Create frontend/lib/presentation/widgets/common/funny_snackbar.dart with a FunnySnackbar class that has a static show() method taking BuildContext, message String, and optional SnackbarType enum (error, warning, info). Style: floating behavior, 12px border radius, colored left border (4px) matching type (error=AppColors.error, warning=AppColors.warning, info=AppColors.persian), penguin emoji or icon on the left, DM Sans text, dark background for dark mode and light for light mode, auto-dismiss after 3 seconds, bottom margin 16px",
+    "Update frontend/lib/presentation/widgets/chat/token_cap_banner.dart: Import FunnyWarnings. In _buildWarningState replace the static text with FunnyWarnings.tokenWarning. In _buildBlockedState use FunnyWarnings.tokenBlocked.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: Import FunnyWarnings and FunnySnackbar. Replace the 'Please sign in to chat' SnackBar with FunnySnackbar.show() using a relevant message. Replace 'Please select a model first' SnackBar with FunnySnackbar.show(context, FunnyWarnings.modelNotSelected, SnackbarType.warning).",
+    "Update frontend/lib/presentation/widgets/chat/plus_panel_widget.dart: Import FunnyWarnings and FunnySnackbar. Replace _showUpgradeSnackBar method body to use FunnySnackbar.show(context, FunnyWarnings.upgradeRequired, SnackbarType.warning). Replace 'File too large' SnackBars with FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, SnackbarType.error).",
+    "Update frontend/lib/presentation/screens/settings/devices_screen.dart: Import FunnyWarnings. Add a GestureDetector on the device limit banner text ('Free plan: 1 device maximum') that shows FunnySnackbar with FunnyWarnings.deviceLimit when tapped."
+  ],
+  "acceptance_criteria": [
+    "funny_warnings.dart exists with all static const warning strings",
+    "funny_snackbar.dart exists with FunnySnackbar.show() static method and SnackbarType enum",
+    "token_cap_banner.dart uses FunnyWarnings messages",
+    "chat_screen.dart uses FunnySnackbar instead of plain SnackBar for error cases",
+    "plus_panel_widget.dart uses FunnySnackbar for upgrade and file-too-large warnings",
+    "devices_screen.dart has interactive device limit warning",
+    "All files pass flutter analyze without errors",
+    "No dynamic types, no commented-out code"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Chatbot_Mio/frontend && flutter analyze --no-fatal-infos"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

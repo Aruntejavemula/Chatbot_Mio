@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/funny_warnings.dart';
 
 class TokenCapBanner extends StatelessWidget {
   final String capType;
@@ -71,7 +72,7 @@ class TokenCapBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '${(percentage * 100).toInt()}% of $displayName tokens used. Resets $resetsIn',
+              '${FunnyWarnings.tokenWarning} ${(percentage * 100).toInt()}% used. Resets $resetsIn',
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 color: isDark
@@ -122,7 +123,7 @@ class TokenCapBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$displayName limit reached',
+                  FunnyWarnings.tokenBlocked,
                   style: GoogleFonts.dmSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

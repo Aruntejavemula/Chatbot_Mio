@@ -14,6 +14,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/animations.dart';
+import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
@@ -25,6 +26,7 @@ import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
+import '../../widgets/common/funny_snackbar.dart';
 import '../../widgets/common/ghost_mascot.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
@@ -146,16 +148,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       if (_isMobile) HapticFeedback.mediumImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please sign in to chat')),
-      );
+      FunnySnackbar.show(context, 'Please sign in to chat', type: SnackbarType.warning);
       return;
     }
     if (_selectedModel == 'Think now') {
       if (_isMobile) HapticFeedback.mediumImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a model first')),
-      );
+      FunnySnackbar.show(context, FunnyWarnings.modelNotSelected, type: SnackbarType.warning);
       return;
     }
     if (_isMobile) HapticFeedback.mediumImpact();

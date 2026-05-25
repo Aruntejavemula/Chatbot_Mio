@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/funny_warnings.dart';
+import '../common/funny_snackbar.dart';
 import 'file_upload_widget.dart';
 
 class PlusPanelWidget extends StatefulWidget {
@@ -406,11 +408,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
   }
 
   void _showUpgradeSnackBar(String requiredPlan, String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Upgrade to $requiredPlan to use $featureName'),
-      ),
-    );
+    FunnySnackbar.show(context, FunnyWarnings.upgradeRequired, type: SnackbarType.warning);
   }
 
   Future<void> _pickPhoto() async {
@@ -422,9 +420,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       final size = await file.length();
       if (size > _maxFileSizeBytes) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
-        );
+        FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;
       }
       final selected = SelectedFileInfo(
@@ -451,9 +447,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       if (filePath != null) {
         if (pickedFile.size > _maxFileSizeBytes) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File too large. Maximum size is 10MB')),
-          );
+          FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
           return;
         }
         final codeExtensions = ['py', 'js', 'ts', 'dart', 'json', 'yaml'];
@@ -481,9 +475,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       final size = await file.length();
       if (size > _maxFileSizeBytes) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
-        );
+        FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;
       }
       final selected = SelectedFileInfo(
@@ -505,9 +497,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       final size = await file.length();
       if (size > _maxFileSizeBytes) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File too large. Maximum size is 10MB')),
-        );
+        FunnySnackbar.show(context, FunnyWarnings.fileTooLarge, type: SnackbarType.error);
         return;
       }
       final selected = SelectedFileInfo(

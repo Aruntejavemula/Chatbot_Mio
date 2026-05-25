@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/funny_warnings.dart';
+import '../../widgets/common/funny_snackbar.dart';
 
 class DevicesScreen extends ConsumerStatefulWidget {
   const DevicesScreen({super.key});
@@ -80,13 +82,18 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Free plan: 1 device maximum',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextMuted
-                          : AppColors.textMuted,
+                  GestureDetector(
+                    onTap: () {
+                      FunnySnackbar.show(context, FunnyWarnings.deviceLimit, type: SnackbarType.info);
+                    },
+                    child: Text(
+                      'Free plan: 1 device maximum',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
+                      ),
                     ),
                   ),
                 ],
