@@ -69,18 +69,24 @@ class ChatService extends ApiService {
     required String model,
     required String provider,
     bool useOurTokens = false,
+    String? projectId,
   }) async* {
     lastCapWarning = null;
     try {
+      final body = <String, dynamic>{
+        'chat_id': chatId,
+        'content': content,
+        'model': model,
+        'provider': provider,
+        'use_our_tokens': useOurTokens,
+      };
+      if (projectId != null) {
+        body['project_id'] = projectId;
+      }
+
       final response = await dio.post<ResponseBody>(
         '/chat/stream',
-        data: {
-          'chat_id': chatId,
-          'content': content,
-          'model': model,
-          'provider': provider,
-          'use_our_tokens': useOurTokens,
-        },
+        data: body,
         options: Options(
           responseType: ResponseType.stream,
           headers: {

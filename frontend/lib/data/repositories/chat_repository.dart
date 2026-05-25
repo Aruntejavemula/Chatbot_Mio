@@ -97,6 +97,7 @@ class ChatRepository {
     required String model,
     required String provider,
     required bool useOurTokens,
+    String? projectId,
   }) async {
     try {
       _ref.read(tokenCapProvider.notifier).state = null;
@@ -130,6 +131,7 @@ class ChatRepository {
         model: model,
         provider: provider,
         useOurTokens: useOurTokens,
+        projectId: projectId,
       );
 
       final buffer = StringBuffer();
