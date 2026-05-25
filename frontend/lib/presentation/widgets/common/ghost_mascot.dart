@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
-
 class PenguinMascot extends StatefulWidget {
   final double size;
   final bool animate;
@@ -48,66 +46,45 @@ class _PenguinMascotState extends State<PenguinMascot>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    Widget mascotImage = Image.asset(
+    Widget image = Image.asset(
       'assets/images/mascot.png',
-      fit: BoxFit.contain,
       width: widget.size,
       height: widget.size,
-      errorBuilder: (context, error, stackTrace) {
-        // Fallback if image not found
-        return Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              '\u{1F427}',
-              style: TextStyle(fontSize: widget.size * 0.5),
-            ),
-          ),
-        );
-      },
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stack) => Text(
+        '\u{1F427}',
+        style: TextStyle(fontSize: widget.size * 0.7),
+      ),
     );
 
     Widget content;
     if (isDark) {
       content = Container(
-        width: widget.size,
-        height: widget.size,
-        padding: EdgeInsets.all(widget.size * 0.1),
-        decoration: BoxDecoration(
-          color: AppColors.darkBgSecondary,
+        width: widget.size * 1.2,
+        height: widget.size * 1.2,
+        decoration: const BoxDecoration(
+          color: Color(0xFFFAF8F5),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: AppColors.darkBorderDefault,
-            width: 1,
-          ),
         ),
-        child: ClipOval(child: mascotImage),
+        padding: EdgeInsets.all(widget.size * 0.12),
+        child: image,
       );
     } else {
       content = SizedBox(
         width: widget.size,
         height: widget.size,
-        child: mascotImage,
+        child: image,
       );
     }
 
-    if (!widget.animate) {
-      return content;
-    }
+    if (!widget.animate) return content;
 
     return AnimatedBuilder(
       animation: _animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _animation.value),
-          child: child,
-        );
-      },
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, _animation.value),
+        child: child,
+      ),
       child: content,
     );
   }
