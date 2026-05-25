@@ -1,16 +1,19 @@
 """Files router - handles file upload and processing for AI context."""
 
+import base64
 import logging
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 
+from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.services.file_service import (
     MAX_FILE_SIZE,
     SUPPORTED_TYPES,
     file_service,
 )
+from app.tasks.file_task import process_file
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +21,11 @@ router = APIRouter()
 
 
 @router.post("/upload")
-async def upload_file(file: UploadFile):
-    """Upload and process a file for AI consumption."""
+async def upload_file(
+    file: UploadFile,
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload and process a file asynchronously for AI consumption."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
 
@@ -39,24 +45,14 @@ async def upload_file(file: UploadFile):
             detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)}MB",
         )
 
-    try:
-        ai_content = file_service.process_file(file.filename, content)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error processing file {file.filename}: {e}")
-        raise HTTPException(status_code=500, detail="Error processing file")
+    user_id = current_user["id"]
+    file_bytes_b64 = base64.b64encode(content).decode()
 
-    # Build preview from content
-    preview_text = ai_content.get("content", "")
-    preview = preview_text[:200] if preview_text else ""
-
-    return {
-        "file_id": str(uuid4()),
-        "filename": file.filename,
-        "type": ai_content["type"],
-        "size_kb": round(len(content) / 1024, 2),
-        "preview": preview,
-        "ai_ready": True,
-        "ai_content": ai_content,
-    }
+    task = process_file.delay(
+        user_id=user_id,
+        file_bytes_b64=file_bytes_b64,
+        filename=file.filename,
+        content_type=file.content_type or "application/octet-stream",
+    )
+    logger.info("File processing task dispatched for user=%s, task_id=%s", user_id, task.id)
+    return {"task_id": task.id, "status": "processing", "filename": file.filename}

@@ -10,6 +10,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from supabase import Client
 
+from celery.result import AsyncResult
+
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.middleware.security_middleware import security_middleware
 from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate, MessageResponse
@@ -17,8 +19,10 @@ from app.routers.keys import get_decrypted_key
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.services.search_service import search_service
+from app.tasks.research_task import run_deep_research
 from app.utils.constants import SUPPORTED_PROVIDERS
 from app.utils.helpers import check_token_abuse, circuit_breaker
+from app.worker import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +95,32 @@ PROMPT_MAKER_SYSTEM = (
 async def get_providers() -> list[dict]:
     """Get list of supported AI providers and their models. No auth required."""
     return SUPPORTED_PROVIDERS
+
+
+@router.get("/task/{task_id}")
+async def get_task_status(
+    task_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Get the status of an async task.
+
+    Args:
+        task_id: The Celery task ID to check.
+        current_user: Authenticated user.
+
+    Returns:
+        Dictionary with task status and result if complete.
+    """
+    result = AsyncResult(task_id, app=celery_app)
+    if result.state == "PENDING":
+        return {"status": "pending"}
+    if result.state == "STARTED":
+        return {"status": "processing"}
+    if result.state == "SUCCESS":
+        return {"status": "done", "result": result.get()}
+    if result.state == "FAILURE":
+        return {"status": "failed", "error": str(result.result)}
+    return {"status": result.state}
 
 
 @router.post("/make-prompt")
@@ -649,11 +679,11 @@ async def search(
 async def deep_research(
     body: DeepResearchRequest,
     current_user: dict = Depends(get_current_user),
-) -> StreamingResponse:
+) -> dict:
     """
-    Perform deep research on a topic. Pro plan only.
+    Dispatch deep research as an async task. Pro plan only.
 
-    Streams progress updates and saves final report to messages table.
+    Returns task_id for polling status via GET /chat/task/{task_id}.
     """
     user_id = current_user["id"]
 
@@ -672,35 +702,15 @@ async def deep_research(
             detail="Deep research is available for Pro plan users only. Upgrade to access.",
         )
 
-    async def generate():
-        final_report = ""
-        async for update in search_service.deep_research(body.query, body.num_searches):
-            yield f"data: {update}\n\n"
-            # Capture final report
-            try:
-                data = json.loads(update)
-                if data.get("stage") == "complete":
-                    final_report = data.get("report", "")
-            except json.JSONDecodeError:
-                pass
+    # Get user's API key for AI provider
+    api_key = await _get_api_key(supabase, user_id, "openai")
 
-        # Save report to messages table
-        if final_report:
-            try:
-                supabase.table("messages").insert({
-                    "chat_id": body.chat_id,
-                    "role": "assistant",
-                    "content": final_report,
-                    "model": "deep-research",
-                }).execute()
-            except Exception as e:
-                logger.error(f"Error saving research report: {str(e)}")
-
-    return StreamingResponse(
-        generate(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
+    task = run_deep_research.delay(
+        user_id=user_id,
+        query=body.query,
+        api_key=api_key,
+        model="gpt-4o",
+        byok=True,
     )
+    logger.info("Deep research task dispatched for user=%s, task_id=%s", user_id, task.id)
+    return {"task_id": task.id, "status": "processing"}
