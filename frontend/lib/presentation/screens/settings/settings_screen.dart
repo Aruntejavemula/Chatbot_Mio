@@ -82,6 +82,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             isDark: isDark,
           ),
 
+          // USAGE section
+          _buildSectionHeader('USAGE', isDark),
+          _buildTile(
+            icon: Icons.bar_chart_outlined,
+            title: 'Token Usage',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            onTap: () => context.go(AppRoutes.usage),
+            isDark: isDark,
+          ),
+
           // DEVICES section
           _buildSectionHeader('DEVICES', isDark),
           _buildTile(

@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "S40 - Usage Dashboard UI: Create usage_screen.dart with token usage cards, cost transparency, 7-day bar chart. Add route and settings tile.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Add route to frontend/lib/core/utils/router.dart: static const usage = '/settings/usage' in AppRoutes. Add GoRoute for the path pointing to UsageScreen. Add import for usage_screen.dart.",
     "Add tile in frontend/lib/presentation/screens/settings/settings_screen.dart: In the DEVICES section (or create a new USAGE section before DEVICES), add a tile with Icons.bar_chart_outlined, title 'Token Usage', navigating to AppRoutes.usage. Import the router if needed.",

@@ -11,6 +11,7 @@ import '../../presentation/screens/settings/api_keys_screen.dart';
 import '../../presentation/screens/settings/devices_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
 import '../../presentation/screens/settings/subscription_screen.dart';
+import '../../presentation/screens/settings/usage_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 
 class AppRoutes {
@@ -26,6 +27,7 @@ class AppRoutes {
   static const apiKeys = '/settings/api-keys';
   static const subscription = '/settings/subscription';
   static const devices = '/settings/devices';
+  static const usage = '/settings/usage';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -99,6 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.devices,
         builder: (context, state) => const DevicesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.usage,
+        builder: (context, state) => const UsageScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

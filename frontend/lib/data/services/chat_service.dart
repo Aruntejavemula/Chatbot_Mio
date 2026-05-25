@@ -192,4 +192,13 @@ class ChatService extends ApiService {
       rethrow;
     }
   }
+
+  Future<Map<String, Object?>> getTokenUsage() async {
+    try {
+      final response = await get<Map<String, dynamic>>('/tokens/usage');
+      return response.data ?? {};
+    } on DioException {
+      rethrow;
+    }
+  }
 }
