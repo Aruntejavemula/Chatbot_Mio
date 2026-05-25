@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import logging
-import time
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
+
+from app.middleware.rate_limit import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -15,49 +16,8 @@ router = APIRouter()
 AUTH_RATE_LIMIT_MAX: int = 5
 AUTH_RATE_LIMIT_WINDOW: int = 60
 
-
-class _AuthRateLimiter:
-    """IP-based rate limiter for unauthenticated auth endpoints.
-
-    Uses in-memory storage with a sliding window approach.
-    In production, this would use Upstash Redis for distributed limiting.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the rate limiter with an empty request store."""
-        self._requests: dict[str, list[float]] = {}
-
-    def check_rate_limit(
-        self, key: str, max_requests: int, window_seconds: int
-    ) -> bool:
-        """Check if a request is within the rate limit.
-
-        Args:
-            key: The unique key for rate limiting (e.g., client IP).
-            max_requests: Maximum number of requests allowed.
-            window_seconds: The time window in seconds.
-
-        Returns:
-            True if the request is allowed, False if rate limited.
-        """
-        now = time.time()
-        cutoff = now - window_seconds
-
-        if key in self._requests:
-            self._requests[key] = [
-                ts for ts in self._requests[key] if ts > cutoff
-            ]
-        else:
-            self._requests[key] = []
-
-        if len(self._requests[key]) >= max_requests:
-            return False
-
-        self._requests[key].append(now)
-        return True
-
-
-_auth_rate_limiter = _AuthRateLimiter()
+# Separate RateLimiter instance for auth endpoints (IP-based, not user-based)
+_auth_rate_limiter = RateLimiter()
 
 
 def _enforce_auth_rate_limit(request: Request) -> None:

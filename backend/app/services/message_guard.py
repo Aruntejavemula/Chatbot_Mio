@@ -7,6 +7,7 @@ single-instance development and testing.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import date, datetime, timezone
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,9 @@ logger = logging.getLogger(__name__)
 # Free plan limits
 FREE_DAILY_MESSAGE_LIMIT: int = 20
 FREE_MESSAGE_WARNING: int = 15
+
+# Cleanup interval in seconds (1 hour)
+_CLEANUP_INTERVAL: int = 3600
 
 
 class MessageGuard:
@@ -26,6 +30,31 @@ class MessageGuard:
     def __init__(self) -> None:
         """Initialize the message guard with an empty counter store."""
         self._counts: dict[str, int] = {}
+        self._last_cleanup: float = 0.0
+
+    def _cleanup_old_keys(self) -> None:
+        """Remove keys for dates older than today.
+
+        Only runs if at least _CLEANUP_INTERVAL seconds have passed
+        since the last cleanup to avoid overhead on every request.
+        """
+        now = time.time()
+        if now - self._last_cleanup < _CLEANUP_INTERVAL:
+            return
+
+        self._last_cleanup = now
+        today_str = date.today().isoformat()
+        stale_keys = [
+            key for key in self._counts
+            if not key.endswith(f":{today_str}")
+        ]
+        for key in stale_keys:
+            del self._counts[key]
+
+        if stale_keys:
+            logger.debug(
+                "MessageGuard cleanup removed %d stale keys", len(stale_keys)
+            )
 
     def _get_key(self, user_id: str) -> str:
         """Build the storage key for today's message count.
@@ -52,6 +81,8 @@ class MessageGuard:
         Returns:
             A dict with keys: allowed, current_count, limit, remaining, warning.
         """
+        self._cleanup_old_keys()
+
         if plan != "free":
             return {
                 "allowed": True,
