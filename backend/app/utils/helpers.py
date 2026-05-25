@@ -241,3 +241,163 @@ def safe_log(data: dict) -> dict:
 
 
 circuit_breaker = CircuitBreaker()
+
+# --- Cost tracking for money protection ---
+
+COST_PER_TOKEN = {
+    "deepseek": {"input": 0.00000027, "output": 0.0000011},
+    "kimi": {"input": 0.00000015, "output": 0.0000060},
+    "gemini-flash": {"input": 0.000000075, "output": 0.0000003},
+    "default": {"input": 0.000001, "output": 0.000002},
+}
+
+
+async def track_spending(
+    user_id: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    redis_client,
+) -> tuple[float, bool]:
+    """
+    Track estimated USD spending per user per day.
+    Soft alert at $2/day. Hard block at $5/day.
+
+    Args:
+        user_id: User ID
+        model: Model name for cost lookup
+        input_tokens: Input tokens consumed
+        output_tokens: Output tokens consumed
+        redis_client: Redis client
+
+    Returns:
+        Tuple of (total_spent_today, is_blocked)
+    """
+    if not redis_client:
+        return 0.0, False
+
+    try:
+        from datetime import date as date_type
+        today = date_type.today().isoformat()
+
+        # Find matching cost rate
+        rates = COST_PER_TOKEN.get("default")
+        for key in COST_PER_TOKEN:
+            if key in model.lower():
+                rates = COST_PER_TOKEN[key]
+                break
+
+        cost = input_tokens * rates["input"] + output_tokens * rates["output"]
+
+        key = f"spending:{user_id}:{today}"
+        new_total_str = await redis_client.incrbyfloat(key, cost)
+        await redis_client.expire(key, 86400)
+        new_total = float(new_total_str)
+
+        if new_total >= 5.0:
+            await redis_client.set(f"cost_blocked:{user_id}", "1", ex=86400)
+            await send_admin_alert(
+                f"User {user_id} cost blocked",
+                f"Spent ${new_total:.4f} today. Blocked.",
+            )
+            return new_total, True
+
+        if new_total >= 2.0:
+            await send_admin_alert(
+                f"User {user_id} high spending",
+                f"Spent ${new_total:.4f} today. Monitoring.",
+            )
+
+        return new_total, False
+
+    except Exception as e:
+        logger.error(f"Error tracking spending: {str(e)}")
+        return 0.0, False
+
+
+async def check_cost_blocked(user_id: str, redis_client) -> bool:
+    """
+    Check if user is cost blocked. Called before every AI request.
+
+    Args:
+        user_id: User ID
+        redis_client: Redis client
+
+    Returns:
+        True if blocked, False otherwise
+    """
+    if not redis_client:
+        return False
+    try:
+        blocked = await redis_client.get(f"cost_blocked:{user_id}")
+        return blocked is not None
+    except Exception:
+        return False
+
+
+async def get_cached_subscription(
+    user_id: str,
+    redis_client,
+    supabase_client,
+) -> dict:
+    """
+    Get subscription with Redis caching (5 minute TTL).
+    Prevents DB hit on every request.
+
+    Args:
+        user_id: User ID
+        redis_client: Redis client
+        supabase_client: Supabase client
+
+    Returns:
+        Subscription dict
+    """
+    import json
+
+    if redis_client:
+        try:
+            cache_key = f"sub_status:{user_id}"
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
+
+    try:
+        result = (
+            supabase_client.table("subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if result.data:
+            sub = result.data[0]
+            if redis_client:
+                try:
+                    await redis_client.set(
+                        f"sub_status:{user_id}",
+                        json.dumps(sub),
+                        ex=300,
+                    )
+                except Exception:
+                    pass
+            return sub
+    except Exception as e:
+        logger.error(f"Error getting subscription: {str(e)}")
+
+    return {"plan": "free", "status": "active", "country_bucket": "premium"}
+
+
+async def invalidate_subscription_cache(user_id: str, redis_client) -> None:
+    """
+    Invalidate subscription cache. Call in payment webhooks.
+
+    Args:
+        user_id: User ID
+        redis_client: Redis client
+    """
+    if redis_client:
+        try:
+            await redis_client.delete(f"sub_status:{user_id}")
+        except Exception:
+            pass

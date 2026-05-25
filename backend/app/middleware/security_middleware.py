@@ -366,4 +366,106 @@ class SecurityMiddleware:
                 pass
 
 
+    async def check_duplicate_request(
+        self, user_id: str, content: str
+    ) -> bool:
+        """
+        Prevent duplicate requests within 10 seconds.
+
+        Args:
+            user_id: User ID
+            content: Request content
+
+        Returns:
+            True if duplicate detected
+        """
+        redis = await self._get_redis()
+        if not redis:
+            return False
+
+        try:
+            import hashlib
+            import time as time_mod
+
+            content_hash = hashlib.sha256(
+                f"{user_id}:{content}:{int(time_mod.time() // 10)}".encode()
+            ).hexdigest()[:16]
+
+            key = f"req_dedup:{content_hash}"
+            exists = await redis.get(key)
+
+            if exists:
+                return True
+
+            await redis.set(key, "1", ex=10)
+            return False
+        except Exception as e:
+            logger.error(f"Dedup check error: {str(e)}")
+            return False
+
+    async def check_ip_signup_blocked(self, ip: str) -> None:
+        """
+        Check if IP is blocked from creating new accounts.
+
+        Args:
+            ip: Client IP
+
+        Raises:
+            HTTPException: 403 if blocked
+        """
+        redis = await self._get_redis()
+        if not redis:
+            return
+
+        try:
+            blocked = await redis.get(f"ip_signup_blocked:{ip}")
+            if blocked:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Maximum accounts reached for this network.",
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"IP signup check error: {str(e)}")
+
+    async def track_account_creation(self, ip: str, user_id: str) -> None:
+        """
+        Track new account creation per IP. Block at 3, alert at 5.
+
+        Args:
+            ip: Client IP
+            user_id: New user ID
+        """
+        redis = await self._get_redis()
+        if not redis:
+            return
+
+        try:
+            key = f"accounts_per_ip:{ip}"
+            count = await redis.incr(key)
+
+            # Store user_id in list
+            list_key = f"ip_users:{ip}"
+            await redis.lpush(list_key, user_id)
+
+            if count >= 5:
+                await redis.set(f"ip_signup_blocked:{ip}", "1")
+                from app.utils.helpers import send_admin_alert
+                user_ids = await redis.lrange(list_key, 0, -1)
+                await send_admin_alert(
+                    f"IP flagged: {ip} - {count} accounts",
+                    f"User IDs: {user_ids}",
+                )
+                await redis.set(f"ip_flagged:{ip}", "1")
+                logger.warning(f"IP flagged for multiple accounts: {ip}")
+
+            elif count >= 3:
+                await redis.set(f"ip_signup_blocked:{ip}", "1")
+                logger.warning(f"IP blocked for signups: {ip} ({count} accounts)")
+
+        except Exception as e:
+            logger.error(f"Account tracking error: {str(e)}")
+
+
 security_middleware = SecurityMiddleware()
