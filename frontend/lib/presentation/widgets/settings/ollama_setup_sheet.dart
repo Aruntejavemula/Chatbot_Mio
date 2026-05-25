@@ -28,6 +28,7 @@ class _OllamaSetupSheetState extends State<OllamaSetupSheet> {
   final TextEditingController _urlController = TextEditingController(
     text: 'http://localhost:11434',
   );
+  final Dio _dio = Dio();
   _OllamaConnectionState _connectionState = _OllamaConnectionState.initial;
   List<String> _availableModels = [];
   String _errorMessage = '';
@@ -35,6 +36,7 @@ class _OllamaSetupSheetState extends State<OllamaSetupSheet> {
   @override
   void dispose() {
     _urlController.dispose();
+    _dio.close();
     super.dispose();
   }
 
@@ -46,9 +48,8 @@ class _OllamaSetupSheetState extends State<OllamaSetupSheet> {
     });
 
     try {
-      final dio = Dio();
       final url = _urlController.text.trim();
-      final response = await dio.get<Map<String, dynamic>>(
+      final response = await _dio.get<Map<String, dynamic>>(
         '$url/api/tags',
         options: Options(
           receiveTimeout: const Duration(seconds: 10),

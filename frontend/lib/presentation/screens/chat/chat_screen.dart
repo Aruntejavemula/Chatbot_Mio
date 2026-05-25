@@ -236,7 +236,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       if (previous == true && current == false) {
         if (_appLifecycleState == AppLifecycleState.paused ||
             _appLifecycleState == AppLifecycleState.inactive) {
-          NotificationService.showTaskComplete('AI Response');
+          NotificationService.requestPermission().then((_) {
+            NotificationService.showTaskComplete('AI Response');
+          });
         }
       }
     });
