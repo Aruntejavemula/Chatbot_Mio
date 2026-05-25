@@ -7,11 +7,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 from supabase import Client
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.middleware.security_middleware import security_middleware
 from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate, MessageResponse
+from app.routers.keys import get_decrypted_key
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.utils.constants import SUPPORTED_PROVIDERS
@@ -52,10 +54,109 @@ MODEL_CONTEXT_LIMITS = {
 }
 
 
+class MakePromptRequest(BaseModel):
+    """Request model for prompt maker."""
+    rough_text: str = Field(..., description="User's rough message to improve")
+    provider: str = Field(..., description="BYOK provider to use")
+    model: str = Field(..., description="Model to use for prompt improvement")
+
+
+PROMPT_MAKER_SYSTEM = (
+    "You are an expert prompt engineer. "
+    "Convert the user's rough message into a clear, specific, effective AI prompt. "
+    "Keep the original intent exactly. "
+    "Make it detailed and unambiguous. "
+    "Return ONLY the improved prompt. "
+    "No explanation. No preamble. "
+    "No 'Here is your prompt:' prefix. "
+    "Just the prompt itself."
+)
+
+
 @router.get("/providers")
 async def get_providers() -> list[dict]:
     """Get list of supported AI providers and their models. No auth required."""
     return SUPPORTED_PROVIDERS
+
+
+@router.post("/make-prompt")
+async def make_prompt(
+    body: MakePromptRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """
+    Convert rough text into an effective AI prompt using user's own API key.
+    Uses BYOK only - zero cost to platform.
+    """
+    user_id = current_user["id"]
+
+    if not body.rough_text or not body.rough_text.strip():
+        raise HTTPException(status_code=400, detail="rough_text is required")
+    if len(body.rough_text) > 2000:
+        raise HTTPException(status_code=400, detail="rough_text must be under 2000 characters")
+    if not body.provider:
+        raise HTTPException(status_code=400, detail="provider is required")
+    if not body.model:
+        raise HTTPException(status_code=400, detail="model is required")
+
+    supabase = get_supabase_client()
+    try:
+        api_key = await get_decrypted_key(user_id, body.provider, supabase)
+    except HTTPException:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Add your API key for {body.provider} to use Prompt Maker",
+        )
+
+    messages = [
+        {"role": "system", "content": PROMPT_MAKER_SYSTEM},
+        {"role": "user", "content": body.rough_text},
+    ]
+
+    try:
+        full_response = ""
+        tokens_used = 0
+
+        async for chunk in ai_service.stream_response(
+            provider=body.provider,
+            model=body.model,
+            messages=messages,
+            api_key=api_key,
+            zero_fluff=False,
+            max_tokens=500,
+        ):
+            if chunk.startswith("data: "):
+                try:
+                    data = json.loads(chunk[6:])
+                    if data.get("type") == "text":
+                        full_response += data.get("content", "")
+                    elif data.get("type") == "done":
+                        tokens_data = data.get("tokens", {})
+                        tokens_used = tokens_data.get("input", 0) + tokens_data.get("output", 0)
+                    elif data.get("type") == "error":
+                        raise HTTPException(
+                            status_code=502,
+                            detail=data.get("error", "AI provider error"),
+                        )
+                except json.JSONDecodeError:
+                    continue
+
+        if not full_response:
+            raise HTTPException(status_code=502, detail="No response from AI provider")
+
+        logger.info(f"Prompt maker used by {user_id}: {tokens_used} tokens")
+
+        return {
+            "improved_prompt": full_response.strip(),
+            "original": body.rough_text,
+            "tokens_used": tokens_used,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Prompt maker error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate improved prompt")
 
 
 STORAGE_TYPE_BY_PLAN = {
