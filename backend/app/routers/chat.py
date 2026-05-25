@@ -20,6 +20,7 @@ from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.services.search_service import search_service
 from app.tasks.research_task import run_deep_research
+from app.services.circuit_breaker import circuit_breaker as provider_circuit_breaker
 from app.utils.constants import SUPPORTED_PROVIDERS
 from app.utils.helpers import check_token_abuse, circuit_breaker
 from app.worker import celery_app
@@ -95,6 +96,25 @@ PROMPT_MAKER_SYSTEM = (
 async def get_providers() -> list[dict]:
     """Get list of supported AI providers and their models. No auth required."""
     return SUPPORTED_PROVIDERS
+
+
+@router.get("/providers/health")
+async def get_providers_health(
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Get health status of all AI providers.
+
+    Returns circuit breaker state for each tracked provider.
+    Healthy = closed circuit, degraded = half-open, unhealthy = open.
+
+    Args:
+        current_user: Authenticated user.
+
+    Returns:
+        Dictionary with providers health map.
+    """
+    health = await provider_circuit_breaker.get_provider_health()
+    return {"providers": health}
 
 
 @router.get("/task/{task_id}")
