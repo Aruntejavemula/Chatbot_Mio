@@ -13,6 +13,7 @@ import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/chat_service.dart';
+import '../../widgets/chat/document_viewer_widget.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/plus_panel_widget.dart';
@@ -218,7 +219,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                               resetsIn: (tokenCap['resets_in'] as String?) ?? '',
                               onAddKey: () => context.go(AppRoutes.apiKeys),
                             ),
-                          if (_selectedFiles.isNotEmpty) _buildFilePreviewBar(isDark),
+                          if (_selectedFiles.isNotEmpty)
+                            DocumentViewerWidget(
+                              files: _selectedFiles,
+                              onRemoveFile: (int index) {
+                                setState(() {
+                                  _selectedFiles.removeAt(index);
+                                });
+                              },
+                              isDark: isDark,
+                            ),
                           PlusPanelWidget(
                             isOpen: _isPanelOpen,
                             onToggle: _togglePanel,
@@ -748,32 +758,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildFilePreviewBar(bool isDark) {
-    return Container(
-      color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: _selectedFiles.asMap().entries.map((entry) {
-          final index = entry.key;
-          final fileInfo = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: FileUploadWidget.buildFilePreview(
-              fileInfo: fileInfo,
-              isDark: isDark,
-              onRemove: () {
-                setState(() {
-                  _selectedFiles.removeAt(index);
-                });
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildInputBar(bool isDark) {
     return Container(
       decoration: BoxDecoration(
@@ -807,17 +791,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Plus button with rotation
+            // Plus button with rotation and file badge
             GestureDetector(
               onTap: _togglePanel,
-              child: AnimatedRotation(
-                turns: _isPanelOpen ? 0.125 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                child: Icon(
-                  Icons.add,
-                  size: 22,
-                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Center(
+                      child: AnimatedRotation(
+                        turns: _isPanelOpen ? 0.125 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        child: Icon(
+                          Icons.add,
+                          size: 22,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                    if (_selectedFiles.isNotEmpty)
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: const BoxDecoration(
+                            color: AppColors.persian,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${_selectedFiles.length}',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
