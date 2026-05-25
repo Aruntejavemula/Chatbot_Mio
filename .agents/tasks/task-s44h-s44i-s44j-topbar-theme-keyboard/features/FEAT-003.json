@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "S44J - Keyboard + Touch Enhancements: Add desktop Enter-to-send (Shift+Enter for newline), auto-focus on desktop, haptic feedback on mobile, message long-press context menu, and scroll-to-bottom button with auto-scroll behavior.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "KEYBOARD BEHAVIOR in chat_screen.dart: Verify resizeToAvoidBottomInset: true is already set (it is). Add Enter-to-send for desktop: Wrap the TextField in the input bar with a KeyboardListener (or use onKeyEvent on the TextField's FocusNode). Detect Platform.isMacOS || Platform.isWindows || Platform.isLinux. If desktop and user presses Enter without Shift held, call _sendMessage() and consume the event. If Shift+Enter, allow newline. On mobile/tablet, Enter = newline as current behavior. Import dart:io for Platform. Also add auto-focus: in initState or didChangeDependencies, if Platform is desktop, request focus on _focusNode after frame.",
     "HAPTIC FEEDBACK (mobile only): Import package:flutter/services.dart (already imported in chat_bubble.dart, add to chat_screen.dart). Add HapticFeedback.mediumImpact() on send button tap (inside _sendMessage, guarded by Platform.isIOS || Platform.isAndroid). Add HapticFeedback.lightImpact() on panel open/close (_togglePanel). Add HapticFeedback.heavyImpact() in chat_bubble.dart on long press (new). Add HapticFeedback.heavyImpact() when tokenCap warning appears (in the build method where tokenCap != null is first set). Add HapticFeedback.mediumImpact() when showing error snackbars. All guarded by Platform.isIOS || Platform.isAndroid.",

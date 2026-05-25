@@ -1,8 +1,11 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -14,11 +17,15 @@ import 'artifact_viewer.dart';
 class ChatBubble extends StatefulWidget {
   final MessageModel message;
   final bool isLast;
+  final VoidCallback? onRegenerate;
+  final Function(String)? onEditResend;
 
   const ChatBubble({
     super.key,
     required this.message,
     this.isLast = false,
+    this.onRegenerate,
+    this.onEditResend,
   });
 
   @override
@@ -95,7 +102,10 @@ class _ChatBubbleState extends State<ChatBubble>
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeController,
-        child: _isUser ? _buildUserBubble(context) : _buildAiBubble(context),
+        child: GestureDetector(
+          onLongPress: () => _showContextMenu(context),
+          child: _isUser ? _buildUserBubble(context) : _buildAiBubble(context),
+        ),
       ),
     );
   }
@@ -473,6 +483,115 @@ class _ChatBubbleState extends State<ChatBubble>
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 color: AppColors.persian,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showContextMenu(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    try {
+      if (Platform.isIOS || Platform.isAndroid) {
+        HapticFeedback.heavyImpact();
+      }
+    } catch (_) {}
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildContextOption(
+                context: sheetContext,
+                icon: Icons.copy_outlined,
+                label: 'Copy',
+                isDark: isDark,
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Clipboard.setData(ClipboardData(text: widget.message.content));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Copied')),
+                  );
+                },
+              ),
+              if (widget.message.content.isNotEmpty)
+                _buildContextOption(
+                  context: sheetContext,
+                  icon: Icons.ios_share_outlined,
+                  label: 'Share',
+                  isDark: isDark,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Share.share(widget.message.content);
+                  },
+                ),
+              if (!_isUser && widget.onRegenerate != null)
+                _buildContextOption(
+                  context: sheetContext,
+                  icon: Icons.refresh_outlined,
+                  label: 'Regenerate',
+                  isDark: isDark,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    widget.onRegenerate!();
+                  },
+                ),
+              if (_isUser && widget.onEditResend != null)
+                _buildContextOption(
+                  context: sheetContext,
+                  icon: Icons.edit_outlined,
+                  label: 'Edit & Resend',
+                  isDark: isDark,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    widget.onEditResend!(widget.message.content);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContextOption({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: textColor),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: textColor,
               ),
             ),
           ],

@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,6 +53,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   List<SelectedFileInfo> _selectedFiles = [];
   late AnimationController _sendButtonAnimController;
   bool _isPanelOpen = false;
+  bool _showScrollButton = false;
+  late AnimationController _scrollButtonAnimController;
+  late Animation<double> _scrollButtonFadeAnimation;
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -69,6 +75,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         .toList();
   }
 
+  bool get _isDesktop {
+    try {
+      return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool get _isMobile {
+    try {
+      return Platform.isIOS || Platform.isAndroid;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -81,9 +103,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       upperBound: 1.0,
       value: 1.0,
     );
+    _scrollButtonAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scrollButtonFadeAnimation = CurvedAnimation(
+      parent: _scrollButtonAnimController,
+      curve: Curves.easeOut,
+    );
+    _scrollController.addListener(_onScrollChanged);
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
     });
+    if (_isDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
   }
 
   @override
@@ -92,16 +128,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _focusNode.dispose();
     _scrollController.dispose();
     _sendButtonAnimController.dispose();
+    _scrollButtonAnimController.dispose();
     super.dispose();
   }
 
   void _togglePanel() {
+    if (_isMobile) HapticFeedback.lightImpact();
     setState(() => _isPanelOpen = !_isPanelOpen);
   }
 
   void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
+    if (_isMobile) HapticFeedback.mediumImpact();
     _inputController.clear();
     setState(() {
       _hasText = false;
@@ -109,12 +148,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     });
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
+      if (_isMobile) HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please sign in to chat')),
       );
       return;
     }
     if (_selectedModel == 'Think now') {
+      if (_isMobile) HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a model first')),
       );
@@ -128,13 +169,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+        final distanceFromBottom = maxScroll - currentScroll;
+
+        if (distanceFromBottom <= 100) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
       }
     });
+  }
+
+  void _onScrollChanged() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    final distanceFromBottom = maxScroll - currentScroll;
+
+    if (distanceFromBottom > 200 && !_showScrollButton) {
+      setState(() => _showScrollButton = true);
+      _scrollButtonAnimController.forward();
+    } else if (distanceFromBottom <= 200 && _showScrollButton) {
+      _scrollButtonAnimController.reverse().then((_) {
+        if (mounted) setState(() => _showScrollButton = false);
+      });
+    }
   }
 
   @override
@@ -149,6 +212,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     ref.watch(isAuthenticatedProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    ref.listen<Map<String, Object?>?>(tokenCapProvider, (prev, next) {
+      if (prev == null && next != null && _isMobile) {
+        HapticFeedback.heavyImpact();
+      }
+    });
 
     if (messages.isNotEmpty || isStreaming) {
       _scrollToBottom();
@@ -253,6 +322,48 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                           setState(() => _isSidebarOpen = false);
                           context.go(AppRoutes.chat);
                         },
+                      ),
+                    // Scroll to bottom button
+                    if (_showScrollButton)
+                      Positioned(
+                        bottom: 80,
+                        right: 16,
+                        child: FadeTransition(
+                          opacity: _scrollButtonFadeAnimation,
+                          child: GestureDetector(
+                            onTap: () {
+                              _scrollController.animateTo(
+                                _scrollController.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                              );
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+                                border: Border.all(
+                                  color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 20,
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -544,6 +655,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
                 } catch (e) {
                   if (mounted) {
+                    if (_isMobile) HapticFeedback.mediumImpact();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Failed to rename chat: $e')),
                     );
@@ -668,6 +780,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                   if (mounted) context.go(AppRoutes.chat);
                 } catch (e) {
                   if (mounted) {
+                    if (_isMobile) HapticFeedback.mediumImpact();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Failed to delete chat: $e')),
                     );
@@ -1193,27 +1306,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             const SizedBox(width: 8),
             // Text field
             Expanded(
-              child: TextField(
-                controller: _inputController,
-                focusNode: _focusNode,
-                decoration: InputDecoration(
-                  hintText: AppStrings.chatPlaceholder,
-                  hintStyle: GoogleFonts.dmSans(
-                    fontSize: 15,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (_isDesktop &&
+                      event is KeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.enter) {
+                    if (!HardwareKeyboard.instance.isShiftPressed) {
+                      _sendMessage();
+                      return KeyEventResult.handled;
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: _inputController,
+                  focusNode: _focusNode,
+                  decoration: InputDecoration(
+                    hintText: AppStrings.chatPlaceholder,
+                    hintStyle: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
                   ),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  ),
+                  maxLines: 6,
+                  minLines: 1,
+                  textInputAction: TextInputAction.newline,
+                  onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
                 ),
-                style: GoogleFonts.dmSans(
-                  fontSize: 15,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                ),
-                maxLines: 6,
-                minLines: 1,
-                textInputAction: TextInputAction.newline,
-                onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
               ),
             ),
             const SizedBox(width: 8),
