@@ -7,10 +7,14 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/router.dart';
+import '../../../data/models/project_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
+import '../../screens/projects/create_project_sheet.dart';
 import 'chat_item.dart';
+
+final projectsProvider = StateProvider<List<ProjectModel>>((ref) => []);
 
 class SidebarWidget extends ConsumerStatefulWidget {
   final bool isOpen;
@@ -225,6 +229,12 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
               textMuted: textMuted,
               isMobile: isMobile,
             ),
+            // Projects section
+            _buildProjectsSection(
+              textMuted: textMuted,
+              borderDefault: borderDefault,
+              isMobile: isMobile,
+            ),
             // Chat list
             Expanded(
               child: _buildChatList(
@@ -348,6 +358,143 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
         ],
       ),
     );
+  }
+
+  Widget _buildProjectsSection({
+    required Color textMuted,
+    required Color borderDefault,
+    required bool isMobile,
+  }) {
+    final bool isProPlan = true;
+    if (!isProPlan) return const SizedBox.shrink();
+
+    final projects = ref.watch(projectsProvider);
+    if (projects.isEmpty && !isProPlan) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final displayProjects = projects.length > 5 ? projects.sublist(0, 5) : projects;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Text(
+                'PROJECTS',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                  color: textMuted,
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 16,
+                  icon: Icon(Icons.add_outlined, color: textMuted, size: 16),
+                  onPressed: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (sheetContext) => CreateProjectSheet(
+                        onCreated: (name, color, systemPrompt) {
+                          // Placeholder: would call service and refresh
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Project items
+          ...displayProjects.map((project) => GestureDetector(
+                onTap: () {
+                  context.go('/projects/${project.id}');
+                  if (isMobile) {
+                    widget.onClose();
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _parseProjectColor(project.color),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          project.name,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            color: textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '0',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+          // See all link
+          if (projects.length > 5)
+            GestureDetector(
+              onTap: () {
+                context.go(AppRoutes.projects);
+                if (isMobile) {
+                  widget.onClose();
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: Text(
+                  'See all',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    color: AppColors.persian,
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          Divider(height: 1, color: borderDefault),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
+  Color _parseProjectColor(String hexColor) {
+    final hex = hexColor.replaceFirst('#', '');
+    if (hex.length == 6) {
+      return Color(int.parse('FF$hex', radix: 16));
+    }
+    return AppColors.persian;
   }
 
   Widget _buildChatList({

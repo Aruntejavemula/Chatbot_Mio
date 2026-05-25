@@ -13,6 +13,8 @@ import '../../presentation/screens/settings/settings_screen.dart';
 import '../../presentation/screens/settings/subscription_screen.dart';
 import '../../presentation/screens/settings/storage_screen.dart';
 import '../../presentation/screens/settings/usage_screen.dart';
+import '../../presentation/screens/projects/project_list_screen.dart';
+import '../../presentation/screens/projects/project_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 
 class AppRoutes {
@@ -30,6 +32,9 @@ class AppRoutes {
   static const devices = '/settings/devices';
   static const usage = '/settings/usage';
   static const storage = '/settings/storage';
+  static const projects = '/projects';
+  static const projectDetail = '/projects/:projectId';
+  static const projectNewChat = '/projects/:projectId/new-chat';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -111,6 +116,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.storage,
         builder: (context, state) => const StorageScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.projects,
+        builder: (context, state) => const ProjectListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.projectDetail,
+        builder: (context, state) {
+          final projectId = state.pathParameters['projectId']!;
+          return ProjectScreen(projectId: projectId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.projectNewChat,
+        builder: (context, state) {
+          return const ChatScreen(chatId: null);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
