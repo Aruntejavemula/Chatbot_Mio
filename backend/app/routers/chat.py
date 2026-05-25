@@ -5,15 +5,17 @@ import logging
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from supabase import Client
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.middleware.security_middleware import security_middleware
 from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate, MessageResponse
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.utils.constants import SUPPORTED_PROVIDERS
+from app.utils.helpers import check_token_abuse, circuit_breaker
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +139,7 @@ async def _get_api_key(supabase: Client, user_id: str, provider: str) -> str:
 
 @router.post("/stream")
 async def stream_message(
+    request: Request,
     body: MessageCreate,
     current_user: dict = Depends(get_current_user),
 ) -> StreamingResponse:
@@ -146,6 +149,19 @@ async def stream_message(
     Validates limits, gets API key, saves messages, streams response.
     """
     user_id = current_user["id"]
+
+    # Security checks
+    await security_middleware.check_account_suspended(user_id)
+    security_middleware.verify_request_headers(request)
+    await security_middleware.check_message_repetition(user_id, body.content)
+    await security_middleware.check_load()
+
+    # Check circuit breaker for provider
+    if await circuit_breaker.is_open(body.provider):
+        raise HTTPException(
+            status_code=503,
+            detail="Provider temporarily unavailable. Try another model.",
+        )
 
     if not body.content or not body.content.strip():
         raise HTTPException(status_code=400, detail="Message content is required")
@@ -284,6 +300,16 @@ async def stream_message(
 
         except Exception as e:
             logger.error(f"Error saving AI response: {str(e)}")
+
+        # Check for token abuse
+        total_tokens = tokens_data["input"] + tokens_data["output"]
+        if total_tokens > 0:
+            redis = await security_middleware._get_redis()
+            await check_token_abuse(user_id, total_tokens, redis)
+
+        await security_middleware.decrement_active_streams()
+
+    await security_middleware.increment_active_streams()
 
     return StreamingResponse(
         generate(),
