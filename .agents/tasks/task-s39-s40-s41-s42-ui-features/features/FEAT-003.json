@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "S41 - Cloud Storage Sync UI: Add icloud_storage to pubspec.yaml, create storage_screen.dart and sync_service.dart. Add route and settings tile.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Update frontend/pubspec.yaml: add icloud_storage: ^2.1.0 under dependencies",
     "Add route to frontend/lib/core/utils/router.dart: static const storage = '/settings/storage' in AppRoutes. Add GoRoute for the path pointing to StorageScreen. Add import.",

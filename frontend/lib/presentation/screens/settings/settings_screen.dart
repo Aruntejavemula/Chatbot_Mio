@@ -109,6 +109,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             isDark: isDark,
           ),
 
+          // STORAGE section
+          _buildSectionHeader('STORAGE', isDark),
+          _buildTile(
+            icon: Icons.cloud_outlined,
+            title: 'Storage & Sync',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            onTap: () => context.go(AppRoutes.storage),
+            isDark: isDark,
+          ),
+
           // APPEARANCE section
           _buildSectionHeader('APPEARANCE', isDark),
           _buildThemeTile(isDark, currentTheme),
