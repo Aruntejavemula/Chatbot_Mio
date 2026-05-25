@@ -1,7 +1,11 @@
 """Mio API - FastAPI backend for Mio chatbot application."""
 
-from fastapi import FastAPI
+import asyncio
+
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
 from app.routers import (
@@ -32,6 +36,50 @@ app = FastAPI(
     description="Backend API for Mio AI chatbot",
     version="1.0.0",
 )
+
+
+# Timeout middleware
+class TimeoutMiddleware(BaseHTTPMiddleware):
+    """Middleware to enforce request timeout."""
+
+    def __init__(self, app: FastAPI, timeout: float = 30.0) -> None:
+        super().__init__(app)
+        self.timeout = timeout
+
+    async def dispatch(self, request: Request, call_next):
+        try:
+            response = await asyncio.wait_for(
+                call_next(request), timeout=self.timeout
+            )
+            return response
+        except asyncio.TimeoutError:
+            return Response(
+                content='{"detail":"Request timeout"}',
+                status_code=504,
+                media_type="application/json",
+            )
+
+
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=()"
+        )
+        return response
+
+
+# Add middlewares (order matters - last added is executed first)
+app.add_middleware(TimeoutMiddleware, timeout=30.0)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS middleware
 app.add_middleware(

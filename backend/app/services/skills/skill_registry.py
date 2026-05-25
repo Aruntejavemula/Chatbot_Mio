@@ -6,24 +6,28 @@ from typing import Any
 from app.services.skills.base_skill import BaseSkill
 from app.services.skills.calculator_skill import CalculatorSkill
 from app.services.skills.code_runner_skill import CodeRunnerSkill
+from app.services.skills.email_writer_skill import EmailWriterSkill
 from app.services.skills.image_gen_skill import ImageGenSkill
 from app.services.skills.translator_skill import TranslatorSkill
+from app.services.skills.web_scraper_skill import WebScraperSkill
 from app.services.skills.web_search_skill import WebSearchSkill
 
 logger = logging.getLogger(__name__)
 
 PLAN_SKILLS: dict[str, list[str]] = {
     "free": [],
-    "basic": ["web_search", "calculator", "translator"],
-    "pro": ["web_search", "calculator", "translator", "image_generation", "code_runner"],
+    "basic": ["web_search", "calculator", "translator", "email_writer"],
+    "pro": ["web_search", "calculator", "translator", "image_generation", "code_runner", "web_scraper", "email_writer"],
 }
 
 SKILL_METADATA: list[dict[str, str]] = [
     {"name": "web_search", "label": "Web Search", "icon": "search", "plan": "basic"},
     {"name": "calculator", "label": "Calculator", "icon": "calculate", "plan": "basic"},
     {"name": "translator", "label": "Translator", "icon": "translate", "plan": "basic"},
+    {"name": "email_writer", "label": "Email Writer", "icon": "email", "plan": "basic"},
     {"name": "image_generation", "label": "Image Generation", "icon": "image", "plan": "pro"},
     {"name": "code_runner", "label": "Code Runner", "icon": "code", "plan": "pro"},
+    {"name": "web_scraper", "label": "Web Scraper", "icon": "language", "plan": "pro"},
 ]
 
 
@@ -64,3 +68,5 @@ skill_registry.register(CalculatorSkill())
 skill_registry.register(TranslatorSkill())
 skill_registry.register(ImageGenSkill())
 skill_registry.register(CodeRunnerSkill())
+skill_registry.register(WebScraperSkill())
+skill_registry.register(EmailWriterSkill())
