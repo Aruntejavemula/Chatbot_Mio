@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/loading_words.dart';
+import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
@@ -29,7 +31,7 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStateMixin {
   bool _isSidebarOpen = false;
   bool _isModelDropdownOpen = false;
   String _selectedModel = 'Think now';
@@ -43,6 +45,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   late ScrollController _scrollController;
   final ChatService _chatService = ChatService();
   List<SelectedFileInfo> _selectedFiles = [];
+  late AnimationController _sendButtonAnimController;
+  double _sendButtonScale = 1.0;
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -68,6 +72,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _inputController = TextEditingController();
     _focusNode = FocusNode();
     _scrollController = ScrollController();
+    _sendButtonAnimController = AnimationController(
+      vsync: this,
+      lowerBound: 0.88,
+      upperBound: 1.0,
+      value: 1.0,
+    );
+    _sendButtonAnimController.addListener(() {
+      setState(() => _sendButtonScale = _sendButtonAnimController.value);
+    });
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
     });
@@ -78,6 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _inputController.dispose();
     _focusNode.dispose();
     _scrollController.dispose();
+    _sendButtonAnimController.dispose();
     super.dispose();
   }
 
@@ -840,24 +854,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ],
             // Send button
             GestureDetector(
-              onTap: _hasText ? _sendMessage : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _hasText
-                      ? AppColors.persian
-                      : (isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.arrow_upward,
-                    size: 18,
+              onTapDown: _hasText
+                  ? (_) {
+                      _sendButtonAnimController.animateTo(
+                        0.88,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  : null,
+              onTapUp: _hasText
+                  ? (_) {
+                      final simulation = SpringSimulation(
+                        MioAnimations.spring,
+                        _sendButtonAnimController.value,
+                        1.0,
+                        0,
+                      );
+                      _sendButtonAnimController.animateWith(simulation);
+                      _sendMessage();
+                    }
+                  : null,
+              onTapCancel: _hasText
+                  ? () {
+                      final simulation = SpringSimulation(
+                        MioAnimations.spring,
+                        _sendButtonAnimController.value,
+                        1.0,
+                        0,
+                      );
+                      _sendButtonAnimController.animateWith(simulation);
+                    }
+                  : null,
+              child: Transform.scale(
+                scale: _sendButtonScale,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
                     color: _hasText
-                        ? Colors.white
-                        : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+                        ? AppColors.persian
+                        : const Color(0xFF9CA3AF),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.arrow_upward_rounded,
+                      size: 22,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
