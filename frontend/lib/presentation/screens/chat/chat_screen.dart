@@ -11,6 +11,7 @@ import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../widgets/chat/file_upload_widget.dart';
+import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/ghost_mascot.dart';
 
@@ -712,6 +713,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _selectedFiles.removeAt(index);
                 });
               },
+            ),
+            const SizedBox(width: 8),
+            // Prompt maker button
+            PromptMakerWidget(
+              hasText: _hasText,
+              inputController: _inputController,
+              onPromptImproved: (String text) {
+                setState(() {
+                  _inputController.text = text;
+                  _hasText = text.isNotEmpty;
+                });
+              },
+              selectedProvider: _selectedProvider,
+              selectedModel: _selectedModel,
             ),
             const SizedBox(width: 8),
             // Text field

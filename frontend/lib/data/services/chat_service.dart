@@ -128,4 +128,31 @@ class ChatService extends ApiService {
       rethrow;
     }
   }
+
+  Future<String> makePrompt({
+    required String roughText,
+    required String provider,
+    required String model,
+  }) async {
+    try {
+      final response = await post<Map<String, dynamic>>(
+        '/chat/make-prompt',
+        data: {
+          'rough_text': roughText,
+          'provider': provider,
+          'model': model,
+        },
+      );
+      final data = response.data;
+      if (data == null || !data.containsKey('improved_prompt')) {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          error: 'Invalid response: missing improved_prompt field',
+        );
+      }
+      return data['improved_prompt'] as String;
+    } on DioException {
+      rethrow;
+    }
+  }
 }
