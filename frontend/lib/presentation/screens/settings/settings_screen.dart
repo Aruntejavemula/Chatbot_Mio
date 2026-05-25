@@ -9,6 +9,7 @@ import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
+import '../../widgets/common/trial_banner_widget.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -46,6 +47,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       body: ListView(
         children: [
+          const TrialBannerWidget(),
+          const SizedBox(height: 8),
           // ACCOUNT section
           _buildSectionHeader('ACCOUNT', isDark),
           _buildUserInfoTile(isDark, user),

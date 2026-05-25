@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -13,6 +14,9 @@ class SubscriptionScreen extends ConsumerStatefulWidget {
 }
 
 class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
+  static const String _stripePortalUrl =
+      'https://billing.stripe.com/p/login/placeholder';
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -38,13 +42,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingCard),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Current plan card
             _buildCurrentPlanCard(isDark),
             const SizedBox(height: 24),
-            // Free card
             _buildPlanCard(
               isDark: isDark,
               name: 'Free',
@@ -59,11 +62,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               ],
               buttonText: 'Current Plan',
               isCurrentPlan: true,
-              borderColor:
-                  isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+              borderColor: isDark
+                  ? AppColors.darkBorderDefault
+                  : AppColors.borderDefault,
             ),
             const SizedBox(height: 12),
-            // Basic card
             _buildPlanCard(
               isDark: isDark,
               name: 'Basic',
@@ -74,15 +77,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 _FeatureItem('100 messages per day', true),
                 _FeatureItem('Google Drive sync', true),
                 _FeatureItem('All models', true),
-                _FeatureItem('Encrypted key storage', true),
-                _FeatureItem('Included tokens', false),
+                _FeatureItem('Encrypted storage', true),
               ],
               buttonText: 'Upgrade to Basic',
               borderColor: AppColors.persian,
               onButtonPressed: () => debugPrint('upgrade to basic'),
             ),
             const SizedBox(height: 12),
-            // Pro card
             _buildPlanCard(
               isDark: isDark,
               name: 'Pro',
@@ -103,6 +104,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               onButtonPressed: () => debugPrint('upgrade to pro'),
             ),
             const SizedBox(height: 32),
+            _buildManageSection(isDark),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -111,7 +114,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
   Widget _buildCurrentPlanCard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSizes.paddingScreen),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
         border: Border.all(
@@ -182,7 +185,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     VoidCallback? onButtonPressed,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSizes.paddingScreen),
       decoration: BoxDecoration(
         color: isPro ? const Color(0x0DCC5801) : null,
         border: Border.all(color: borderColor),
@@ -191,7 +194,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Plan name row
           Row(
             children: [
               Text(
@@ -232,8 +234,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Features
           ...features.map((feature) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
@@ -261,8 +261,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 ),
               )),
           const SizedBox(height: 16),
-
-          // Button
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -331,6 +329,166 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           ),
                         ),
                       ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManageSection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            'MANAGE',
+            style: GoogleFonts.dmSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+        _buildManageTile(
+          icon: Icons.receipt_long_outlined,
+          title: 'Manage Subscription',
+          subtitle: 'Open Stripe billing portal',
+          isDark: isDark,
+          onTap: _openStripePortal,
+        ),
+        const SizedBox(height: 4),
+        _buildManageTile(
+          icon: Icons.cancel_outlined,
+          title: 'Cancel Subscription',
+          isDark: isDark,
+          titleColor: AppColors.error,
+          iconColor: AppColors.error,
+          onTap: () => _showCancelDialog(isDark),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildManageTile({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required bool isDark,
+    Color? titleColor,
+    Color? iconColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: iconColor ??
+                  (isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: titleColor ??
+                          (isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary),
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openStripePortal() async {
+    try {
+      final uri = Uri.parse(_stripePortalUrl);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open billing portal')),
+        );
+      }
+    }
+  }
+
+  void _showCancelDialog(bool isDark) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+        title: Text(
+          'Cancel Subscription',
+          style: GoogleFonts.dmSans(
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.',
+          style: GoogleFonts.dmSans(
+            color:
+                isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              'Keep Subscription',
+              style: GoogleFonts.dmSans(
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              debugPrint('cancel subscription confirmed');
+            },
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.dmSans(
+                color: AppColors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
