@@ -34,6 +34,9 @@ class AppConstants {
   // UI
   static const int usageRefreshIntervalSeconds = 60;
 
+  // Agent
+  static const int agentMaxSteps = 10;
+
   // Cost Protection
   static const int defaultDailyTokenLimit = 100000;
 
