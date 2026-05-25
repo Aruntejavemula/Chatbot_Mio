@@ -7,6 +7,7 @@ Never work on main branch.
 Never expose secrets in frontend.
 Frontend never calls Supabase directly.
 All work on feature branches only.
+
 # Mio App — Project Rules
 
 ## Branch Strategy
@@ -178,4 +179,3 @@ Backend (FastAPI):
 - Never skip rate limiting
 - Never hardcode values
 - Never commit .env files
-

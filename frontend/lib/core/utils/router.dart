@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../data/repositories/auth_repository.dart';
 import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/auth/onboarding_screen.dart';
 import '../../presentation/screens/auth/welcome_screen.dart';
 import '../../presentation/screens/chat/chat_screen.dart';
 import '../../presentation/screens/settings/api_keys_screen.dart';
@@ -18,6 +19,7 @@ class AppRoutes {
   static const splash = '/';
   static const welcome = '/welcome';
   static const login = '/login';
+  static const onboarding = '/onboarding';
   static const chat = '/chat';
   static const chatDetail = '/chat/:chatId';
   static const settings = '/settings';
@@ -38,6 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         AppRoutes.splash,
         AppRoutes.welcome,
         AppRoutes.login,
+        AppRoutes.onboarding,
       ];
 
       if (!isAuthenticated) {
@@ -65,6 +68,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.chat,
