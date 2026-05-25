@@ -19,9 +19,14 @@ class Settings(BaseSettings):
     STRIPE_PRO_PRICE_ID_MONTHLY: str = ""
     STRIPE_PRO_PRICE_ID_ANNUAL: str = ""
 
+    STRIPE_MIDDLE_BASIC_PRICE_ID: str = ""
+    STRIPE_MIDDLE_PRO_PRICE_ID: str = ""
+
     # Razorpay
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_BASIC_PLAN_ID: str = ""
+    RAZORPAY_PRO_PLAN_ID: str = ""
 
     # Redis
     UPSTASH_REDIS_URL: str = ""
