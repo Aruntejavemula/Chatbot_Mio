@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "S37: Artifact Viewer - Create ArtifactViewer widget that detects code/HTML/markdown artifacts in AI responses and shows them in a full-screen modal with syntax highlighting, HTML preview toggle, and copy/download actions. Integrate with chat_bubble.dart.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create frontend/lib/presentation/widgets/chat/artifact_viewer.dart with: (a) ArtifactType enum (code, html, markdown, chart, unknown), (b) Static method detectArtifactType(String content) that parses message content - if contains ```html -> html, if contains ```dart/python/js/ts etc -> code, if long structured text with # headers -> markdown, default unknown, (c) ArtifactViewer StatefulWidget with props: content (String), artifactType (ArtifactType)",
     "Build the artifact modal (full screen) in artifact_viewer.dart: (a) Background bgPrimary, (b) Top bar with title showing detected type, close X button on right, copy button that copies artifact content, (c) For HTML type: toggle tabs 'Preview' | 'Code', (d) Code artifact view: dark background #0D0D0D, JetBrains Mono 13px, horizontally scrollable, line numbers on left, copy button top right, (e) HTML artifact view: placeholder for WebView (use webview_flutter), toggle to source code, (f) Markdown artifact view: rendered with flutter_markdown, clean document style, (g) Bottom bar with placeholder Run button (for code), download button, share button",

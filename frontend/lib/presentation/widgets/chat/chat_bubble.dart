@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../data/models/message_model.dart';
+import 'artifact_viewer.dart';
 
 class ChatBubble extends StatefulWidget {
   final MessageModel message;
@@ -199,6 +200,8 @@ class _ChatBubbleState extends State<ChatBubble>
               ],
             ),
           ),
+          // Artifact detection
+          _buildArtifactButton(context),
         ],
       ),
     );
@@ -422,6 +425,46 @@ class _ChatBubbleState extends State<ChatBubble>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildArtifactButton(BuildContext context) {
+    final artifactType =
+        ArtifactViewer.detectArtifactType(widget.message.content);
+    if (artifactType == ArtifactType.unknown) {
+      return const SizedBox.shrink();
+    }
+
+    final label =
+        artifactType == ArtifactType.html ? 'Preview' : 'View';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: GestureDetector(
+        onTap: () => ArtifactViewer.showArtifactModal(
+          context,
+          widget.message.content,
+          artifactType,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.open_in_new,
+              size: 14,
+              color: AppColors.persian,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: AppColors.persian,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
