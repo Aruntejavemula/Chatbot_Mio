@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -107,87 +108,67 @@ class _ConnectorsScreenState extends ConsumerState<ConnectorsScreen> {
   }
 
   Widget _buildConnectorCard(ConnectorModel connector, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-        border: Border.all(
-          color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+    return GestureDetector(
+      onTap: () => context.go('/settings/connectors/${connector.name}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+          border: Border.all(
+            color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+          ),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         ),
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
-              shape: BoxShape.circle,
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.extension_outlined,
+                size: 24,
+                color: AppColors.persian,
+              ),
             ),
-            child: const Icon(
-              Icons.extension_outlined,
-              size: 24,
-              color: AppColors.persian,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  connector.label,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    connector.label,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  connector.description,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 12,
-                    color: isDark
-                        ? AppColors.darkTextMuted
-                        : AppColors.textMuted,
+                  Text(
+                    connector.description,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (connector.isConnected)
-            TextButton(
-              onPressed: () => _disconnect(connector.name),
-              child: Text(
-                'Disconnect',
-                style: GoogleFonts.dmSans(
-                  fontSize: 12,
-                  color: AppColors.error,
-                ),
-              ),
-            )
-          else
-            ElevatedButton(
-              onPressed: () => _connect(connector.name),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.persian,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              child: Text(
-                'Connect',
-                style: GoogleFonts.dmSans(fontSize: 13),
+                ],
               ),
             ),
-        ],
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

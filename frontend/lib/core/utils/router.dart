@@ -12,6 +12,7 @@ import '../../presentation/screens/settings/devices_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
 import '../../presentation/screens/settings/subscription_screen.dart';
 import '../../presentation/screens/settings/connectors_screen.dart';
+import '../../presentation/screens/settings/connector_detail_screen.dart';
 import '../../presentation/screens/settings/memory_screen.dart';
 import '../../presentation/screens/settings/storage_screen.dart';
 import '../../presentation/screens/settings/usage_screen.dart';
@@ -36,6 +37,7 @@ class AppRoutes {
   static const usage = '/settings/usage';
   static const storage = '/settings/storage';
   static const connectors = '/settings/connectors';
+  static const connectorDetail = '/settings/connectors/:name';
   static const memory = '/settings/memory';
   static const projects = '/projects';
   static const projectDetail = '/projects/:projectId';
@@ -188,6 +190,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const ConnectorsScreen(),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.connectorDetail,
+        pageBuilder: (context, state) {
+          final name = state.pathParameters['name']!;
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: ConnectorDetailScreen(connectorName: name),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.memory,
