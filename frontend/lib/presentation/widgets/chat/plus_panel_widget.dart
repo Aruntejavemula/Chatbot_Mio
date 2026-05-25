@@ -41,35 +41,39 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
       duration: Duration(milliseconds: widget.isOpen ? 300 : 200),
       curve: Curves.easeOutCubic,
       alignment: Alignment.bottomCenter,
-      child: widget.isOpen
-          ? Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-                border: Border(
-                  top: BorderSide(
-                    color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-                    width: 1,
-                  ),
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+      child: ClipRect(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: widget.isOpen ? 1.0 : 0.0,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+              border: Border(
+                top: BorderSide(
+                  color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
+                  width: 1,
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSkillsSection(isDark),
-                  const SizedBox(height: 12),
-                  _buildConnectorsSection(isDark),
-                  const SizedBox(height: 12),
-                  _buildAttachSection(isDark),
-                ],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
-            )
-          : const SizedBox.shrink(),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSkillsSection(isDark),
+                const SizedBox(height: 12),
+                _buildConnectorsSection(isDark),
+                const SizedBox(height: 12),
+                _buildAttachSection(isDark),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

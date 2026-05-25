@@ -48,7 +48,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   final ChatService _chatService = ChatService();
   List<SelectedFileInfo> _selectedFiles = [];
   late AnimationController _sendButtonAnimController;
-  double _sendButtonScale = 1.0;
   bool _isPanelOpen = false;
 
   final List<Map<String, dynamic>> _availableModels = [
@@ -81,9 +80,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       upperBound: 1.0,
       value: 1.0,
     );
-    _sendButtonAnimController.addListener(() {
-      setState(() => _sendButtonScale = _sendButtonAnimController.value);
-    });
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
     });
@@ -817,15 +813,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                         top: -2,
                         right: -2,
                         child: Container(
-                          width: 16,
-                          height: 16,
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: const BoxDecoration(
                             color: AppColors.persian,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
                           child: Center(
                             child: Text(
-                              '${_selectedFiles.length}',
+                              _selectedFiles.length > 9
+                                  ? '9+'
+                                  : '${_selectedFiles.length}',
                               style: GoogleFonts.dmSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -895,61 +893,66 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
               const SizedBox(width: 8),
             ],
             // Send button
-            GestureDetector(
-              onTapDown: _hasText
-                  ? (_) {
-                      _sendButtonAnimController.animateTo(
-                        0.88,
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  : null,
-              onTapUp: _hasText
-                  ? (_) {
-                      final simulation = SpringSimulation(
-                        MioAnimations.spring,
-                        _sendButtonAnimController.value,
-                        1.0,
-                        0,
-                      );
-                      _sendButtonAnimController.animateWith(simulation);
-                      _sendMessage();
-                    }
-                  : null,
-              onTapCancel: _hasText
-                  ? () {
-                      final simulation = SpringSimulation(
-                        MioAnimations.spring,
-                        _sendButtonAnimController.value,
-                        1.0,
-                        0,
-                      );
-                      _sendButtonAnimController.animateWith(simulation);
-                    }
-                  : null,
-              child: Transform.scale(
-                scale: _sendButtonScale,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: _hasText
-                        ? AppColors.persian
-                        : const Color(0xFF9CA3AF),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.arrow_upward_rounded,
-                      size: 22,
-                      color: Colors.white,
+            AnimatedBuilder(
+              animation: _sendButtonAnimController,
+              builder: (context, child) {
+                return GestureDetector(
+                  onTapDown: _hasText
+                      ? (_) {
+                          _sendButtonAnimController.animateTo(
+                            0.88,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOut,
+                          );
+                        }
+                      : null,
+                  onTapUp: _hasText
+                      ? (_) {
+                          final simulation = SpringSimulation(
+                            MioAnimations.spring,
+                            _sendButtonAnimController.value,
+                            1.0,
+                            0,
+                          );
+                          _sendButtonAnimController.animateWith(simulation);
+                          _sendMessage();
+                        }
+                      : null,
+                  onTapCancel: _hasText
+                      ? () {
+                          final simulation = SpringSimulation(
+                            MioAnimations.spring,
+                            _sendButtonAnimController.value,
+                            1.0,
+                            0,
+                          );
+                          _sendButtonAnimController.animateWith(simulation);
+                        }
+                      : null,
+                  child: Transform.scale(
+                    scale: _sendButtonAnimController.value,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: _hasText
+                            ? AppColors.persian
+                            : const Color(0xFF9CA3AF),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 22,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

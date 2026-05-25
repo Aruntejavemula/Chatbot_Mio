@@ -125,11 +125,11 @@ class DocumentViewerWidget extends StatelessWidget {
     }
 
     if (_isTextFile(extension)) {
-      return _buildTextPreview();
+      return _buildTextPreview(fileInfo);
     }
 
     if (fileInfo.type == SelectedFileType.code) {
-      return _buildCodePreview(extension);
+      return _buildCodePreview(fileInfo, extension);
     }
 
     // Default document preview
@@ -192,37 +192,72 @@ class DocumentViewerWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTextPreview() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.description_outlined,
-          size: 28,
-          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Text file',
-          style: GoogleFonts.dmSans(
-            fontSize: 12,
-            color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCodePreview(String extension) {
-    return Stack(
-      children: [
-        Center(
-          child: Icon(
-            Icons.code,
+  Widget _buildTextPreview(SelectedFileInfo fileInfo) {
+    final lines = _readFileLines(fileInfo.path, 3);
+    if (lines == null) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.description_outlined,
             size: 28,
             color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           ),
+          const SizedBox(height: 4),
+          Text(
+            'Text file',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Text(
+        lines.join('\n'),
+        style: GoogleFonts.sourceCodePro(
+          fontSize: 10,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
         ),
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildCodePreview(SelectedFileInfo fileInfo, String extension) {
+    final lines = _readFileLines(fileInfo.path, 2);
+
+    return Stack(
+      children: [
+        if (lines != null)
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                lines.join('\n'),
+                style: GoogleFonts.sourceCodePro(
+                  fontSize: 10,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+        else
+          Center(
+            child: Icon(
+              Icons.code,
+              size: 28,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
+          ),
         Positioned(
           top: 0,
           right: 0,
@@ -266,5 +301,17 @@ class DocumentViewerWidget extends StatelessWidget {
 
   bool _isTextFile(String extension) {
     return ['txt', 'md', 'csv'].contains(extension);
+  }
+
+  List<String>? _readFileLines(String path, int maxLines) {
+    try {
+      final file = File(path);
+      if (!file.existsSync()) return null;
+      final lines = file.readAsLinesSync();
+      if (lines.isEmpty) return null;
+      return lines.take(maxLines).toList();
+    } catch (_) {
+      return null;
+    }
   }
 }
