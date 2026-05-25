@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "test",
   "description": "S100B + S100C: Frontend unit tests and widget tests on branch feature/project-setup-resolved. Add mocktail dependency, create unit tests for models (MessageModel, ProjectModel, ReferralModel, ScheduledTaskModel), utility tests (CostRates, AppConstants, FunnyWarnings), and widget tests (ChatBubble, FunnySnackbar, LoadingIndicator, TrialBannerWidget, TokenCapBanner).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Ensure we are on branch feature/project-setup-resolved (already checked out)",
     "Add mocktail: ^1.0.4 to frontend/pubspec.yaml under dev_dependencies",
@@ -33,5 +33,5 @@
     "cd frontend && flutter test test/widget/"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "1. Flutter not pre-installed - installed from git stable. 2. Pre-existing dependency conflict: share_plus ^9.0.0 incompatible with file_picker ^8.1.2 on this Flutter version - fixed by updating share_plus to ^10.0.0. 3. Pre-existing compile error in ollama_setup_sheet.dart: GoogleFonts.dmSans() does not accept fontFamily parameter - fixed by switching to GoogleFonts.jetBrainsMono() for the monospace code text. 4. Pre-existing failing test: test/widget_test.dart (App renders smoke test) fails due to pending timers from SplashScreen animations - not caused by our changes. 5. LoadingIndicator widget uses repeating animations (AnimationController.repeat) requiring careful timer management in tests - resolved by transitioning back to idle state before test cleanup."
 }
