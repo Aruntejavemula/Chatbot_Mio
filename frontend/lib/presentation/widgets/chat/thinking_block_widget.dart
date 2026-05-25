@@ -1,3 +1,5 @@
+import 'dart:math' show pi;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -116,7 +118,7 @@ class _ThinkingBlockWidgetState extends State<ThinkingBlockWidget>
         animation: _rotationController,
         builder: (context, child) {
           return Transform.rotate(
-            angle: _rotationController.value * 2 * 3.14159265,
+            angle: _rotationController.value * 2 * pi,
             child: Icon(
               Icons.sync,
               size: 16,
