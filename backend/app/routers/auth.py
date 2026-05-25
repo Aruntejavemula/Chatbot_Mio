@@ -1,10 +1,11 @@
-"""Authentication router - handles Google/Apple sign-in and session management."""
+"""Authentication router - handles Google/Apple/Microsoft sign-in and session management."""
 
 import logging
 from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from supabase import Client, create_client
 
 from app.config import get_settings
@@ -237,6 +238,12 @@ async def _check_device_limit(
         return False
 
 
+class MicrosoftSignInRequest(BaseModel):
+    """Request model for Microsoft sign-in."""
+
+    identity_token: str = Field(..., description="Microsoft identity token")
+
+
 @router.post("/google")
 async def google_sign_in(request: Request) -> dict:
     """
@@ -373,6 +380,74 @@ async def apple_sign_in(request: Request) -> dict:
         raise
     except Exception as e:
         logger.error(f"Apple sign-in error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/microsoft")
+async def microsoft_sign_in(
+    body: MicrosoftSignInRequest,
+    request: Request,
+) -> dict:
+    """
+    Sign in with Microsoft identity token.
+    
+    Creates or updates user, subscription, and settings.
+    Returns access token and user data.
+    """
+    try:
+        logger.info("Microsoft sign-in request received")
+
+        supabase = get_supabase_client()
+
+        # Verify with Supabase Auth
+        try:
+            auth_response = supabase.auth.sign_in_with_id_token({
+                "provider": "azure",
+                "token": body.identity_token,
+            })
+        except Exception as e:
+            logger.error(f"Microsoft sign-in failed: {str(e)}")
+            raise HTTPException(status_code=400, detail="Invalid Microsoft token")
+
+        if not auth_response.user:
+            raise HTTPException(status_code=400, detail="Authentication failed")
+
+        auth_user = auth_response.user
+        session = auth_response.session
+
+        # Extract user info
+        user_meta = auth_user.user_metadata or {}
+        email = auth_user.email or ""
+        name = user_meta.get("full_name", user_meta.get("name", email.split("@")[0]))
+        avatar_url = user_meta.get("avatar_url", user_meta.get("picture"))
+
+        # Get or create user
+        user = await _get_or_create_user(
+            supabase, email, name, avatar_url, auth_user.id
+        )
+
+        # Detect country and get/create subscription
+        client_ip = _get_client_ip(request)
+        country_bucket = await get_country_bucket(client_ip)
+        subscription = await _get_or_create_subscription(
+            supabase, auth_user.id, country_bucket
+        )
+
+        # Get or create settings
+        await _get_or_create_settings(supabase, auth_user.id)
+
+        logger.info(f"Microsoft sign-in successful for: {email}")
+
+        return {
+            "token": session.access_token if session else "",
+            "user": user,
+            "subscription": subscription,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Microsoft sign-in error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
