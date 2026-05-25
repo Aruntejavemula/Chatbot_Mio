@@ -1,0 +1,22 @@
+-- Mio App - Seed Data & Setup Instructions
+--
+-- HOW TO USE:
+-- 1. Go to your Supabase project dashboard
+-- 2. Navigate to SQL Editor
+-- 3. First run schema.sql to create all tables
+-- 4. Then run this file for any seed data
+--
+-- IMPORTANT:
+-- - Run schema.sql FIRST before this file
+-- - The backend uses the service role key
+-- - RLS policies are backup security only
+-- - Never expose service role key in frontend
+--
+-- NOTES:
+-- - All tables use UUID primary keys
+-- - All timestamps are TIMESTAMPTZ (UTC)
+-- - Cascade deletes ensure data integrity
+-- - Indexes optimize common query patterns
+
+-- No seed data needed for production
+-- Tables are populated through the API
