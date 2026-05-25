@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../data/services/api_service.dart';
 import '../../../data/services/voice_service.dart';
 
 enum _VoiceInputState { idle, recording, processing, error }
@@ -35,13 +38,13 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
   late final AnimationController _animationController;
   late final AudioRecorder _recorder;
   late final VoiceService _voiceService;
+  String? _currentRecordingPath;
 
   static const int _barCount = 5;
   static const double _barMinHeight = 4.0;
   static const double _barMaxHeight = 24.0;
   static const double _barWidth = 3.0;
   static const double _barSpacing = 2.0;
-  static const String _recordingPath = '/tmp/recording.m4a';
 
   @override
   void initState() {
@@ -51,7 +54,7 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
       duration: const Duration(milliseconds: 300),
     );
     _recorder = AudioRecorder();
-    _voiceService = VoiceService();
+    _voiceService = VoiceService(ApiService());
   }
 
   @override
@@ -59,7 +62,25 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
     _timer?.cancel();
     _animationController.dispose();
     _recorder.dispose();
+    _cleanupRecordingFile();
     super.dispose();
+  }
+
+  Future<String> _generateRecordingPath() async {
+    final directory = await getTemporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return '${directory.path}/recording_$timestamp.m4a';
+  }
+
+  void _cleanupRecordingFile() {
+    final path = _currentRecordingPath;
+    if (path != null) {
+      final file = File(path);
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      _currentRecordingPath = null;
+    }
   }
 
   Future<void> _startRecording() async {
@@ -74,9 +95,12 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
         return;
       }
 
+      final recordingPath = await _generateRecordingPath();
+      _currentRecordingPath = recordingPath;
+
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc),
-        path: _recordingPath,
+        path: recordingPath,
       );
 
       _recordingSeconds = 0;
@@ -135,6 +159,8 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
           _errorMessage = 'Transcription failed';
         });
       }
+    } finally {
+      _cleanupRecordingFile();
     }
   }
 
@@ -146,6 +172,7 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
     } catch (_) {
       // Ignore errors during cancel
     }
+    _cleanupRecordingFile();
     if (mounted) {
       widget.onCancel();
       setState(() => _state = _VoiceInputState.idle);

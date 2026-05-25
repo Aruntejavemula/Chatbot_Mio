@@ -1,21 +1,13 @@
 import 'package:dio/dio.dart';
 
+import 'api_service.dart';
+
 class VoiceService {
   final Dio _dio;
 
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
-  );
-
-  VoiceService()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: _baseUrl,
-            connectTimeout: const Duration(seconds: 60),
-            receiveTimeout: const Duration(seconds: 60),
-          ),
-        );
+  /// Creates a VoiceService that uses the ApiService's Dio instance,
+  /// which includes the JWT auth interceptor for authenticated requests.
+  VoiceService(ApiService apiService) : _dio = apiService.dio;
 
   Future<String> transcribeAudio(String filePath) async {
     try {
@@ -31,6 +23,8 @@ class VoiceService {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
         ),
       );
 

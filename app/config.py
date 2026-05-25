@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     OPENAI_WHISPER_KEY: str = ""
     APP_NAME: str = "Mio"
     DEBUG: bool = False
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     model_config = {
         "env_file": ".env",
