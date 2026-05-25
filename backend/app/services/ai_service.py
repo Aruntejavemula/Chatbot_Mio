@@ -6,6 +6,9 @@ from typing import AsyncGenerator, Optional
 
 import httpx
 
+from app.services.circuit_breaker import circuit_breaker
+from app.services.provider_router import provider_router, ServiceUnavailableError
+
 logger = logging.getLogger(__name__)
 
 ZERO_FLUFF_PROMPT = """You are a direct, efficient assistant. Never use pleasantries like 'Great question!' or 'Certainly!' or 'Of course!' or 'Sure!'. Never use emojis. Never start with filler phrases. Get straight to the answer immediately. Be concise but complete. No yapping. No padding. No unnecessary words."""
@@ -121,6 +124,8 @@ class AIService:
         api_key: str,
         zero_fluff: bool = True,
         max_tokens: int = 4096,
+        user_id: str = "",
+        byok: bool = True,
     ) -> AsyncGenerator[str, None]:
         """
         Stream AI response as SSE chunks.
@@ -132,10 +137,24 @@ class AIService:
             api_key: Decrypted API key
             zero_fluff: Whether to inject zero-fluff system prompt
             max_tokens: Maximum output tokens
+            user_id: User ID for routing decisions
+            byok: Whether user is using their own API key
 
         Yields:
             SSE formatted JSON strings
         """
+        # Route through circuit breaker if using platform tokens
+        if not byok:
+            try:
+                provider, model = await provider_router.route(
+                    preferred_provider=provider,
+                    preferred_model=model,
+                    byok=False,
+                    user_id=user_id,
+                )
+            except ServiceUnavailableError as e:
+                yield f'data: {json.dumps({"type": "error", "error": str(e)})}\n\n'
+                return
         if zero_fluff:
             messages = [{"role": "system", "content": ZERO_FLUFF_PROMPT}] + messages
 
@@ -183,7 +202,9 @@ class AIService:
                     yield chunk
             elif fmt in ("vertex", "bedrock"):
                 yield f'data: {json.dumps({"type": "error", "error": f"{fmt.title()} requires server-side credentials configuration. Contact support to enable."})}\n\n'
+            await circuit_breaker.record_success(provider)
         except Exception as e:
+            await circuit_breaker.record_failure(provider)
             logger.error(f"Stream error for {provider}/{model}: {str(e)}")
             yield f'data: {json.dumps({"type": "error", "error": str(e)})}\n\n'
 
