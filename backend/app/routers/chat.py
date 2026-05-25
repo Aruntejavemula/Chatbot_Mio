@@ -21,6 +21,7 @@ from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
 from app.services.search_service import search_service
 from app.tasks.research_task import run_deep_research
+from app.tasks.background_agent import run_background_agent
 from app.services.circuit_breaker import circuit_breaker as provider_circuit_breaker
 from app.services.skills.skill_registry import skill_registry
 from app.services.skills.code_runner_skill import CodeRunnerSkill
@@ -95,6 +96,16 @@ class ExecuteCodeRequest(BaseModel):
     """Request model for code execution."""
     code: str = Field(..., description="Code to execute", min_length=1)
     language: str = Field(default="python", description="Programming language")
+
+
+class BackgroundAgentRequest(BaseModel):
+    """Request model for background agent execution."""
+    prompt: str = Field(..., description="Prompt/instruction for the agent", min_length=1, max_length=10000)
+    skills: list[str] = Field(default_factory=list, description="Skills to use")
+    connectors: list[str] = Field(default_factory=list, description="Connectors to use")
+    model: str = Field(..., description="Model to use")
+    api_key: Optional[str] = Field(None, description="API key (if not stored)")
+    byok: bool = Field(default=True, description="Whether using own key")
 
 
 PROMPT_MAKER_SYSTEM = (
@@ -562,6 +573,54 @@ async def execute_code(
     code_runner = CodeRunnerSkill()
     result = await code_runner.execute({"code": body.code, "language": body.language})
     return result
+
+
+@router.post("/background-agent")
+async def dispatch_background_agent(
+    body: BackgroundAgentRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Dispatch a background agent as an async task.
+
+    Args:
+        body: Background agent request with prompt, skills, connectors, model.
+        current_user: Authenticated user.
+
+    Returns:
+        Dictionary with task_id and queued status.
+    """
+    user_id = current_user["id"]
+
+    if not body.prompt or not body.prompt.strip():
+        raise HTTPException(status_code=400, detail="Prompt is required")
+
+    supabase = get_supabase_client()
+
+    # Get API key if not provided
+    api_key = body.api_key
+    if not api_key:
+        # Determine provider from model (simple heuristic)
+        provider = "openai"
+        if "claude" in body.model:
+            provider = "anthropic"
+        elif "gemini" in body.model:
+            provider = "google"
+        elif "deepseek" in body.model:
+            provider = "deepseek"
+        api_key = await _get_api_key(supabase, user_id, provider)
+
+    task = run_background_agent.delay(
+        user_id=user_id,
+        prompt=body.prompt,
+        skills=body.skills,
+        connectors=body.connectors,
+        api_key=api_key,
+        model=body.model,
+        byok=body.byok,
+    )
+
+    logger.info("Background agent dispatched for user=%s, task_id=%s", user_id, task.id)
+    return {"task_id": task.id, "status": "queued"}
 
 
 @router.get("/chats")

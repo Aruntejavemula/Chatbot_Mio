@@ -14,6 +14,7 @@ from app.routers import (
     memory,
     tokens,
     devices,
+    scheduled,
     settings,
     payments_stripe,
     payments_razorpay,
@@ -53,6 +54,7 @@ app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(connectors.router, prefix="/connectors", tags=["Connectors"])
 app.include_router(memory.router, prefix="/memory", tags=["Memory"])
 app.include_router(voice.router, prefix="/voice", tags=["Voice"])
+app.include_router(scheduled.router, prefix="/scheduled", tags=["Scheduled Tasks"])
 
 
 @app.get("/health")
