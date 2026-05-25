@@ -1,0 +1,7 @@
+{
+  "task_id": "task-voice-input-ui",
+  "task_description": "Build voice input UI for chat screen using record package as fallback for Wispr Flow, and create backend POST /voice/transcribe endpoint using OpenAI Whisper API",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

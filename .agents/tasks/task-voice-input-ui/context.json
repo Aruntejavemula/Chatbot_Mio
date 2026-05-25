@@ -1,0 +1,23 @@
+{
+  "project_type": "Flutter mobile app + FastAPI backend (to be created)",
+  "language": "Dart (frontend), Python (backend)",
+  "build_system": "Flutter pub (frontend), pip/requirements.txt (backend)",
+  "test_framework": "flutter_test (frontend), pytest (backend - TBD)",
+  "build_command": "flutter analyze (frontend - SDK not available), python -m py_compile app/routers/voice.py (backend)",
+  "test_command": "python -m py_compile app/routers/voice.py",
+  "verification_instructions": "1. Run python -m py_compile on all new Python files. 2. Flutter analyze is not available (no SDK) so use dart analyze or syntax review.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "No Flutter SDK in sandbox. Python 3.12 available. Use py_compile for backend verification.",
+  "environment_constraints": "No Flutter/Dart SDK installed. Python 3.12.13 available. Cannot run flutter analyze. Can verify Python files with py_compile. Branch: feature/project-setup-resolved.",
+  "contribution_requirements": "Never work on main. Strict null safety. No dynamic types. Separate UI from business logic. All routes have auth + rate limiting. Type hints on every Python function. Error handling everywhere. No print statements (use logging). No commented-out code. Constants instead of magic numbers.",
+  "key_patterns": "Frontend: Riverpod ConsumerStatefulWidget pattern, Dio for HTTP via ApiService (singleton with interceptors), AppColors constants, GoogleFonts.dmSans for text styles, clean architecture (core/data/presentation). Backend structure per RULES.md: app/routers/, app/services/, app/models/, app/middleware/, app/utils/.",
+  "relevant_files": [
+    "frontend/lib/presentation/screens/chat/chat_screen.dart",
+    "frontend/lib/presentation/widgets/chat/chat_input.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/data/services/api_service.dart",
+    "frontend/pubspec.yaml",
+    "RULES.md"
+  ],
+  "directory_structure": "Root: RULES.md, README.md, frontend/. Frontend: lib/core/constants/, lib/data/services/, lib/data/repositories/, lib/presentation/screens/chat/, lib/presentation/widgets/chat/. Backend (to create): app/, app/routers/, app/services/, app/middleware/, app/config.py, requirements.txt, .env.example."
+}
