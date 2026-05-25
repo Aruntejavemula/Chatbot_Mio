@@ -16,6 +16,7 @@ from app.models.chat import ChatCreate, ChatResponse, ChatUpdate, MessageCreate,
 from app.routers.keys import get_decrypted_key
 from app.services.ai_service import AIService
 from app.services.encryption_service import EncryptionService
+from app.services.search_service import search_service
 from app.utils.constants import SUPPORTED_PROVIDERS
 from app.utils.helpers import check_token_abuse, circuit_breaker
 
@@ -59,6 +60,19 @@ class MakePromptRequest(BaseModel):
     rough_text: str = Field(..., description="User's rough message to improve")
     provider: str = Field(..., description="BYOK provider to use")
     model: str = Field(..., description="Model to use for prompt improvement")
+
+
+class SearchRequest(BaseModel):
+    """Request model for web search."""
+    query: str = Field(..., description="Search query")
+    num_results: int = Field(default=5, description="Number of results to return", ge=1, le=20)
+
+
+class DeepResearchRequest(BaseModel):
+    """Request model for deep research."""
+    query: str = Field(..., description="Research topic or question")
+    chat_id: str = Field(..., description="Chat ID to save research report to")
+    num_searches: int = Field(default=3, description="Number of search iterations", ge=1, le=5)
 
 
 PROMPT_MAKER_SYSTEM = (
@@ -606,3 +620,87 @@ async def get_messages(
     except Exception as e:
         logger.error(f"Error fetching messages: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch messages")
+
+
+@router.post("/search")
+async def search(
+    body: SearchRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """
+    Search the web for information.
+
+    Requires authentication. Returns search results.
+    """
+    if not body.query or not body.query.strip():
+        raise HTTPException(status_code=400, detail="Search query is required")
+    if len(body.query) > 500:
+        raise HTTPException(status_code=400, detail="Query too long (max 500 characters)")
+
+    try:
+        results = await search_service.web_search(body.query, body.num_results)
+        return {"query": body.query, "results": results}
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Search failed")
+
+
+@router.post("/deep-research")
+async def deep_research(
+    body: DeepResearchRequest,
+    current_user: dict = Depends(get_current_user),
+) -> StreamingResponse:
+    """
+    Perform deep research on a topic. Pro plan only.
+
+    Streams progress updates and saves final report to messages table.
+    """
+    user_id = current_user["id"]
+
+    if not body.query or not body.query.strip():
+        raise HTTPException(status_code=400, detail="Research query is required")
+    if len(body.query) > 1000:
+        raise HTTPException(status_code=400, detail="Query too long (max 1000 characters)")
+
+    supabase = get_supabase_client()
+
+    # Pro plan only check
+    plan = await _get_user_plan(supabase, user_id)
+    if plan != "pro":
+        raise HTTPException(
+            status_code=403,
+            detail="Deep research is available for Pro plan users only. Upgrade to access.",
+        )
+
+    async def generate():
+        final_report = ""
+        async for update in search_service.deep_research(body.query, body.num_searches):
+            yield f"data: {update}\n\n"
+            # Capture final report
+            try:
+                data = json.loads(update)
+                if data.get("stage") == "complete":
+                    final_report = data.get("report", "")
+            except json.JSONDecodeError:
+                pass
+
+        # Save report to messages table
+        if final_report:
+            try:
+                supabase.table("messages").insert({
+                    "chat_id": body.chat_id,
+                    "role": "assistant",
+                    "content": final_report,
+                    "model": "deep-research",
+                }).execute()
+            except Exception as e:
+                logger.error(f"Error saving research report: {str(e)}")
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
