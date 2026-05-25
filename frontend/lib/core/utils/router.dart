@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/repositories/auth_repository.dart';
+import '../../presentation/screens/auth/email_signin_screen.dart';
+import '../../presentation/screens/auth/forgot_password_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/onboarding_screen.dart';
+import '../../presentation/screens/auth/reset_password_screen.dart';
+import '../../presentation/screens/auth/verify_email_screen.dart';
 import '../../presentation/screens/auth/welcome_screen.dart';
 import '../../presentation/screens/chat/chat_screen.dart';
 import '../../presentation/screens/settings/api_keys_screen.dart';
@@ -35,6 +39,10 @@ class AppRoutes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const onboarding = '/onboarding';
+  static const emailSignIn = '/auth/email-sign-in';
+  static const verifyEmail = '/auth/verify-email';
+  static const forgotPassword = '/auth/forgot-password';
+  static const resetPassword = '/auth/reset-password';
   static const chat = '/chat';
   static const chatDetail = '/chat/:chatId';
   static const settings = '/settings';
@@ -95,6 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         AppRoutes.welcome,
         AppRoutes.login,
         AppRoutes.onboarding,
+        AppRoutes.emailSignIn,
+        AppRoutes.verifyEmail,
+        AppRoutes.forgotPassword,
+        AppRoutes.resetPassword,
       ];
 
       if (!isAuthenticated) {
@@ -139,6 +151,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const OnboardingScreen(),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.emailSignIn,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const EmailSignInScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        pageBuilder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: VerifyEmailScreen(email: email),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        pageBuilder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: ResetPasswordScreen(token: token),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.chat,

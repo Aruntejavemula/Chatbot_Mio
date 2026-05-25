@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/animations.dart';
@@ -13,6 +14,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../screens/projects/create_project_sheet.dart';
+import '../chat/message_count_widget.dart';
 import '../chat/usage_indicator_widget.dart';
 import 'chat_item.dart';
 
@@ -644,6 +646,16 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (!isProPlan) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: MessageCountWidget(
+              count: 0,
+              limit: AppConstants.freeMessageLimit,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         if (isProPlan) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

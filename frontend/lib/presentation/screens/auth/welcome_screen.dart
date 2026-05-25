@@ -148,6 +148,50 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         label: 'Continue with Apple',
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.darkBorderDefault
+                                : AppColors.borderDefault,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'or',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13,
+                              color: isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.darkBorderDefault
+                                : AppColors.borderDefault,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSignInButton(
+                      isLoading: false,
+                      onPressed: () => context.go(AppRoutes.emailSignIn),
+                      logoWidget: Icon(
+                        Icons.email_outlined,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : const Color(0xFF0A0A0A),
+                      ),
+                      label: 'Continue with email',
+                    ),
                     const SizedBox(height: 24),
                     // Try without signing in
                     TextButton(

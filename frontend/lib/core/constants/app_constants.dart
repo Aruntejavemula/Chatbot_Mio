@@ -40,6 +40,10 @@ class AppConstants {
   // Cost Protection
   static const int defaultDailyTokenLimit = 100000;
 
+  // Message limits (Free plan)
+  static const int freeMessageLimit = 20;
+  static const int freeMessageWarning = 15;
+
   // Display helpers
   static String get fiveHourCapDisplay => '5-hour ($freeTokenCapDisplay)';
   static String get dailyCapDisplay => 'Daily ($basicTokenCapDisplay)';
