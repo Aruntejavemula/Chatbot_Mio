@@ -9,9 +9,9 @@ from app.middleware.rate_limit import _rate_limiter
 @pytest.fixture(autouse=True)
 def reset_rate_limiter():
     """Reset the rate limiter state before each test."""
-    _rate_limiter._requests.clear()
+    _rate_limiter.reset()
     yield
-    _rate_limiter._requests.clear()
+    _rate_limiter.reset()
 
 
 VALID_HEADERS = {"Authorization": "Bearer validtoken1234567890"}

@@ -29,6 +29,14 @@ class RateLimiter:
         """Initialize the rate limiter with an empty request store."""
         self._requests: dict[str, list[float]] = {}
 
+    def reset(self) -> None:
+        """Reset all rate limiter state.
+
+        Intended for use in tests to clear state between test cases
+        without reaching into private attributes.
+        """
+        self._requests.clear()
+
     def _cleanup_expired(self, key: str, window_seconds: int) -> None:
         """Remove expired timestamps from the request store.
 

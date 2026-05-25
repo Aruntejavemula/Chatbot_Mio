@@ -1,14 +1,21 @@
-"""Encryption service for AES-256 data protection."""
+"""Demonstration encryption service using XOR cipher.
+
+WARNING: This is NOT cryptographically secure and must not be used in
+production. Use the cryptography library with Fernet or AES-GCM for
+real encryption needs.
+"""
 import base64
 import hashlib
 import os
 
 
 class EncryptionService:
-    """Encrypts and decrypts strings using AES-256-compatible XOR cipher.
+    """Demonstration XOR cipher for testing and development only.
 
-    Note: This is a simplified implementation for demonstration.
-    Production should use the cryptography library with Fernet or AES-GCM.
+    This implementation uses a repeating XOR key stream derived from
+    SHA-256. It is NOT suitable for production use and provides no
+    real confidentiality guarantees. For production, replace with
+    cryptography.fernet.Fernet or AES-GCM.
     """
 
     def __init__(self, secret_key: str = "default-secret-key-for-testing"):
