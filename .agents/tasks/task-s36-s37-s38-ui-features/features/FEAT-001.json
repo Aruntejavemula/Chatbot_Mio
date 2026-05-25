@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "S36: File Upload UI - Add file_picker and image_picker to pubspec.yaml, create FileUploadWidget with bottom sheet (2x2 grid of options: Photo, Camera, File, Scan), file preview row above input bar, and integrate into chat_screen.dart replacing the + button.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Add file_picker: ^8.1.2 and image_picker: ^1.1.2 to dependencies in frontend/pubspec.yaml",
     "Create frontend/lib/presentation/widgets/chat/file_upload_widget.dart with: (a) FileUploadWidget StatefulWidget that shows + button, (b) On tap shows bottom sheet with bgSecondary background, 20px top border radius, 24px padding, (c) Title 'Add to chat' in DM Serif Display 18px bold, (d) 2x2 GridView of option tiles (Photo/Camera/File/Scan) each with bgTertiary background, radiusMedium border radius, 1px borderDefault, 16px padding, column centered with icon 28px in persian color, 8px gap, label in DM Sans 13px, (e) Photo option uses ImagePicker().pickImage(source: ImageSource.gallery), (f) Camera option uses ImagePicker().pickImage(source: ImageSource.camera), (g) File option uses FilePicker.platform.pickFiles with allowed extensions [pdf, docx, txt, md, csv, py, js, ts, dart, json, yaml], (h) Scan option uses ImagePicker camera for doc scanning, (i) Free users see lock icon with 'Upgrade to attach files' text on options",
@@ -25,5 +25,5 @@
     "Verify pubspec.yaml has both new dependencies added correctly"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Successfully implemented. Flutter/Dart SDK not available so verification was code review only. No dynamic types, strict null safety, no print statements. Used StatefulWidget (not ConsumerStatefulWidget) since no Riverpod state is needed in the widget itself."
 }
