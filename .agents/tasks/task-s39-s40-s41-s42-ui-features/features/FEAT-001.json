@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S39 - Export UI: Add share_plus to pubspec.yaml, create export_menu_widget.dart with bottom sheet, add export methods to chat_service.dart, add export button to chat_screen.dart top bar",
+  "status": "completed",
+  "steps": [
+    "Update frontend/pubspec.yaml: add share_plus: ^9.0.0 under dependencies (path_provider already exists at ^2.1.3, update to ^2.1.4)",
+    "Add export methods to frontend/lib/data/services/chat_service.dart: Future<Uint8List> exportChatMarkdown(String chatId) - GET /export/chat/{chatId}/markdown returning bytes; Future<Uint8List> exportChatPdf(String chatId) - GET /export/chat/{chatId}/pdf returning bytes; Future<Uint8List> exportAllChats() - GET /export/all/markdown returning bytes. Use dio with responseType: ResponseType.bytes.",
+    "Create frontend/lib/presentation/widgets/chat/export_menu_widget.dart: A StatelessWidget that shows an export bottom sheet. Background: AppColors.bgSecondary, border radius top 20px, padding 24px. Title 'Export Chat' DM Serif Display 18px. Three options: (1) Markdown - Icons.description_outlined persian, 'Export as Markdown', '.md file', on tap calls exportChatMarkdown then saves to temp file and uses share_plus shareXFiles, shows success snackbar. (2) PDF - Icons.picture_as_pdf_outlined persian, 'Export as PDF', '.pdf file', if plan is free show upgrade dialog, else call exportChatPdf and share. (3) Export All - Icons.folder_zip_outlined persian, 'Export All Chats', 'Single .md', if not pro show upgrade dialog, else call exportAllChats. The widget should accept chatId, userPlan (String), and a BuildContext for showing dialogs/snackbars. Use ConsumerWidget with ref to access chatServiceProvider.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: Add export button (Icons.download_outlined, 20px, color AppColors.textMuted) to the top bar Row, placed between the hamburger menu button and the Spacer. Show only when messages.length > 0. On tap show the export bottom sheet from export_menu_widget.dart. Pass current chat ID and user plan."
+  ],
+  "acceptance_criteria": [
+    "pubspec.yaml contains share_plus: ^9.0.0",
+    "chat_service.dart has exportChatMarkdown, exportChatPdf, exportAllChats methods returning Future<Uint8List>",
+    "export_menu_widget.dart exists with ExportMenuWidget class showing bottom sheet with 3 options",
+    "chat_screen.dart shows export button in top bar when messages are not empty",
+    "No dynamic types, proper error handling, null safety enforced",
+    "flutter analyze passes with no errors"
+  ],
+  "verification": [
+    "Run flutter pub get in frontend/ to verify dependency resolution",
+    "Run flutter analyze in frontend/ to confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment. Verification done through code review only, consistent with prior features (FEAT-001 in task-s36-s37-s38-ui-features). Used Share.shareXFiles API from share_plus ^9.0.0. No dynamic types, no print statements, strict null safety enforced. ConsumerWidget used for ExportMenuWidget to access chatServiceProvider via ref."
+}

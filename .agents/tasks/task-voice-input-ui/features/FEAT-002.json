@@ -1,0 +1,44 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create the backend voice transcription endpoint. Build the FastAPI backend structure from scratch (app/ directory with routers, config, main.py) and implement POST /voice/transcribe that accepts multipart audio, validates it, and sends to OpenAI Whisper API for transcription. Register the voice router in main.py. Create .env.example and requirements.txt. Add config.py with OPENAI_WHISPER_KEY. Follow RULES.md strictly: auth middleware, rate limiting (30/min), type hints on every function, logging (no print), error handling, Pydantic validation.",
+  "status": "completed",
+  "steps": [
+    "Create app/__init__.py (empty)",
+    "Create app/config.py with pydantic-settings BaseSettings class loading from .env: OPENAI_WHISPER_KEY (str, default empty), plus any other base config (APP_NAME, DEBUG, etc). Use proper type hints.",
+    "Create app/routers/__init__.py (empty)",
+    "Create app/routers/voice.py with APIRouter prefix /voice. Implement POST /transcribe endpoint: accept UploadFile, validate file size (max 25MB constant), validate audio format (m4a, mp3, wav, webm, ogg), read file content, send to OpenAI Whisper API (POST https://api.openai.com/v1/audio/transcriptions with model whisper-1, response_format json, language en), return {transcript: str, duration: float, language: str}. If no OPENAI_WHISPER_KEY configured, try user BYOK key (placeholder logic for getting from api_keys table). If no key at all, return 400. Use httpx for the OpenAI call. Add rate limit decorator/dependency (30 per minute). Add auth dependency. Use logging module throughout. All functions have type hints. Error handling with try/except returning proper HTTP errors.",
+    "Create app/middleware/__init__.py (empty)",
+    "Create app/middleware/auth.py with a get_current_user dependency that verifies JWT from Authorization header (placeholder that extracts and validates token structure). Return user dict with user_id.",
+    "Create app/middleware/rate_limit.py with a rate limiter dependency (can be a simple in-memory implementation or placeholder that documents Upstash Redis usage). Support configurable limits per endpoint.",
+    "Create app/main.py: FastAPI app instance, include voice router with prefix /voice, add CORS middleware, startup/shutdown events if needed. Import and register the router.",
+    "Create requirements.txt with: fastapi, uvicorn[standard], httpx, python-multipart, pydantic-settings, python-jose[cryptography], passlib[bcrypt]. Do not add packages already implied.",
+    "Create .env.example with: OPENAI_WHISPER_KEY=",
+    "Run python -m py_compile app/routers/voice.py and python -m py_compile app/main.py to verify Python syntax"
+  ],
+  "acceptance_criteria": [
+    "app/routers/voice.py exists with POST /transcribe endpoint accepting UploadFile",
+    "File size validation (25MB max) and format validation (m4a, mp3, wav, webm, ogg) are implemented",
+    "OpenAI Whisper API call is made via httpx with proper auth header",
+    "BYOK fallback logic is present when no system key configured",
+    "Returns 400 with message 'Add OpenAI API key for voice transcription' when no key available",
+    "app/config.py has OPENAI_WHISPER_KEY setting",
+    "app/main.py registers voice router at /voice prefix",
+    "All Python functions have type hints",
+    "No print statements - uses logging module",
+    "Auth middleware dependency is applied to the endpoint",
+    "Rate limiting (30/min) is applied",
+    ".env.example contains OPENAI_WHISPER_KEY=",
+    "requirements.txt contains fastapi, uvicorn, httpx, python-multipart, pydantic-settings",
+    "python -m py_compile passes on all .py files"
+  ],
+  "verification": [
+    "Run: python -m py_compile app/main.py",
+    "Run: python -m py_compile app/routers/voice.py",
+    "Run: python -m py_compile app/config.py",
+    "Run: python -m py_compile app/middleware/auth.py",
+    "Run: python -m py_compile app/middleware/rate_limit.py"
+  ],
+  "blocked_reason": null,
+  "findings": "All py_compile checks pass. App imports correctly and route /voice/transcribe is registered. Dependencies (fastapi, pydantic-settings, httpx, python-multipart) already available in the environment."
+}

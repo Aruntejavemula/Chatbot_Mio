@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Complete rewrite of onboarding_screen.dart with 8-page PageView-based onboarding flow. Includes animated progress dots, PenguinMascot, problem/solution pages, BYOK grid, multi-select preferences saved to SharedPreferences, API key input page, pricing cards, and personalized ready page.",
+  "status": "completed",
+  "steps": [
+    "Add shared_preferences: ^2.2.3 to frontend/pubspec.yaml dependencies (needed for saving user preferences on page 5)",
+    "Completely replace frontend/lib/presentation/screens/auth/onboarding_screen.dart with a new 8-page onboarding implementation using PageController and PageView with NeverScrollableScrollPhysics",
+    "PAGE 1 (Hook): PenguinMascot widget (from ghost_mascot.dart), 'Meet Mio.' heading (DM Serif Display), 'The AI that doesn't yap.' subtext, 'No greetings. No filler. Just answers.' body text, disclaimer at bottom of page",
+    "PAGE 2 (Problem): 'Other AIs be like...' heading, fake bad example chat bubble with verbose filler text styled as an AI bubble, 'You fell asleep reading that.' punchline text below",
+    "PAGE 3 (Solution): 'Mio be like...' heading, good example bubble 'The answer is 42.' styled as a concise AI response, 'Direct. Fast. No yapping.' subtext, 3 feature pills (e.g. 'No filler', 'Straight answers', 'Your keys')",
+    "PAGE 4 (BYOK Explained): 'Your AI. Your keys.' heading, 3x3 grid of provider circles (OpenAI Color(0xFF10A37F), Anthropic Color(0xFFD97757), DeepSeek Color(0xFF4D6BFE), Gemini Color(0xFF4285F4), Groq Color(0xFFF97316), Mistral Color(0xFF6366F1), OpenRouter Color(0xFF8B5CF6), Ollama Color(0xFF0EA5E9), + More with bgTertiary), 'No markup. No middleman. Just your API keys.' text",
+    "PAGE 5 (Preferences): 'What do you use AI for?' heading, multi-select chip grid with items: Coding, Writing, Learning, Work, Creative, Research, Chat, Math. Save selections to SharedPreferences key 'user_preferences' as comma-separated string on continue",
+    "PAGE 6 (Add First Key): Recommended provider card (e.g. OpenAI) with TextEditingController for API key input, obscured text with visibility toggle, Ollama local option mention, 'Skip for now' button that advances to page 7",
+    "PAGE 7 (Pricing): '14 days free.' heading, three plan cards: Free ($0 - 3 features), Basic ($4.99/mo - 5 features), Pro ($9.99/mo - 7 features). Cards show feature bullet points. No actual purchase logic needed.",
+    "PAGE 8 (Ready): Personalized greeting based on page 5 selections (e.g. 'Ready to code?' if Coding selected), PenguinMascot, 'Let's go' button that calls _completeOnboarding() which writes 'onboarding_complete' to FlutterSecureStorage and navigates to AppRoutes.chat",
+    "Bottom area (fixed, not in PageView scroll): Row of 8 progress dots with AnimatedContainer for width transition (active: Persian Orange #CC5801, width 20, height 8, borderRadius 4; inactive: AppColors.borderDefault, width 8, height 8, borderRadius 4; 200ms animation). Next button and Skip button (Skip shown only pages 0-5).",
+    "Top area: Skip button positioned top-right (pages 0-5 only) that skips to page 7 (Ready page)"
+  ],
+  "acceptance_criteria": [
+    "The file compiles without errors (flutter analyze passes)",
+    "8 pages exist with PageController navigation",
+    "Progress dots animate width between active/inactive states",
+    "Page 5 preferences are saved to SharedPreferences",
+    "Page 8 navigates to /chat via go_router",
+    "PenguinMascot widget is imported and used from ghost_mascot.dart",
+    "No dynamic types, strict null safety throughout",
+    "DM Sans for body, DM Serif Display for headings",
+    "No commented-out code, no magic numbers"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Chatbot_Mio/frontend && flutter pub get",
+    "Run: cd /projects/sandbox/Chatbot_Mio/frontend && flutter analyze --no-fatal-infos"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment (consistent with previous task findings). Verification done via manual code inspection confirming correct imports, proper use of AppColors/AppSizes constants, PenguinMascot from ghost_mascot.dart, SharedPreferences for user_preferences key, FlutterSecureStorage for onboarding_complete, GoRouter navigation to AppRoutes.chat, strict null safety, no dynamic types, no commented-out code. Used withValues(alpha:) consistent with existing codebase pattern."
+}

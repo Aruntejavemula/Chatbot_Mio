@@ -36,8 +36,20 @@ final streamingTextProvider = StateProvider<String>((ref) {
   return '';
 });
 
+final streamingThinkingTextProvider = StateProvider<String>((ref) {
+  return '';
+});
+
+final isThinkingStreamingProvider = StateProvider<bool>((ref) {
+  return false;
+});
+
 final loadingWordIndexProvider = StateProvider<int>((ref) {
   return 0;
+});
+
+final tokenCapProvider = StateProvider<Map<String, Object?>?>((ref) {
+  return null;
 });
 
 class ChatRepository {
@@ -85,8 +97,11 @@ class ChatRepository {
     required String model,
     required String provider,
     required bool useOurTokens,
+    String? projectId,
   }) async {
     try {
+      _ref.read(tokenCapProvider.notifier).state = null;
+
       final userMessage = MessageModel(
         id: const Uuid().v4(),
         chatId: chatId,
@@ -103,6 +118,8 @@ class ChatRepository {
 
       _ref.read(isStreamingProvider.notifier).state = true;
       _ref.read(streamingTextProvider.notifier).state = '';
+      _ref.read(streamingThinkingTextProvider.notifier).state = '';
+      _ref.read(isThinkingStreamingProvider.notifier).state = false;
 
       final wordIndex = _ref.read(loadingWordIndexProvider);
       LoadingWords.getWord(wordIndex);
@@ -114,14 +131,39 @@ class ChatRepository {
         model: model,
         provider: provider,
         useOurTokens: useOurTokens,
+        projectId: projectId,
       );
 
       final buffer = StringBuffer();
+      final thinkingBuffer = StringBuffer();
 
-      await for (final chunk in stream) {
-        buffer.write(chunk);
-        _ref.read(streamingTextProvider.notifier).state = buffer.toString();
+      await for (final event in stream) {
+        switch (event.type) {
+          case ChatStreamEventType.thinking:
+            if (!_ref.read(isThinkingStreamingProvider)) {
+              _ref.read(isThinkingStreamingProvider.notifier).state = true;
+            }
+            thinkingBuffer.write(event.content);
+            _ref.read(streamingThinkingTextProvider.notifier).state =
+                thinkingBuffer.toString();
+          case ChatStreamEventType.text:
+            if (_ref.read(isThinkingStreamingProvider)) {
+              _ref.read(isThinkingStreamingProvider.notifier).state = false;
+            }
+            buffer.write(event.content);
+            _ref.read(streamingTextProvider.notifier).state =
+                buffer.toString();
+          case ChatStreamEventType.done:
+            break;
+        }
       }
+
+      final capWarning = _chatService.lastCapWarning;
+      if (capWarning != null) {
+        _ref.read(tokenCapProvider.notifier).state = capWarning;
+      }
+
+      final thinkingContent = thinkingBuffer.toString();
 
       final aiMessage = MessageModel(
         id: const Uuid().v4(),
@@ -130,6 +172,8 @@ class ChatRepository {
         content: buffer.toString(),
         model: model,
         createdAt: DateTime.now(),
+        thinkingContent: thinkingContent.isNotEmpty ? thinkingContent : null,
+        hasThinking: thinkingContent.isNotEmpty,
       );
 
       final updatedMessages = _ref.read(messagesProvider);
@@ -140,9 +184,13 @@ class ChatRepository {
 
       _ref.read(isStreamingProvider.notifier).state = false;
       _ref.read(streamingTextProvider.notifier).state = '';
+      _ref.read(streamingThinkingTextProvider.notifier).state = '';
+      _ref.read(isThinkingStreamingProvider.notifier).state = false;
     } catch (e) {
       _ref.read(isStreamingProvider.notifier).state = false;
       _ref.read(streamingTextProvider.notifier).state = '';
+      _ref.read(streamingThinkingTextProvider.notifier).state = '';
+      _ref.read(isThinkingStreamingProvider.notifier).state = false;
       rethrow;
     }
   }

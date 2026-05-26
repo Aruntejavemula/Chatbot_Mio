@@ -3,10 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/region_service.dart';
 import '../../../core/utils/router.dart';
+import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/settings/ollama_setup_sheet.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -15,38 +20,33 @@ class OnboardingScreen extends ConsumerStatefulWidget {
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
-    with TickerProviderStateMixin {
-  final PageController _pageController = PageController();
-  int currentPage = 0;
-  int? selectedProviderIndex;
-  final TextEditingController apiKeyController = TextEditingController();
-  bool isKeyVisible = false;
-  bool isTestingKey = false;
-  bool isSavingKey = false;
-  Set<String> selectedPreferences = {};
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
+  static const int _totalPages = 8;
 
-  late final AnimationController _floatingController;
-  late final Animation<double> _floatingAnimation;
+  final PageController _pageController = PageController();
+  final TextEditingController _apiKeyController = TextEditingController();
+
+  int _currentPage = 0;
+  bool _isKeyVisible = false;
+  bool _isAnnualOnboarding = false;
+  String _userCountry = 'US';
+  final Set<String> _selectedPreferences = {};
 
   @override
   void initState() {
     super.initState();
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
+    _loadRegion();
+  }
 
-    _floatingAnimation = Tween<double>(begin: 0, end: -8).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
+  Future<void> _loadRegion() async {
+    final country = await RegionService.getRegion();
+    if (mounted) setState(() => _userCountry = country);
   }
 
   @override
   void dispose() {
-    _floatingController.dispose();
     _pageController.dispose();
-    apiKeyController.dispose();
+    _apiKeyController.dispose();
     super.dispose();
   }
 
@@ -55,6 +55,41 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       page,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
+    );
+    setState(() => _currentPage = page);
+  }
+
+  void _nextPage() {
+    if (_currentPage == 4) {
+      _savePreferences();
+    }
+    if (_currentPage == 5 && _apiKeyController.text.isNotEmpty) {
+      _saveApiKey();
+    }
+    if (_currentPage < _totalPages - 1) {
+      _goToPage(_currentPage + 1);
+    } else {
+      _completeOnboarding();
+    }
+  }
+
+  void _skipToReady() {
+    _goToPage(_totalPages - 1);
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'user_preferences',
+      _selectedPreferences.join(','),
+    );
+  }
+
+  Future<void> _saveApiKey() async {
+    const storage = FlutterSecureStorage();
+    await storage.write(
+      key: 'pending_api_key',
+      value: _apiKeyController.text,
     );
   }
 
@@ -66,6 +101,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     }
   }
 
+  String _getReadyText() {
+    if (_selectedPreferences.contains('Coding')) {
+      return 'Ready to code?';
+    } else if (_selectedPreferences.contains('Writing')) {
+      return 'Ready to write?';
+    } else if (_selectedPreferences.length > 1) {
+      return 'Ready to create?';
+    }
+    return 'Ready to go?';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -73,631 +119,440 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            PageView(
-              controller: _pageController,
-              physics: currentPage == 0
-                  ? const NeverScrollableScrollPhysics()
-                  : const ClampingScrollPhysics(),
-              onPageChanged: (index) {
-                setState(() => currentPage = index);
-              },
-              children: [
-                _buildPage1(isDark),
-                _buildPage2(isDark),
-                _buildPage3(isDark),
-                _buildPage4(isDark),
-                _buildPage5(isDark),
-              ],
-            ),
-            // Back arrow on pages 2-4
-            if (currentPage >= 1 && currentPage <= 3)
-              Positioned(
-                top: 12,
-                left: 16,
-                child: IconButton(
-                  onPressed: () => _goToPage(currentPage - 1),
-                  icon: Icon(
-                    Icons.arrow_back,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary,
+            Expanded(
+              child: Stack(
+                children: [
+                  PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildPageHook(isDark),
+                      _buildPageProblem(isDark),
+                      _buildPageSolution(isDark),
+                      _buildPageBYOK(isDark),
+                      _buildPagePreferences(isDark),
+                      _buildPageAddKey(isDark),
+                      _buildPagePricing(isDark),
+                      _buildPageReady(isDark),
+                    ],
                   ),
-                ),
-              ),
-            // Page indicator dots on pages 1-4
-            if (currentPage < 4)
-              Positioned(
-                bottom: 32,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) {
-                    final isActive = index == currentPage;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: isActive ? 8 : 6,
-                      height: isActive ? 8 : 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isActive
-                            ? AppColors.persian
-                            : (isDark
-                                ? AppColors.darkBorderDefault
-                                : AppColors.borderDefault),
+                  if (_currentPage <= 5)
+                    Positioned(
+                      top: 12,
+                      right: 16,
+                      child: TextButton(
+                        onPressed: _skipToReady,
+                        child: Text(
+                          'Skip',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted,
+                          ),
+                        ),
                       ),
-                    );
-                  }),
-                ),
+                    ),
+                ],
               ),
+            ),
+            _buildBottomArea(isDark),
           ],
         ),
       ),
     );
   }
 
-  // PAGE 1 - Welcome To Mio
-  Widget _buildPage1(bool isDark) {
+  Widget _buildBottomArea(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: _floatingAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, _floatingAnimation.value),
-                child: child,
-              );
-            },
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkBgSecondary
-                    : AppColors.bgSecondary,
-                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-              ),
-              child: const Center(
-                child: Text(
-                  '\u{1F47B}',
-                  style: TextStyle(fontSize: 40),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No fluff. Just answers.',
-            style: GoogleFonts.dmSerifDisplay(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Mio gives you direct, honest AI responses.\nNo pleasantries. No filler. No yapping.\nJust exactly what you asked for.',
-            style: GoogleFonts.dmSans(
-              fontSize: 16,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => _goToPage(1),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.persian,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Next',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.paddingScreen,
+        vertical: 24,
       ),
-    );
-  }
-
-  // PAGE 2 - Bring Your Own Key
-  Widget _buildPage2(bool isDark) {
-    final providers = [
-      {'label': 'O', 'color': const Color(0xFF10A37F)},
-      {'label': 'A', 'color': const Color(0xFFD97757)},
-      {'label': 'D', 'color': const Color(0xFF4D6BFE)},
-      {'label': 'G', 'color': const Color(0xFF4285F4)},
-      {
-        'label': '+',
-        'color': isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 80),
-          // Provider icons row
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: providers.map((p) {
-              final isMore = p['label'] == '+';
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: p['color'] as Color,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    p['label'] as String,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isMore
-                          ? (isDark
-                              ? AppColors.darkTextMuted
-                              : AppColors.textMuted)
-                          : Colors.white,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Your keys. Your models.',
-            style: GoogleFonts.dmSerifDisplay(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Connect your own API keys from any\nAI provider. Use GPT, Claude, Gemini,\nDeepSeek, and more. Your keys stay encrypted.\nWe never read them. Ever.',
-            style: GoogleFonts.dmSans(
-              fontSize: 16,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          // Info box
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkBorderDefault
-                    : AppColors.borderDefault,
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.lock_outline,
-                  size: 16,
-                  color: AppColors.persian,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'AES-256 encrypted on our servers',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          // Primary button
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => _goToPage(2),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.persian,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Add my API key now',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Secondary outline button
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: SizedBox(
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: () => _goToPage(3),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.darkBorderDefault
-                          : AppColors.borderDefault,
-                    ),
-                    backgroundColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                  ),
-                  child: Text(
-                    'Skip for now',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 60),
-        ],
-      ),
-    );
-  }
-
-  // PAGE 3 - Add First API Key
-  Widget _buildPage3(bool isDark) {
-    final providerList = [
-      {'name': 'OpenAI', 'initial': 'O', 'color': const Color(0xFF10A37F)},
-      {'name': 'Anthropic', 'initial': 'A', 'color': const Color(0xFFD97757)},
-      {
-        'name': 'Google Gemini',
-        'initial': 'G',
-        'color': const Color(0xFF4285F4)
-      },
-      {'name': 'DeepSeek', 'initial': 'D', 'color': const Color(0xFF4D6BFE)},
-      {'name': 'Kimi', 'initial': 'K', 'color': const Color(0xFF6366F1)},
-      {'name': 'Groq', 'initial': 'G', 'color': const Color(0xFFF97316)},
-      {
-        'name': 'Together AI',
-        'initial': 'T',
-        'color': const Color(0xFF0EA5E9)
-      },
-      {
-        'name': 'OpenRouter',
-        'initial': 'R',
-        'color': const Color(0xFF8B5CF6)
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        children: [
-          const SizedBox(height: 80),
-          Text(
-            'Add your first AI key',
-            style: GoogleFonts.dmSerifDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap a provider to get started',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          // 2-column grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.5,
-            ),
-            itemCount: providerList.length,
-            itemBuilder: (context, index) {
-              final provider = providerList[index];
-              final isSelected = selectedProviderIndex == index;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedProviderIndex = index;
-                  });
-                },
-                child: Container(
+            children: List.generate(_totalPages, (index) {
+              final isActive = index == _currentPage;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isActive ? 20 : 8,
+                  height: 8,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkBgSecondary
-                        : AppColors.bgSecondary,
-                    borderRadius:
-                        BorderRadius.circular(AppSizes.radiusMedium),
-                    border: Border.all(
-                      color:
-                          isSelected ? AppColors.persian : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: provider['color'] as Color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            provider['initial'] as String,
-                            style: GoogleFonts.dmSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        provider['name'] as String,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(4),
+                    color: isActive
+                        ? AppColors.persian
+                        : (isDark
+                            ? AppColors.darkBorderDefault
+                            : AppColors.borderDefault),
                   ),
                 ),
               );
-            },
+            }),
           ),
-          // Show API key input when provider is selected
-          if (selectedProviderIndex != null) ...[
-            const SizedBox(height: 24),
-            TextField(
-              controller: apiKeyController,
-              obscureText: !isKeyVisible,
-              decoration: InputDecoration(
-                hintText: 'Paste your API key here',
-                hintStyle: GoogleFonts.dmSans(
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _nextPage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.persian,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                _currentPage == _totalPages - 1 ? "Let's go" : 'Next',
+                style: GoogleFonts.dmSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          if (_currentPage <= 5) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _skipToReady,
+              child: Text(
+                'Skip',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
                   color: isDark
                       ? AppColors.darkTextMuted
                       : AppColors.textMuted,
                 ),
-                filled: true,
-                fillColor: isDark
-                    ? AppColors.darkBgSecondary
-                    : AppColors.bgSecondary,
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.radiusMedium),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? AppColors.darkBorderDefault
-                        : AppColors.borderDefault,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.radiusMedium),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? AppColors.darkBorderDefault
-                        : AppColors.borderDefault,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.radiusMedium),
-                  borderSide: const BorderSide(
-                    color: AppColors.persian,
-                  ),
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() => isKeyVisible = !isKeyVisible);
-                  },
-                  icon: Icon(
-                    isKeyVisible
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    color: isDark
-                        ? AppColors.darkTextMuted
-                        : AppColors.textMuted,
-                  ),
-                ),
               ),
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: OutlinedButton(
-                      // ignore: avoid_print
-                      onPressed: isTestingKey ? null : () { print('test key pressed'); },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.persian),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusFull),
-                        ),
-                      ),
-                      child: isTestingKey
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.persian,
-                              ),
-                            )
-                          : Text(
-                              'Test',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.persian,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      // ignore: avoid_print
-                      onPressed: isSavingKey ? null : () { print('save key pressed'); },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.persian,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusFull),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: isSavingKey
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              'Save',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
-          const SizedBox(height: 24),
-          TextButton(
-            onPressed: () => _goToPage(3),
-            child: Text(
-              'Skip for now',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.darkTextMuted
-                    : AppColors.textMuted,
-              ),
-            ),
-          ),
-          const SizedBox(height: 60),
         ],
       ),
     );
   }
 
-  // PAGE 4 - What Do You Use AI For
-  Widget _buildPage4(bool isDark) {
-    final chips = [
+  Widget _buildPageHook(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const PenguinMascot(size: 80, animate: true),
+          const SizedBox(height: 24),
+          Text(
+            'Meet Mio.',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "The AI that doesn't yap.",
+            style: GoogleFonts.dmSans(
+              fontSize: 18,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No greetings. No filler. Just answers.',
+            style: GoogleFonts.dmSans(
+              fontSize: 15,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 48),
+          Text(
+            'By continuing, you agree to our Terms of Service',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageProblem(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 80),
+          Text(
+            'Other AIs be like...',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkBgSecondary
+                    : AppColors.bgSecondary,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              ),
+              child: Text(
+                "Hello! I'd be happy to help you with that! So, the answer "
+                'to your question about the meaning of life, the universe, '
+                'and everything is actually quite fascinating when you think '
+                'about it from multiple perspectives...',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'You fell asleep reading that.',
+            style: GoogleFonts.dmSans(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageSolution(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 80),
+          Text(
+            'Mio be like...',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.persian,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              ),
+              child: Text(
+                'The answer is 42.',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Direct. Fast. No yapping.',
+            style: GoogleFonts.dmSans(
+              fontSize: 16,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildFeaturePill('No filler', isDark),
+              const SizedBox(width: 8),
+              _buildFeaturePill('Straight answers', isDark),
+              const SizedBox(width: 8),
+              _buildFeaturePill('Your keys', isDark),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturePill(String label, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkBorderDefault
+              : AppColors.borderDefault,
+        ),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.dmSans(
+          fontSize: 13,
+          color: isDark
+              ? AppColors.darkTextSecondary
+              : AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageBYOK(bool isDark) {
+    final providers = <_ProviderInfo>[
+      _ProviderInfo(label: 'O', name: 'OpenAI', color: const Color(0xFF10A37F)),
+      _ProviderInfo(label: 'A', name: 'Anthropic', color: const Color(0xFFD97757)),
+      _ProviderInfo(label: 'D', name: 'DeepSeek', color: const Color(0xFF4D6BFE)),
+      _ProviderInfo(label: 'G', name: 'Gemini', color: const Color(0xFF4285F4)),
+      _ProviderInfo(label: 'G', name: 'Groq', color: const Color(0xFFF97316)),
+      _ProviderInfo(label: 'M', name: 'Mistral', color: const Color(0xFF6366F1)),
+      _ProviderInfo(label: 'R', name: 'OpenRouter', color: const Color(0xFF8B5CF6)),
+      _ProviderInfo(label: 'O', name: 'Ollama', color: const Color(0xFF0EA5E9)),
+      _ProviderInfo(
+        label: '+',
+        name: 'More',
+        color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 80),
+          Text(
+            'Your AI. Your keys.',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: providers.length,
+            itemBuilder: (context, index) {
+              final provider = providers[index];
+              final isMore = provider.label == '+';
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: provider.color,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        provider.label,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isMore
+                              ? (isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted)
+                              : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    provider.name,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No markup. No middleman.',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPagePreferences(bool isDark) {
+    const chips = [
       'Coding',
       'Writing',
-      'Research',
       'Learning',
-      'Business',
+      'Work',
       'Creative',
+      'Research',
+      'Chat',
       'Math',
-      'Data Analysis',
-      'Language learning',
-      'General chat',
     ];
 
     return Padding(
@@ -706,24 +561,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'What do you mainly use AI for?',
+            'What do you use AI for?',
             style: GoogleFonts.dmSerifDisplay(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: isDark
                   ? AppColors.darkTextPrimary
                   : AppColors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "We'll suggest the best models for you",
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -733,20 +577,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: chips.map((chip) {
-              final isSelected = selectedPreferences.contains(chip);
+              final isSelected = _selectedPreferences.contains(chip);
               return GestureDetector(
                 onTap: () {
                   setState(() {
                     if (isSelected) {
-                      selectedPreferences.remove(chip);
+                      _selectedPreferences.remove(chip);
                     } else {
-                      selectedPreferences.add(chip);
+                      _selectedPreferences.add(chip);
                     }
                   });
                 },
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.persian
@@ -778,46 +624,185 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               );
             }).toList(),
           ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => _goToPage(4),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.persian,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                    elevation: 0,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageAddKey(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 80),
+          Text(
+            'Add your first key',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We recommend starting with OpenAI',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(AppSizes.paddingCard),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkBorderDefault
+                    : AppColors.borderDefault,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10A37F),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    'Continue',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  child: Center(
+                    child: Text(
+                      'O',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'OpenAI',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.persian.withValues(alpha: 0.1),
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusFull),
+                        ),
+                        child: Text(
+                          'Most popular',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            color: AppColors.persian,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => _goToPage(4),
-            child: Text(
-              'Skip',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
+          const SizedBox(height: 16),
+          TextField(
+            controller: _apiKeyController,
+            obscureText: !_isKeyVisible,
+            decoration: InputDecoration(
+              hintText: 'Paste your API key here',
+              hintStyle: GoogleFonts.dmSans(
                 color: isDark
                     ? AppColors.darkTextMuted
                     : AppColors.textMuted,
               ),
+              filled: true,
+              fillColor:
+                  isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                borderSide: BorderSide(
+                  color: isDark
+                      ? AppColors.darkBorderDefault
+                      : AppColors.borderDefault,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                borderSide: BorderSide(
+                  color: isDark
+                      ? AppColors.darkBorderDefault
+                      : AppColors.borderDefault,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                borderSide: const BorderSide(color: AppColors.persian),
+              ),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() => _isKeyVisible = !_isKeyVisible);
+                },
+                icon: Icon(
+                  _isKeyVisible ? Icons.visibility_off : Icons.visibility,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
+                ),
+              ),
+            ),
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () => OllamaSetupSheet.show(context),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.textMuted,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Or use Ollama locally',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.persian,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -825,41 +810,329 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  // PAGE 5 - You Are Ready
-  Widget _buildPage5(bool isDark) {
+  Widget _buildPagePricing(bool isDark) {
+    if (RegionService.isIndian(_userCountry)) {
+      return _buildPagePricingIndian(isDark);
+    }
+    return _buildPagePricingGlobal(isDark);
+  }
+
+  Widget _buildPagePricingIndian(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 60),
+          const PenguinMascot(size: 60),
+          const SizedBox(height: 16),
+          Text(
+            'Subscribe at mio.app',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 22,
+              color: AppColors.persian,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Basic ${RegionService.getPriceDisplay(_userCountry, 'basic', false)} \u00B7 Pro ${RegionService.getPriceDisplay(_userCountry, 'pro', false)}',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Annual plans on our website',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No payment needed in app',
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPagePricingGlobal(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        children: [
+          const SizedBox(height: 60),
+          Text(
+            '${AppConstants.trialDurationDays} days free.',
+            style: GoogleFonts.dmSerifDisplay(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Then pick what works for you.',
+            style: GoogleFonts.dmSans(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          if (RegionService.hasAnnualOption(_userCountry))
+            _buildOnboardingBillingToggle(isDark),
+          if (RegionService.hasAnnualOption(_userCountry))
+            const SizedBox(height: 16),
+          _buildPlanCard(
+            isDark: isDark,
+            title: 'Free',
+            price: '\$0',
+            features: ['40K tokens/5hr', '1 device', 'Community models'],
+            isHighlighted: false,
+          ),
+          const SizedBox(height: 12),
+          _buildPlanCard(
+            isDark: isDark,
+            title: 'Basic',
+            price: RegionService.getPriceDisplay(
+              _userCountry, 'basic', _isAnnualOnboarding,
+            ),
+            features: [
+              '100K tokens/day',
+              '3 devices',
+              'File uploads',
+              'Voice input',
+              'All providers',
+            ],
+            isHighlighted: false,
+            savingsText: _isAnnualOnboarding && RegionService.hasAnnualOption(_userCountry)
+                ? 'Save ${AppConstants.annualSavingsPercent}%'
+                : null,
+          ),
+          const SizedBox(height: 12),
+          _buildPlanCard(
+            isDark: isDark,
+            title: 'Pro',
+            price: RegionService.getPriceDisplay(
+              _userCountry, 'pro', _isAnnualOnboarding,
+            ),
+            features: [
+              'Unlimited*',
+              '10 devices',
+              'Everything in Basic',
+              'Connectors',
+              'Priority support',
+              'Deep Research',
+              'Image Gen',
+            ],
+            isHighlighted: true,
+            savingsText: _isAnnualOnboarding && RegionService.hasAnnualOption(_userCountry)
+                ? 'Save ${AppConstants.annualSavingsPercent}%'
+                : null,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOnboardingBillingToggle(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Monthly',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: !_isAnnualOnboarding
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Semantics(
+          toggled: _isAnnualOnboarding,
+          label: 'Billing period toggle',
+          child: GestureDetector(
+            onTap: () => setState(() => _isAnnualOnboarding = !_isAnnualOnboarding),
+            child: Container(
+              width: 56,
+              height: 28,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
+                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: AnimatedAlign(
+                alignment: _isAnnualOnboarding
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                duration: const Duration(milliseconds: 150),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: AppColors.persian,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          'Annual',
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: _isAnnualOnboarding
+                ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
+                : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlanCard({
+    required bool isDark,
+    required String title,
+    required String price,
+    required List<String> features,
+    required bool isHighlighted,
+    String? savingsText,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.paddingCard),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBgSecondary : Colors.white,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(
+          color: isHighlighted
+              ? AppColors.persian
+              : (isDark
+                  ? AppColors.darkBorderDefault
+                  : AppColors.borderDefault),
+          width: isHighlighted ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (savingsText != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.persian.withValues(alpha: 0.1),
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.radiusFull),
+                      ),
+                      child: Text(
+                        savingsText,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.persian,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 150),
+                child: Text(
+                  price,
+                  key: ValueKey<String>(price),
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...features.map((feature) => Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check,
+                      size: 14,
+                      color: AppColors.persian,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      feature,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageReady(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AnimatedBuilder(
-            animation: _floatingAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, _floatingAnimation.value),
-                child: child,
-              );
-            },
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkBgSecondary
-                    : AppColors.bgSecondary,
-                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-              ),
-              child: const Center(
-                child: Text(
-                  '\u{1F47B}',
-                  style: TextStyle(fontSize: 50),
-                ),
-              ),
-            ),
-          ),
+          const PenguinMascot(size: 100, animate: true),
           const SizedBox(height: 24),
           Text(
-            "You're all set!",
+            _getReadyText(),
             style: GoogleFonts.dmSerifDisplay(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -869,48 +1142,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Start chatting with any AI model.\nDirect answers. Zero fluff. Always.',
-            style: GoogleFonts.dmSans(
-              fontSize: 16,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _completeOnboarding,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.persian,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Start chatting',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
+}
+
+class _ProviderInfo {
+  final String label;
+  final String name;
+  final Color color;
+
+  const _ProviderInfo({
+    required this.label,
+    required this.name,
+    required this.color,
+  });
 }

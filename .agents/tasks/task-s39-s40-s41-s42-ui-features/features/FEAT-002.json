@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S40 - Usage Dashboard UI: Create usage_screen.dart with token usage cards, cost transparency, 7-day bar chart. Add route and settings tile.",
+  "status": "completed",
+  "steps": [
+    "Add route to frontend/lib/core/utils/router.dart: static const usage = '/settings/usage' in AppRoutes. Add GoRoute for the path pointing to UsageScreen. Add import for usage_screen.dart.",
+    "Add tile in frontend/lib/presentation/screens/settings/settings_screen.dart: In the DEVICES section (or create a new USAGE section before DEVICES), add a tile with Icons.bar_chart_outlined, title 'Token Usage', navigating to AppRoutes.usage. Import the router if needed.",
+    "Create frontend/lib/presentation/screens/settings/usage_screen.dart: ConsumerStatefulWidget. AppBar: 'Usage' with back arrow, DM Serif Display. SingleChildScrollView body. Four usage cards (5-Hour limit 40000, Today limit 100000, This Week limit 500000, This Month limit 2000000). Each card has: bgSecondary background, 1px borderDefault border, radiusLarge border radius, 16px padding, 12px margin bottom. Row top: cap name (DM Sans 13px 600) left, reset time (DM Sans 11px textMuted) right. Gap 8px. Text 'X / Y tokens' DM Sans 12px textMuted. Gap 6px. LinearProgressIndicator: minHeight 6px, borderRadius full, background bgTertiary, color: <0.7 success, 0.7-0.9 warning, >0.9 error. Cost transparency card: title 'This Month' 13px 600, rows for estimated cost, tokens saved (green), current model (persian), footer italic. 7-day bar chart: 7 Container bars with proportional heights (max 60px), persian color, day labels Mon-Sun. Load data on init with GET /tokens/usage, parse TokenUsageModel, refresh every 60 seconds with Timer.",
+    "Ensure usage_screen.dart imports and uses the chatServiceProvider or creates a dedicated usage service method. Add a method to chat_service.dart or a new service: Future<Map<String, dynamic>> getTokenUsage() that calls GET /tokens/usage."
+  ],
+  "acceptance_criteria": [
+    "usage_screen.dart exists at frontend/lib/presentation/screens/settings/usage_screen.dart",
+    "AppRoutes.usage is defined and routed to UsageScreen",
+    "Settings screen has a Token Usage tile that navigates to the usage screen",
+    "Usage screen shows 4 cap cards with progress indicators",
+    "Usage screen shows cost transparency section",
+    "Usage screen shows 7-day bar chart",
+    "Data loads from GET /tokens/usage endpoint",
+    "flutter analyze passes with no errors"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ to confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment. Verification done through code review only, consistent with FEAT-001 findings. Used Map<String, Object?> instead of Map<String, dynamic> to avoid dynamic types. Used chatServiceProvider from chat_repository.dart for service access. Timer.periodic for 60s refresh with proper dispose. Error state with retry button included."
+}

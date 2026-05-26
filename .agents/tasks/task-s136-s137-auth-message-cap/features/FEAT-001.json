@@ -1,0 +1,40 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S136 + S137 Backend: Add email/password auth endpoints (auth.py) and message count cap service (message_guard.py + chat.py) on the feature/backend-setup-tests branch",
+  "status": "completed",
+  "steps": [
+    "Switch to feature/backend-setup-tests branch",
+    "Create backend/app/routers/auth.py with these endpoints following the pattern in backend/app/routers/projects.py (APIRouter, Pydantic models, Depends(rate_limit(...)), logging, consistent error format): POST /auth/signup (email/password/name validation via Pydantic, calls Supabase auth.sign_up placeholder, returns access_token + user + subscription), POST /auth/login (Supabase sign_in_with_password placeholder, checks email_verified flag, returns access_token + user + subscription), POST /auth/forgot-password (email input, always returns 200 for security even on error), POST /auth/reset-password (new_password + token validation, calls Supabase update_user placeholder), POST /auth/resend-verification (email input, calls Supabase resend placeholder, always returns 200)",
+    "Rate limit auth endpoints at 5 requests per minute per IP as specified in RULES.md",
+    "Create backend/app/services/message_guard.py with: check_message_limit(user_id: str, plan: str) -> dict that checks Redis key msg_count:{user_id}:{date} against FREE_DAILY_MESSAGE_LIMIT=20, returns {allowed: bool, current_count: int, limit: int, warning: bool (when count >= FREE_MESSAGE_WARNING=15)}. Also increment_message_count(user_id: str) that increments the Redis counter with TTL 86400s. Use placeholder Redis client that can be swapped for real Upstash Redis later.",
+    "Create backend/app/routers/chat.py with: POST /chat/stream (placeholder that enforces message limit via message_guard before processing, increments count after success), GET /tokens/message-count (returns current count, limit, remaining for the user). Follow same patterns as projects.py with auth middleware and rate limiting.",
+    "Update backend/app/main.py to register the new auth router (prefix='/auth', tags=['auth']) and chat router (prefix='/chat', tags=['chat'])",
+    "Update backend/requirements.txt to add redis>=5.0.0 dependency",
+    "Verify all new Python files compile with python -m py_compile",
+    "Switch back to feature/project-setup-resolved branch"
+  ],
+  "acceptance_criteria": [
+    "backend/app/routers/auth.py exists with all 5 endpoints (signup, login, forgot-password, reset-password, resend-verification)",
+    "backend/app/services/message_guard.py exists with check_message_limit and increment_message_count functions",
+    "backend/app/routers/chat.py exists with POST /chat/stream and GET /tokens/message-count",
+    "backend/app/main.py includes auth and chat routers",
+    "All .py files pass python -m py_compile without errors",
+    "No print statements used, only logging module",
+    "All endpoints use Pydantic models for input validation",
+    "Rate limiting applied on all endpoints",
+    "Auth middleware (get_current_user) on all non-auth endpoints",
+    "Consistent error response format with detail field"
+  ],
+  "verification": [
+    "Run: git checkout feature/backend-setup-tests",
+    "Run: python -m py_compile backend/app/routers/auth.py",
+    "Run: python -m py_compile backend/app/services/message_guard.py",
+    "Run: python -m py_compile backend/app/routers/chat.py",
+    "Run: python -m py_compile backend/app/main.py",
+    "Run: cd backend && pip install -r requirements.txt && python -m pytest tests/ -x",
+    "Run: git checkout feature/project-setup-resolved"
+  ],
+  "blocked_reason": null,
+  "findings": "All files created and committed on feature/backend-setup-tests branch. Added email-validator>=2.1.0 to requirements.txt (required by pydantic EmailStr). Used IP-based rate limiting for auth endpoints since users are not yet authenticated. All 70 existing tests pass. Files created: backend/app/routers/auth.py, backend/app/routers/chat.py, backend/app/services/message_guard.py. Files modified: backend/app/main.py, backend/requirements.txt."
+}

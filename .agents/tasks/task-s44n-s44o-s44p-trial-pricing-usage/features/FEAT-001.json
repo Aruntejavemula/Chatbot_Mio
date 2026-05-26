@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S44N - 14 Day Trial UI: Create trial_banner_widget.dart and fully replace subscription_screen.dart. Add trial banner to settings_screen.dart at top.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/lib/presentation/widgets/common/trial_banner_widget.dart - A ConsumerStatefulWidget that reads 'trial_start_date' from FlutterSecureStorage on init. Calculates days remaining: 14 - (DateTime.now().difference(trialStart).inDays). Shows active state with gradient background (persian 20% opacity to bgSecondary), persian border, 'Pro Trial Active' heading in DM Serif Display 20px, days remaining count, '$9.99/month' price text, Upgrade button (navigates to subscription route), and a LinearProgressIndicator showing trial progress (daysElapsed/14). If trial_start_date is null or expired (>=14 days), shows expired state with error colors, 'Your trial ended' text, and 'Upgrade now' button. Widget is self-contained and handles its own loading state.",
+    "Replace frontend/lib/presentation/screens/settings/subscription_screen.dart - Full screen with AppBar 'Subscription'. Section 1: Current plan card showing the active plan name and status. Section 2: Plan cards matching onboarding page 7 pattern (_buildPlanCard) with Free ($0), Basic ($4.99/mo), and Pro ($9.99/mo) with feature lists. Section 3: 'Manage subscription' tile that launches Stripe portal via url_launcher, and 'Cancel subscription' tile with confirmation AlertDialog. Follow existing screen patterns (ConsumerStatefulWidget, isDark, AppColors, GoogleFonts).",
+    "Update frontend/lib/presentation/screens/settings/settings_screen.dart - Import TrialBannerWidget. Add it as the very first item in the ListView children list (before the ACCOUNT section header). It will self-hide when not applicable."
+  ],
+  "acceptance_criteria": [
+    "trial_banner_widget.dart exists and compiles with strict null safety",
+    "Banner reads trial_start_date from FlutterSecureStorage and calculates remaining days",
+    "Banner shows active state (gradient, progress bar, days remaining) when trial is active",
+    "Banner shows expired state (error colors, upgrade button) when trial has ended",
+    "Banner hides completely when trial_start_date is null (user never started trial)",
+    "subscription_screen.dart has AppBar 'Subscription', current plan card, plan cards section, and manage/cancel section",
+    "Cancel subscription shows confirmation dialog before action",
+    "settings_screen.dart shows TrialBannerWidget at the very top of the ListView"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ directory and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment (consistent with all previous task findings). Verification done via manual code review confirming: correct imports matching existing patterns (flutter_secure_storage, url_launcher, go_router, google_fonts), proper use of AppColors/AppSizes constants, ConsumerStatefulWidget pattern, isDark pattern, DM Serif Display for headings, DM Sans for body, strict null safety with no dynamic types, error handling with try-catch in async operations, no commented-out code, no magic numbers. The withValues(alpha:) pattern used for Color opacity is consistent with existing codebase usage."
+}

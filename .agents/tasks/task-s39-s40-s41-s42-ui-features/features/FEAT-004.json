@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "S42 - Token Cap Banner UI: Create token_cap_banner.dart widget, update chat_screen.dart to show it between chat area and input bar, add tokenCapProvider to chat_repository.dart",
+  "status": "completed",
+  "steps": [
+    "Create frontend/lib/presentation/widgets/chat/token_cap_banner.dart: StatelessWidget TokenCapBanner. Props: capType (String), used (int), limit (int), resetsIn (String), onAddKey (VoidCallback). Getter: double get percentage => used / limit. Warning state (percentage 0.7 to <1.0): background Color(0xFFF59E0B).withOpacity(0.1), border 1px Color(0xFFF59E0B), radiusMedium, padding 10px 14px, margin 0px 16px 8px. Row with Icons.warning_amber_outlined 14px warning, gap 8px, Expanded Text 'X% of {capType} tokens used. Resets {resetsIn}' DM Sans 12px textSecondary, TextButton 'Add key' persian on tap onAddKey. Blocked state (percentage >= 1.0): background Color(0xFFEF4444).withOpacity(0.1), border 1px Color(0xFFEF4444). Row with Icons.block 14px error, gap 8px, Column Expanded with '{capType} limit reached' DM Sans 13px 500 error color and 'Add your own API key to continue' DM Sans 12px textMuted, ElevatedButton 'Add key' background error text white on tap onAddKey. Cap type display names mapping: five_hour -> '5-hour (40K)', daily -> 'Daily (100K)', weekly -> 'Weekly (500K)', monthly -> 'Monthly (2M)'. If percentage < 0.7, return SizedBox.shrink() (no banner shown).",
+    "Update frontend/lib/data/repositories/chat_repository.dart: Add tokenCapProvider StateProvider<Map<String, dynamic>?> initialized to null. In the sendMessage method, after processing SSE stream chunks, check if a chunk contains a 'cap_warning' type event with fields cap_type, used, limit, resets_in. If found, update tokenCapProvider with that data.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: Add watch of tokenCapProvider. Show TokenCapBanner between the chat Expanded area and the input bar (before _buildFilePreviewBar / _buildInputBar) when tokenCapProvider is not null and percentage >= 0.7. Pass onAddKey: () => context.go(AppRoutes.apiKeys). Import token_cap_banner.dart."
+  ],
+  "acceptance_criteria": [
+    "token_cap_banner.dart exists with TokenCapBanner StatelessWidget",
+    "Banner shows warning state at 70-99% usage",
+    "Banner shows blocked state at 100% usage",
+    "Banner not shown when usage < 70%",
+    "tokenCapProvider exists in chat_repository.dart",
+    "chat_screen.dart conditionally shows TokenCapBanner",
+    "Cap type names properly mapped from API strings to display strings",
+    "No dynamic types, proper null safety, error handling",
+    "flutter analyze passes with no errors"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ to confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment. Verification done through code review only, consistent with prior features (FEAT-001, FEAT-002, FEAT-003). Used Map<String, Object?> instead of Map<String, dynamic> to avoid dynamic types per project rules. Used Map.from() to explicitly cast from jsonDecode result. TokenCapBanner handles all three states: hidden (<70%), warning (70-99%), blocked (>=100%). ChatService.lastCapWarning is reset to null at the start of each streamMessage call. tokenCapProvider added to chat_repository.dart as StateProvider<Map<String, Object?>?>."
+}

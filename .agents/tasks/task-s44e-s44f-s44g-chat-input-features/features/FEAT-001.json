@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S44E - Update the send button in chat_screen.dart _buildInputBar to use custom rounded rectangle shape (44x44px, border radius 20px), Icons.arrow_upward_rounded (22px), gray #9CA3AF when empty / Persian Orange when has text, with tap animation (scale 0.88 spring back) and color transition animation (200ms easeOutCubic).",
+  "status": "completed",
+  "steps": [
+    "In frontend/lib/presentation/screens/chat/chat_screen.dart, add TickerProviderStateMixin (change SingleTickerProviderStateMixin if needed, or add mixin) to _ChatScreenState to support an AnimationController for the send button scale animation.",
+    "Add an AnimationController _sendButtonAnimController for the tap animation with spring physics (stiffness 300, damping 20). Add a bool _sendButtonPressed state variable.",
+    "Replace the existing send button section (the GestureDetector wrapping AnimatedContainer with circle shape, 36x36) with a new implementation: GestureDetector with onTapDown (scale to 0.88) and onTapUp/onTapCancel (spring back to 1.0), wrapping an AnimatedScale or ScaleTransition.",
+    "The new send button: AnimatedContainer 44x44px, borderRadius 20px (rounded rectangle not circle), color transitions between Color(0xFF9CA3AF) (gray, empty) and AppColors.persian (has text) with duration 200ms curve Curves.easeOutCubic.",
+    "Icon: Icons.arrow_upward_rounded, size 22px, color white always.",
+    "Only modify the send button section. Do not change any other part of _buildInputBar or chat_screen.dart.",
+    "Use MioAnimations.spring from core/utils/animations.dart for the spring description if appropriate, or define the spring inline with stiffness 300 damping 20."
+  ],
+  "acceptance_criteria": [
+    "Send button is 44x44px rounded rectangle with border radius 20px",
+    "Empty input state: button color is #9CA3AF gray, no tap animation fires",
+    "Has text state: button color is Persian Orange #CC5801",
+    "Icon is Icons.arrow_upward_rounded at 22px, always white",
+    "Tap down scales to 0.88, tap up springs back to 1.0 with spring physics",
+    "Color animates between states with 200ms easeOutCubic",
+    "No other parts of chat_screen.dart are modified beyond the send button"
+  ],
+  "verification": [
+    "Read back the modified chat_screen.dart and verify only the send button section changed",
+    "Check AnimationController is properly disposed in dispose()",
+    "Verify no compilation errors by checking all imports and types"
+  ],
+  "blocked_reason": null,
+  "findings": "Added TickerProviderStateMixin to _ChatScreenState (no prior mixin existed). Added flutter/physics.dart and core/utils/animations.dart imports. AnimationController uses lowerBound 0.88 and upperBound 1.0 for scale animation range. SpringSimulation uses MioAnimations.spring (stiffness 300, damping 20). Only the send button section, imports, class declaration, state fields, initState, and dispose were modified."
+}

@@ -77,4 +77,74 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  Future<UserModel> signUpWithEmail({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _authService.signUpWithEmail(
+        name: name,
+        email: email,
+        password: password,
+      );
+      final token = response['access_token'] as String;
+      await _authService.saveTokenSecurely(token);
+      final user =
+          UserModel.fromJson(response['user'] as Map<String, dynamic>);
+      // Don't set currentUser here - user must verify email first.
+      // Token is saved for the resend-verification call.
+      return user;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<UserModel> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _authService.signInWithEmail(
+        email: email,
+        password: password,
+      );
+      final token = response['access_token'] as String;
+      await _authService.saveTokenSecurely(token);
+      final user =
+          UserModel.fromJson(response['user'] as Map<String, dynamic>);
+      _ref.read(currentUserProvider.notifier).state = user;
+      return user;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> forgotPassword(String email) async {
+    try {
+      await _authService.forgotPassword(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      await _authService.resetPassword(token: token, newPassword: newPassword);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resendVerification(String email) async {
+    try {
+      await _authService.resendVerification(email);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

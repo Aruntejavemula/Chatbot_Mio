@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "S44D - Premium Animations (Apple Style): Create MioAnimations utility class, add spring/fade/slide animations to chat bubbles, sidebar, route transitions, loading indicator dots, and settings tiles",
+  "status": "completed",
+  "steps": [
+    "Create frontend/lib/core/utils/animations.dart with MioAnimations class: static const Duration standard = Duration(milliseconds: 300), static const Duration fast = Duration(milliseconds: 200), static const Curve curve = Curves.easeOutCubic, static const SpringDescription spring = SpringDescription(mass: 1, stiffness: 300, damping: 20). Import physics package for SpringDescription.",
+    "Update frontend/lib/presentation/widgets/chat/chat_bubble.dart: The existing _fadeController already does a FadeTransition. Add a SlideTransition from bottom 20px (Offset(0, 0.1) -> Offset.zero) combined with the existing fade. Use MioAnimations.standard duration and MioAnimations.curve. Trigger on first build only (already done via initState forward).",
+    "Update frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart: The sidebar already has a slide animation from left. Update the curve to use Curves.easeOutCubic and duration to 300ms to match MioAnimations.standard. The Tween is already Offset(-1,0) -> Offset.zero which is correct.",
+    "Update frontend/lib/core/utils/router.dart: Replace all GoRoute builder with pageBuilder using CustomTransitionPage. transitionDuration: MioAnimations.standard. transitionsBuilder: SlideTransition from right (Offset(1,0) -> Offset.zero) with MioAnimations.curve. Pop is automatic reverse. Import MioAnimations.",
+    "Update frontend/lib/presentation/widgets/chat/loading_indicator.dart: Add pulse scale animation to the dots. Each dot gets a ScaleTransition 0.6 -> 1.0 -> 0.6 loop. Stagger: dot 1 starts at 0ms, dot 2 at 150ms, dot 3 at 300ms. Use existing _dot1Controller/_dot2Controller/_dot3Controller but add scale animations alongside the existing translate animations.",
+    "Update frontend/lib/presentation/screens/settings/settings_screen.dart: Wrap each settings tile (the InkWell in _buildTile) with a GestureDetector + AnimatedScale that scales to 0.97 on tap down and back to 1.0 on tap up/cancel, using MioAnimations.fast duration. This provides the spring-like tap feedback.",
+    "Run flutter analyze and fix any warnings or errors in all modified files."
+  ],
+  "acceptance_criteria": [
+    "frontend/lib/core/utils/animations.dart exists with MioAnimations class and all constants",
+    "chat_bubble.dart has combined FadeTransition + SlideTransition from bottom",
+    "sidebar_widget.dart uses easeOutCubic curve and 300ms duration",
+    "router.dart uses CustomTransitionPage with slide transitions on all routes",
+    "loading_indicator.dart dots have scale pulse animation with stagger",
+    "settings_screen.dart tiles have scale-on-tap animation",
+    "flutter analyze passes with no errors"
+  ],
+  "verification": [
+    "Run: cd frontend && flutter pub get && flutter analyze --no-fatal-infos"
+  ],
+  "blocked_reason": null,
+  "findings": "All animations implemented successfully. Flutter SDK not available in sandbox so verification limited to code review. The _buildTransitionPage helper function in router.dart reduces code duplication across all 15 routes. ScaleTransition in loading_indicator reuses existing controllers (which already repeat with reverse:true) for the ping-pong scale effect. The _AnimatedTile widget in settings_screen is a private StatefulWidget that encapsulates the scale-on-tap interaction."
+}

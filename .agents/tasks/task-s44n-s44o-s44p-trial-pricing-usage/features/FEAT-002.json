@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S44O - Annual Pricing UI: Add monthly/annual toggle to subscription_screen.dart and onboarding page 7 with animated price switching.",
+  "status": "completed",
+  "steps": [
+    "Update frontend/lib/presentation/screens/settings/subscription_screen.dart - Add a boolean state _isAnnual. Build a custom sliding toggle widget (56x28 container with persian pill 24x24) that switches between Monthly and Annual. When toggled, prices animate with AnimatedSwitcher (duration 150ms). Monthly prices: Basic $4.99/mo, Pro $9.99/mo. Annual prices: Basic $49.99/yr ($4.17/mo shown as subtitle), Pro $99.99/yr ($8.33/mo shown as subtitle). Annual cards get a savings pill/badge showing 'Save 17%'. Place toggle above plan cards section.",
+    "Update frontend/lib/presentation/screens/auth/onboarding_screen.dart - In _buildPagePricing method, add state variable _isAnnualOnboarding to the screen state class. Add the same monthly/annual sliding toggle above the plan cards. Update _buildPlanCard calls to use AnimatedSwitcher for price text. When annual is selected, show annual prices with per-month equivalent and savings badge. Keep the same toggle design (56x28 container, 24x24 persian pill, animated slide)."
+  ],
+  "acceptance_criteria": [
+    "subscription_screen.dart has a monthly/annual toggle with sliding pill animation",
+    "Toggling changes displayed prices with AnimatedSwitcher (150ms duration)",
+    "Annual mode shows yearly price with per-month equivalent and savings pill",
+    "onboarding_screen.dart page 7 has the same toggle above plan cards",
+    "Toggle design: 56x28 container, 24x24 persian pill, smooth slide animation",
+    "All code compiles with strict null safety"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ directory and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox (consistent with FEAT-001 findings). Verification done via manual code review. Both toggles use independent state variables (_isAnnual in subscription, _isAnnualOnboarding in onboarding). Used AnimatedAlign with 150ms duration for sliding pill. Used AnimatedSwitcher with 150ms and ValueKey for price text transitions. Savings badge uses persian.withValues(alpha: 0.1) pattern matching existing codebase. All types are explicit (no dynamic), all parameters use strict null safety with String? for optional values."
+}

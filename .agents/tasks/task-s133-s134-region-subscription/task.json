@@ -1,0 +1,7 @@
+{
+  "task_id": "task-s133-s134-region-subscription",
+  "task_description": "S133: Create RegionService for user region detection with cached locale, regional pricing, and payment provider selection. S134: Replace subscription_screen with region-aware version (Indian website-only, US+Global App Store/Website dual option), update onboarding page 7 with regional pricing, verify welcome_screen has no pricing.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

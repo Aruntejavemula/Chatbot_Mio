@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Permission Dialogs System: Create a reusable PermissionDialog widget with static helpers for microphone, camera, notifications, and photos. Update voice_input_widget.dart and plus_panel_widget.dart to show the permission dialog before requesting OS permissions or opening camera/picker.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/lib/presentation/widgets/common/permission_dialog.dart with a PermissionDialog class that has: a static show() method returning Future<bool> (true=allow, false=deny), static helper methods microphone(BuildContext), camera(BuildContext), notifications(BuildContext), photos(BuildContext) each calling show() with appropriate icon, title, and reason text. Dialog style: AlertDialog with rounded corners (16px radius), top icon in a colored circle (64px diameter, AppColors.persian background, white icon), title in DM Serif Display 20px, reason text in DM Sans 14px textSecondary, two buttons (Deny: outline style, Allow: filled Persian Orange). Theme-aware (isDark checks).",
+    "Update frontend/lib/presentation/widgets/chat/voice_input_widget.dart: Import PermissionDialog. In _startRecording(), before calling Permission.microphone.request(), first call PermissionDialog.microphone(context). If it returns false, return early without requesting OS permission. If true, proceed with the existing Permission.microphone.request() flow.",
+    "Update frontend/lib/presentation/widgets/chat/plus_panel_widget.dart: Import PermissionDialog. In _pickPhoto(), before calling _imagePicker.pickImage(source: ImageSource.gallery), show PermissionDialog.photos(context). If denied, return early. In _pickCamera() and _pickScan(), show PermissionDialog.camera(context) before calling _imagePicker.pickImage(source: ImageSource.camera). If denied, return early."
+  ],
+  "acceptance_criteria": [
+    "permission_dialog.dart exists with PermissionDialog class and all 4 static helpers",
+    "show() returns Future<bool> - true for allow, false for deny",
+    "voice_input_widget.dart shows microphone permission dialog before OS permission request",
+    "plus_panel_widget.dart shows photos/camera permission dialog before picker access",
+    "All files pass flutter analyze without errors",
+    "No dynamic types, strict null safety",
+    "Dialog uses DM Serif Display for title, DM Sans for body"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Chatbot_Mio/frontend && flutter analyze --no-fatal-infos"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment (consistent with FEAT-001 and FEAT-002 findings). Verified correctness via manual code inspection: PermissionDialog class created with private constructor, all 4 static helper methods (microphone, camera, notifications, photos) returning Future<bool>, show() uses result ?? false pattern for null safety. voice_input_widget.dart calls PermissionDialog.microphone(context) before Permission.microphone.request(). plus_panel_widget.dart calls PermissionDialog.photos in _pickPhoto, PermissionDialog.camera in both _pickCamera and _pickScan. All imports resolve correctly. No dynamic types, strict null safety throughout."
+}

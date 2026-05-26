@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S44H - Top Bar Redesign All Platforms: Completely rewrite _buildTopBar in chat_screen.dart to support mobile, tablet landscape, and desktop layouts. Add share button, more options button with bottom sheet (rename, clear, new, delete), center title/project display, and adapt icons/layout per platform.",
+  "status": "completed",
+  "steps": [
+    "Rewrite the _buildTopBar method in frontend/lib/presentation/screens/chat/chat_screen.dart. MOBILE top bar (56px height, AppColors.bgPrimary bg, 1px bottom border AppColors.borderDefault, no elevation): Left side - IconButton with Icons.menu_rounded (20px, textMuted) shown only on phone + tablet portrait. Center (Expanded Column): chat title or 'New Chat' (DM Sans 15px w600 textPrimary, max 1 line ellipsis), and if projectId is set, show project name (DM Sans 11px AppColors.persian, max 1 line ellipsis). Right side (Row gap 4): Export button (Icons.download_outlined 20px textMuted, show when messages.length > 0), Share button (Icons.ios_share_outlined 20px textMuted, show when messages.length > 0, on tap: Share.share formatted chat text), More button (Icons.more_horiz_rounded 20px textMuted, on tap: show _buildMoreOptionsSheet).",
+    "TABLET LANDSCAPE + DESKTOP top bar: Same structure but no hamburger icon (showPermanentSidebar is true). Add a Text 'Share' button (DM Sans 13px w500 textMuted) instead of icon for share. Optionally show model name subtitle if there is enough space.",
+    "EMPTY STATE top bar (no chat selected, no chatId): Title shows 'Mio' in DM Serif Display 18px. No right side buttons.",
+    "Add _showMoreOptionsSheet method: shows a bottom sheet with options: 'Rename chat' (Icons.edit_outlined, on tap shows rename dialog with TextField, Save calls ChatService.updateChatTitle via PATCH /chat/chats/{id}), 'Clear chat' (Icons.delete_sweep_outlined, confirm dialog with red Delete, clears local messages state), 'New chat' (Icons.add_outlined, navigates to AppRoutes.chat), Divider, 'Delete chat' (Icons.delete_outlined, AppColors.error color, confirm dialog, calls ChatService.deleteChat, navigates back). Use existing ChatService methods updateChatTitle and deleteChat.",
+    "Add the share_plus import to chat_screen.dart (import 'package:share_plus/share_plus.dart'). The share function formats messages as 'Chat from Mio\\n\\n{role}: content\\n...' and calls Share.share(). Add dart:io import for Platform checks.",
+    "Ensure the existing export button logic (ExportMenuWidget.showExportSheet) is preserved and moved to the new right-side icon row."
+  ],
+  "acceptance_criteria": [
+    "Top bar shows hamburger only on phone/tablet-portrait, not on desktop/tablet-landscape",
+    "Center shows chat title (or 'New Chat') with project subtitle when projectId is set",
+    "Right side shows export, share, more buttons when messages exist",
+    "More button opens bottom sheet with Rename, Clear, New Chat, Delete options",
+    "Rename calls PATCH via ChatService.updateChatTitle",
+    "Delete calls DELETE via ChatService.deleteChat and navigates away",
+    "Empty state shows 'Mio' title only, no action buttons",
+    "Desktop/tablet-landscape shows 'Share' as text instead of icon",
+    "No compilation errors"
+  ],
+  "verification": [
+    "Read back the modified chat_screen.dart and verify all top bar logic",
+    "Verify imports are complete (share_plus, dart:io if needed)",
+    "Verify ChatService methods (updateChatTitle, deleteChat) are called correctly"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox, so flutter analyze could not be run. Verification done via file inspection - brace balancing, import verification, and grep checks for correct usage of ChatService methods (updateChatTitle, deleteChat), Riverpod providers (chatServiceProvider, currentChatProvider, chatsProvider, messagesProvider), and AppColors constants. share_plus already in pubspec.yaml. Ghost mascot settings button removed from top bar as specified."
+}

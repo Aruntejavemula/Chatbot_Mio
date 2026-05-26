@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "S133 - Create RegionService and S134 - Replace subscription_screen.dart with region-aware version, update onboarding page 7, verify welcome_screen has no pricing",
+  "status": "completed",
+  "steps": [
+    "Step 1: Create frontend/lib/core/utils/region_service.dart with RegionService class. It should use FlutterSecureStorage to cache the user region. Detection uses WidgetsBinding.instance.platformDispatcher.locale.countryCode. Includes: getRegion(), isIndian(), isMiddleTier() (countries: BR, MX, PL, AR, CO, CL, PE, ZA, NG, EG, PK, BD, VN, PH, ID, TH, MY, UA, RO, HU), isPremium(), getPriceDisplay() with Indian pricing (basic monthly Rs99/annual Rs999, pro monthly Rs299/annual Rs2999), MiddleTier pricing (basic $2.99, pro $5.99, no annual), Premium pricing (basic $4.99/annual $49.99, pro $9.99/annual $99.99), getPaymentProvider() (Indian=razorpay, else=stripe), hasAnnualOption() (MiddleTier=false, else=true). Follow the pattern of ConnectivityService for service structure but use static methods.",
+    "Step 2: Replace frontend/lib/presentation/screens/settings/subscription_screen.dart entirely with a region-aware version. The screen must: (a) call RegionService.getRegion() in initState, (b) For Indian non-subscribed: full screen centered column with PenguinMascot, 'Subscribe to Mio' (DM Serif Display 28px), 'To subscribe, visit:' (DM Sans 16px textMuted), SelectableText 'mio.app/subscribe' (DM Serif Display 22px persian), 'Basic Rs99/mo - Pro Rs299/mo' (DM Sans 14px textMuted), 'Annual plans available on our website.' (DM Sans 13px textMuted), NO buttons/links/payment UI. (c) For Indian subscribed: show current plan normally + 'Manage via website' text. (d) For US+Global non-subscribed: current plan card, monthly/annual toggle (only if hasAnnualOption), plan cards with getPriceDisplay() prices, Option 1 App Store/Play Store card (bgSecondary bg, 1px border, 16px radius, platform icon, price, chevron, onTap snackbar 'Coming soon - use website option for now'), Option 2 Website card (highlighted: persian 10% bg, 2px persian border, 'BEST DEAL' badge, globe icon, save % text, chevron, onTap launch mio.app/subscribe with plan+country params). (e) For all subscribed: current plan card + management text based on subscribed_via (stripe/razorpay -> mio.app/account, apple -> App Store Settings, google -> Play Store). Import PenguinMascot from '../../widgets/common/ghost_mascot.dart'. Use url_launcher for opening URLs.",
+    "Step 3: Update frontend/lib/presentation/screens/auth/onboarding_screen.dart _buildPagePricing method to be region-aware. Load region via RegionService.getRegion(). If Indian: show PenguinMascot small, 'Subscribe at mio.app' (DM Serif Display 22px persian), pricing text with Indian prices, 'No payment needed in app' text, Continue button. If not Indian: show existing plan cards with correct regional prices via RegionService.getPriceDisplay(). Add RegionService import.",
+    "Step 4: Verify frontend/lib/presentation/screens/auth/welcome_screen.dart has no pricing content. Currently confirmed it has none (just sign-in buttons + tagline), so no changes needed."
+  ],
+  "acceptance_criteria": [
+    "frontend/lib/core/utils/region_service.dart exists with RegionService class containing all specified methods",
+    "RegionService.getRegion() uses FlutterSecureStorage for caching and platformDispatcher.locale for detection",
+    "RegionService correctly categorizes IN as Indian, BR/MX/PL/AR/CO/CL/PE/ZA/NG/EG/PK/BD/VN/PH/ID/TH/MY/UA/RO/HU as MiddleTier, everything else as Premium",
+    "subscription_screen.dart shows Indian-specific website-only flow with no payment UI for Indian users",
+    "subscription_screen.dart shows App Store/Website dual option for US+Global users",
+    "subscription_screen.dart shows management text for subscribed users based on provider",
+    "onboarding_screen.dart page 7 shows region-appropriate pricing",
+    "welcome_screen.dart has no pricing content",
+    "flutter analyze passes with no errors on the changed files"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/Chatbot_Mio/frontend && flutter analyze lib/core/utils/region_service.dart lib/presentation/screens/settings/subscription_screen.dart lib/presentation/screens/auth/onboarding_screen.dart lib/presentation/screens/auth/welcome_screen.dart"
+  ],
+  "blocked_reason": null,
+  "findings": "flutter analyze passes with exit code 0. Only 8 pre-existing info-level prefer_const_constructors issues in onboarding BYOK page (not our changes). Used // ignore comments for prefer_final_fields on _isSubscribed/_subscribedVia since they will be mutated when subscription state is integrated. welcome_screen.dart confirmed to have no pricing content."
+}

@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "S44P - Usage Percentage Tracker: Create usage_indicator_widget.dart, create usage_provider.dart, update sidebar and usage screen.",
+  "status": "completed",
+  "steps": [
+    "Create directory frontend/lib/data/providers/ and create frontend/lib/data/providers/usage_provider.dart - Define UsageState class (immutable, with dailyUsed int, dailyLimit int, isLoading bool, error String?). Define UsageNotifier extends StateNotifier<UsageState> with refresh() method that calls ChatService.getTokenUsage() via GET /tokens/usage. Create a StateNotifierProvider<UsageNotifier, UsageState> named usageProvider. The notifier should auto-refresh every 60 seconds using a Timer. Dispose the timer in dispose(). Use chatServiceProvider from chat_repository.dart to get the service instance.",
+    "Create frontend/lib/presentation/widgets/chat/usage_indicator_widget.dart - A compact ConsumerWidget for the sidebar bottom. Shows: bolt icon (Icons.bolt), 'Daily tokens' label, percentage text (dailyUsed/dailyLimit * 100), a thin LinearProgressIndicator with color based on percentage (green < 70%, warning 70-90%, error > 90%), and a milestone message below. Milestone messages: 'Getting started' (0-25%), 'Making progress' (25-50%), 'Heavy usage' (50-75%), 'Almost at limit' (75-100%). Reads from usageProvider. Compact design fitting sidebar width.",
+    "Update frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart - Import UsageIndicatorWidget. In _buildBottomSection, add UsageIndicatorWidget above the existing user info row. Show it only when user is on Pro plan (use existing isProPlan pattern from _buildProjectsSection). Add a Divider between the usage widget and user row.",
+    "Update frontend/lib/presentation/screens/settings/usage_screen.dart - Below the 'Today' _buildCapCard in _buildContent, add milestone messages section. Show the same milestone message logic as in usage_indicator_widget (based on daily ratio). Display as a small styled container with an icon and text."
+  ],
+  "acceptance_criteria": [
+    "frontend/lib/data/providers/usage_provider.dart exists with UsageState, UsageNotifier, and usageProvider",
+    "UsageNotifier calls GET /tokens/usage via ChatService and refreshes every 60 seconds",
+    "usage_indicator_widget.dart shows bolt icon, daily tokens label, percentage, progress bar, and milestone message",
+    "Progress bar color changes based on usage percentage thresholds",
+    "sidebar_widget.dart shows UsageIndicatorWidget above user info when Pro plan",
+    "usage_screen.dart shows milestone message below daily progress card",
+    "All code compiles with strict null safety, no dynamic types"
+  ],
+  "verification": [
+    "Run flutter analyze in frontend/ directory and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Flutter SDK not available in sandbox environment (consistent with FEAT-001 and FEAT-002 findings). Verified via manual code review: correct imports matching existing patterns, proper use of AppColors/AppSizes constants, ConsumerWidget pattern for indicator, StateNotifier pattern for provider with Timer-based auto-refresh every 60s, strict null safety with no dynamic types, error handling in refresh() method, proper dispose() for timer cleanup. UsageState is immutable with copyWith. The error field in copyWith intentionally always takes the passed value (null or string) to allow clearing errors on successful refresh."
+}

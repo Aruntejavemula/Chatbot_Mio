@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "S44G - Create document_viewer_widget.dart that shows file previews (images, PDFs, text, code) above input bar when files are attached, and update chat_screen.dart to show it when attachedFiles is not empty. Add file count badge on + button.",
+  "status": "completed",
+  "steps": [
+    "Create frontend/lib/presentation/widgets/chat/document_viewer_widget.dart as a StatelessWidget that takes: List<SelectedFileInfo> files, Function(int index) onRemoveFile, bool isDark.",
+    "Implement file type detection: IMAGE (jpg, png, gif, webp) shows Image.file thumbnail 80x80 with radius 8px cover fit. PDF shows Icons.picture_as_pdf in persian 32px with filename and page count text. Text (txt, md, csv) shows first 3 lines monospace DM Sans 12px textMuted truncated with '...'. Code (py, js, ts, dart, etc) shows Icons.code with language badge top-right and first 2 lines.",
+    "All preview cards: background AppColors.bgSecondary, border 1px AppColors.borderDefault, radius 12px, padding 12px, max height 120px. Remove button (Icons.close 16px) at top right. File name DM Sans 12px w500. File size DM Sans 11px textMuted formatted as '2.3 MB' or '340 KB'.",
+    "Multiple files: horizontal scroll row of previews, each 140px wide, gap 8px between.",
+    "In chat_screen.dart: Show DocumentViewerWidget when _selectedFiles.isNotEmpty, positioned above PlusPanelWidget (and below chat messages area). Replace existing _buildFilePreviewBar call with DocumentViewerWidget usage.",
+    "In _buildInputBar in chat_screen.dart: Add a file count badge on the + button when _selectedFiles.isNotEmpty. Small persian circle badge (16x16), white number text 10px, positioned top-right of + button using Stack + Positioned.",
+    "Add import for document_viewer_widget.dart in chat_screen.dart."
+  ],
+  "acceptance_criteria": [
+    "document_viewer_widget.dart exists at frontend/lib/presentation/widgets/chat/document_viewer_widget.dart",
+    "Image files show thumbnail 80x80 with border radius 8px",
+    "PDF files show PDF icon with filename",
+    "Text files show first 3 lines monospace",
+    "Code files show code icon with language badge",
+    "Remove button works on each preview card",
+    "Multiple files shown in horizontal scroll row",
+    "File count badge appears on + button when files attached",
+    "DocumentViewerWidget replaces _buildFilePreviewBar in chat_screen.dart"
+  ],
+  "verification": [
+    "Read back document_viewer_widget.dart and verify all file type previews",
+    "Read back chat_screen.dart and verify integration",
+    "Check all imports match existing files and types (SelectedFileInfo from file_upload_widget.dart)"
+  ],
+  "blocked_reason": null,
+  "findings": "Created document_viewer_widget.dart with file type detection (image, pdf, text, code) and preview cards. Replaced _buildFilePreviewBar in chat_screen.dart with DocumentViewerWidget. Added file count badge (persian circle with white number) on the + button using Stack + Positioned. Removed the now-unused _buildFilePreviewBar method. Kept file_upload_widget.dart import since SelectedFileInfo type is still used directly in chat_screen.dart state."
+}

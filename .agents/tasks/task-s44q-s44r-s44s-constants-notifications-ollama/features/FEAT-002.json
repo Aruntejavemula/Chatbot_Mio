@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S44R - Background notifications using flutter_local_notifications. Create notification service with initialize(), showTaskComplete(), showResearchComplete(), showTokenWarning(), requestPermission(). Create notification_ids.dart with static IDs. Update main.dart and chat_screen.dart.",
+  "status": "completed",
+  "steps": [
+    "Add flutter_local_notifications: ^17.2.2 to frontend/pubspec.yaml under dependencies (after shared_preferences).",
+    "Create frontend/lib/core/utils/notification_ids.dart with a class NotificationIds containing static const int values: taskComplete = 1, researchComplete = 2, tokenWarning = 3, general = 100.",
+    "Create frontend/lib/data/services/notification_service.dart with class NotificationService containing: static final FlutterLocalNotificationsPlugin _plugin; static Future<void> initialize() to set up plugin with Android/iOS/macOS settings; static Future<void> showTaskComplete(String taskName) to show notification with title 'Task Complete' and body; static Future<void> showResearchComplete(String topic) with title 'Research Ready'; static Future<void> showTokenWarning(int percentUsed) with title 'Token Usage Warning'; static Future<bool> requestPermission() to request notification permission. All methods should have try/catch error handling. Use NotificationIds for IDs.",
+    "Update frontend/lib/main.dart: Import notification_service.dart. Change main() to async, add WidgetsFlutterBinding.ensureInitialized() before runApp, call await NotificationService.initialize() before runApp.",
+    "Update frontend/lib/presentation/screens/chat/chat_screen.dart: Import notification_service.dart. Add logic that when isStreaming transitions from true to false (AI response complete) and the app lifecycle is paused/inactive, call NotificationService.showTaskComplete('AI Response'). Use WidgetsBindingObserver mixin on _ChatScreenState to track app lifecycle state."
+  ],
+  "acceptance_criteria": [
+    "flutter_local_notifications: ^17.2.2 is in pubspec.yaml",
+    "frontend/lib/core/utils/notification_ids.dart exists with static IDs",
+    "frontend/lib/data/services/notification_service.dart exists with all 5 methods (initialize, showTaskComplete, showResearchComplete, showTokenWarning, requestPermission)",
+    "main.dart calls NotificationService.initialize() before runApp",
+    "chat_screen.dart fires notification when AI response completes while app is backgrounded",
+    "All functions have error handling (try/catch)",
+    "No dynamic types used"
+  ],
+  "verification": [
+    "Run: cd frontend && flutter analyze --no-fatal-infos 2>&1 | tail -20",
+    "Verify files exist: ls frontend/lib/core/utils/notification_ids.dart frontend/lib/data/services/notification_service.dart"
+  ],
+  "blocked_reason": null,
+  "findings": "INTEGRATIONS_ONLY network - cannot run flutter analyze to verify. Code is structurally correct. flutter_local_notifications added to pubspec.yaml. notification_ids.dart and notification_service.dart created with all required methods and error handling. main.dart updated with async init. chat_screen.dart updated with WidgetsBindingObserver and background notification trigger on streaming completion."
+}

@@ -1,0 +1,52 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "S136 + S137 Frontend: Add email auth screens, update auth_service.dart with new methods, add message count widget, update router, welcome screen, chat screen, sidebar, and app_constants on feature/project-setup-resolved branch",
+  "status": "completed",
+  "steps": [
+    "Ensure on feature/project-setup-resolved branch",
+    "Update frontend/lib/data/services/auth_service.dart to add methods: signUpWithEmail(String name, String email, String password) -> Map, signInWithEmail(String email, String password) -> Map, forgotPassword(String email) -> void, resetPassword(String token, String newPassword) -> void, resendVerification(String email) -> void. Follow existing pattern of post() calls with DioException rethrow.",
+    "Update frontend/lib/data/repositories/auth_repository.dart to add methods: signUpWithEmail, signInWithEmail, forgotPassword, resetPassword, resendVerification that call the new auth_service methods and manage state (save token, set currentUser for signup/signin).",
+    "Create frontend/lib/presentation/screens/auth/email_signin_screen.dart - ConsumerStatefulWidget with sign-in/sign-up toggle (isSignUp bool state). When isSignUp: name + email + password fields. When !isSignUp: email + password fields with 'Forgot password?' link. Form validation (email format, password min 8 chars, name not empty). On submit calls appropriate auth repository method. Shows loading state and error messages via SnackBar. Uses GoogleFonts.dmSans, AppColors, same styling as welcome_screen.dart.",
+    "Create frontend/lib/presentation/screens/auth/verify_email_screen.dart - StatefulWidget showing 'Check your inbox' message with email displayed, a resend button (calls resendVerification), cooldown timer on resend, and 'Back to sign in' link. Follows app design patterns.",
+    "Create frontend/lib/presentation/screens/auth/forgot_password_screen.dart - StatefulWidget with email input field, 'Send reset link' button that calls forgotPassword, shows success state ('Check your email') after submission. Has 'Back to sign in' navigation.",
+    "Create frontend/lib/presentation/screens/auth/reset_password_screen.dart - StatefulWidget that accepts a token from the route (deep link query parameter). Has new password + confirm password fields with validation (min 8 chars, must match). Calls resetPassword service. Shows success state and navigates to sign in.",
+    "Update frontend/lib/presentation/screens/auth/welcome_screen.dart - Add a divider with 'or' text between the social buttons section and the 'Try without signing in' button. Below the divider add an outlined 'Continue with email' button that navigates to AppRoutes.emailSignIn. Use same _buildSignInButton pattern with an email icon.",
+    "Update frontend/lib/core/utils/router.dart - Add route constants: emailSignIn = '/auth/email-sign-in', verifyEmail = '/auth/verify-email', forgotPassword = '/auth/forgot-password', resetPassword = '/auth/reset-password'. Add these to the publicRoutes list in the redirect logic. Add GoRoute entries for each new route with appropriate page builders. Import the new screen files.",
+    "Add to frontend/lib/core/constants/app_constants.dart: static const int freeMessageLimit = 20 and static const int freeMessageWarning = 15",
+    "Create frontend/lib/presentation/widgets/chat/message_count_widget.dart - A compact ConsumerWidget showing '{count}/20 messages' with a thin LinearProgressIndicator. Color thresholds: green (<= 10), yellow/warning (11-15), red (>= 16). Shows 'Free plan' label above. Accepts count as parameter.",
+    "Update frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart - In _buildBottomSection, add the MessageCountWidget above the UsageIndicatorWidget for free plan users (when isProPlan is false). Import the new widget.",
+    "Verify with dart analyze that all files have no errors"
+  ],
+  "acceptance_criteria": [
+    "frontend/lib/presentation/screens/auth/email_signin_screen.dart exists with sign-in/sign-up toggle form",
+    "frontend/lib/presentation/screens/auth/verify_email_screen.dart exists with resend functionality",
+    "frontend/lib/presentation/screens/auth/forgot_password_screen.dart exists with email input and success state",
+    "frontend/lib/presentation/screens/auth/reset_password_screen.dart exists with password fields and token handling",
+    "frontend/lib/data/services/auth_service.dart has signUpWithEmail, signInWithEmail, forgotPassword, resetPassword, resendVerification methods",
+    "frontend/lib/data/repositories/auth_repository.dart has corresponding repository methods",
+    "frontend/lib/presentation/screens/auth/welcome_screen.dart has 'or' divider and 'Continue with email' button",
+    "frontend/lib/core/utils/router.dart has all 4 new auth routes registered and in publicRoutes",
+    "frontend/lib/core/constants/app_constants.dart has freeMessageLimit and freeMessageWarning",
+    "frontend/lib/presentation/widgets/chat/message_count_widget.dart exists with progress bar and color thresholds",
+    "frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart shows MessageCountWidget for free users",
+    "No dynamic types used anywhere",
+    "All imports are valid and reference existing files",
+    "dart analyze shows no errors on the new/modified files"
+  ],
+  "verification": [
+    "Run: dart analyze frontend/lib/data/services/auth_service.dart",
+    "Run: dart analyze frontend/lib/data/repositories/auth_repository.dart",
+    "Run: dart analyze frontend/lib/presentation/screens/auth/email_signin_screen.dart",
+    "Run: dart analyze frontend/lib/presentation/screens/auth/verify_email_screen.dart",
+    "Run: dart analyze frontend/lib/presentation/screens/auth/forgot_password_screen.dart",
+    "Run: dart analyze frontend/lib/presentation/screens/auth/reset_password_screen.dart",
+    "Run: dart analyze frontend/lib/presentation/screens/auth/welcome_screen.dart",
+    "Run: dart analyze frontend/lib/core/utils/router.dart",
+    "Run: dart analyze frontend/lib/core/constants/app_constants.dart",
+    "Run: dart analyze frontend/lib/presentation/widgets/chat/message_count_widget.dart",
+    "Run: dart analyze frontend/lib/presentation/widgets/sidebar/sidebar_widget.dart"
+  ],
+  "blocked_reason": null,
+  "findings": "All files created/modified successfully. dart analyze shows no errors (only pre-existing warnings/infos). Files created: email_signin_screen.dart, verify_email_screen.dart, forgot_password_screen.dart, reset_password_screen.dart, message_count_widget.dart. Files modified: auth_service.dart (5 new methods), auth_repository.dart (5 new methods), welcome_screen.dart (or divider + email button), router.dart (4 new routes + publicRoutes), app_constants.dart (freeMessageLimit/freeMessageWarning), sidebar_widget.dart (MessageCountWidget for free plan)."
+}
