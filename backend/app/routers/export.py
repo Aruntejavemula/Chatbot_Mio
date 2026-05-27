@@ -7,6 +7,7 @@ from fastapi.responses import Response
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.services.export_service import export_service
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ async def _get_user_plan(supabase, user_id: str) -> str:
         return "free"
 
 
-@router.get("/chat/{chat_id}/markdown")
+@router.get("/chat/{chat_id}/markdown", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def export_chat_markdown(
     chat_id: str,
     current_user: dict = Depends(get_current_user),
@@ -76,7 +77,7 @@ async def export_chat_markdown(
     )
 
 
-@router.get("/chat/{chat_id}/pdf")
+@router.get("/chat/{chat_id}/pdf", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def export_chat_pdf(
     chat_id: str,
     current_user: dict = Depends(get_current_user),
@@ -130,7 +131,7 @@ async def export_chat_pdf(
     )
 
 
-@router.get("/all/markdown")
+@router.get("/all/markdown", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def export_all_markdown(
     current_user: dict = Depends(get_current_user),
 ) -> Response:

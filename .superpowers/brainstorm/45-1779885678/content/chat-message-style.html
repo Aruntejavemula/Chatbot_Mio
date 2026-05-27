@@ -1,0 +1,118 @@
+<h2>How should chat messages look?</h2>
+<p class="subtitle">This is the core screen. Pick the style that feels most premium.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="claude-style" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:'Georgia',serif;">
+      <!-- AI message - no bubble, full width -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#CC5801;border-radius:50%;"></div>
+          <span style="color:#666;font-size:10px;letter-spacing:0.5px;">MIO</span>
+        </div>
+        <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.7;">Here's a clear explanation of what you asked. The answer spans naturally across the full width without any bubble constraint...</p>
+      </div>
+      <!-- User message - right aligned pill -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:18px 18px 4px 18px;padding:10px 14px;max-width:75%;">
+          <p style="color:#FAF8F5;font-size:12px;margin:0;line-height:1.5;">What about this follow-up question?</p>
+        </div>
+      </div>
+      <!-- AI message 2 -->
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#CC5801;border-radius:50%;"></div>
+          <span style="color:#666;font-size:10px;letter-spacing:0.5px;">MIO</span>
+        </div>
+        <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.7;">Great follow-up. Let me explain that too...</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Claude-inspired</h3>
+      <p>AI: no bubble, full width, avatar + name label. User: dark pill right. Clean, readable, premium. Most popular pattern today.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="symmetric" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <!-- AI message - subtle bubble left -->
+      <div style="margin-bottom:12px;display:flex;gap:8px;">
+        <div style="width:20px;height:20px;background:#CC5801;border-radius:50%;flex-shrink:0;margin-top:2px;"></div>
+        <div style="background:#111;border:1px solid #222;border-radius:4px 16px 16px 16px;padding:10px 12px;max-width:78%;">
+          <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.6;">Here's my answer to your question, wrapped in a subtle container...</p>
+        </div>
+      </div>
+      <!-- User message right -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <div style="background:#CC5801;border-radius:16px 4px 16px 16px;padding:10px 14px;max-width:72%;">
+          <p style="color:#fff;font-size:12px;margin:0;line-height:1.5;">Follow-up question here</p>
+        </div>
+      </div>
+      <!-- AI 2 -->
+      <div style="display:flex;gap:8px;">
+        <div style="width:20px;height:20px;background:#CC5801;border-radius:50%;flex-shrink:0;margin-top:2px;"></div>
+        <div style="background:#111;border:1px solid #222;border-radius:4px 16px 16px 16px;padding:10px 12px;max-width:78%;">
+          <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.6;">And here's my next response...</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Symmetric bubbles</h3>
+      <p>Both sides use bubbles. AI: dark left with avatar. User: Persian Orange right. More chat-app feel. Warmer but less document-like.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="minimal-lines" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <!-- AI -->
+      <div style="margin-bottom:14px;border-left:2px solid #CC5801;padding-left:12px;">
+        <p style="color:#666;font-size:10px;margin:0 0 4px;letter-spacing:0.8px;">MIO</p>
+        <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.7;">Clean answer with no box at all. Just a colored left border and name label. Ultra minimal...</p>
+      </div>
+      <!-- User -->
+      <div style="margin-bottom:14px;border-left:2px solid #333;padding-left:12px;">
+        <p style="color:#444;font-size:10px;margin:0 0 4px;letter-spacing:0.8px;">YOU</p>
+        <p style="color:#AAA;font-size:12px;margin:0;line-height:1.7;">What about this question?</p>
+      </div>
+      <!-- AI 2 -->
+      <div style="border-left:2px solid #CC5801;padding-left:12px;">
+        <p style="color:#666;font-size:10px;margin:0 0 4px;letter-spacing:0.8px;">MIO</p>
+        <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.7;">Another response, very clean...</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Borderline minimal</h3>
+      <p>No bubbles at all. Left border accent only. Like a transcript or editorial layout. Very premium, very different. Risky — unusual for chat.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="notion-style" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <!-- AI with section feel -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div style="width:16px;height:16px;background:#CC5801;border-radius:4px;"></div>
+          <span style="color:#CC5801;font-size:10px;font-weight:600;letter-spacing:0.8px;">MIO</span>
+          <span style="color:#333;font-size:10px;">2:34 PM</span>
+        </div>
+        <p style="color:#E8E4DE;font-size:12px;margin:0 0 6px;line-height:1.7;">Here's a detailed answer. Long responses get breathing room and look like documents...</p>
+        <div style="background:#111;border-radius:6px;padding:8px 10px;border-left:3px solid #CC5801;">
+          <p style="color:#AAA;font-size:11px;margin:0;font-family:monospace;">code block example</p>
+        </div>
+      </div>
+      <!-- User inline -->
+      <div style="background:#0D0D0D;border:1px solid #1A1A1A;border-radius:8px;padding:10px 12px;margin-left:20px;">
+        <p style="color:#888;font-size:10px;margin:0 0 3px;letter-spacing:0.5px;">YOU · 2:35 PM</p>
+        <p style="color:#CCC;font-size:12px;margin:0;line-height:1.5;">Follow-up question</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D — Document / Notion-style</h3>
+      <p>AI responses feel like documents. User messages subtly indented. Timestamps visible. Code blocks styled inline. Most "premium tool" feel.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Light mode will invert — cream bg, same structure. Click your pick then tell me in terminal.</p>

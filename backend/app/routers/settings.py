@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.utils.constants import SUPPORTED_PROVIDERS
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class SettingsUpdateRequest(BaseModel):
     preferences: Optional[dict[str, Any]] = Field(None, description="Additional preferences")
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_settings(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Get user settings. Creates defaults if not exists.
@@ -84,7 +85,7 @@ async def get_settings(current_user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Failed to get settings")
 
 
-@router.patch("/")
+@router.patch("/", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def update_settings(
     body: SettingsUpdateRequest,
     current_user: dict = Depends(get_current_user),
@@ -146,7 +147,7 @@ async def update_settings(
         raise HTTPException(status_code=500, detail="Failed to update settings")
 
 
-@router.get("/providers")
+@router.get("/providers", dependencies=[Depends(rate_limiter.get_limiter_dependency("providers"))])
 async def get_providers() -> list[dict]:
     """
     Get list of supported AI providers and their models.

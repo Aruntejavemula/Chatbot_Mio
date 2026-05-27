@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from app.config import get_settings
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class RazorpayVerifyRequest(BaseModel):
     signature: str = Field(..., description="Razorpay signature")
 
 
-@router.post("/create-subscription")
+@router.post("/create-subscription", dependencies=[Depends(rate_limiter.get_limiter_dependency("payment"))])
 async def create_subscription(
     body: RazorpayCreateRequest,
     current_user: dict = Depends(get_current_user),
@@ -126,7 +127,7 @@ async def create_subscription(
         raise HTTPException(status_code=500, detail="Failed to create subscription")
 
 
-@router.post("/verify-payment")
+@router.post("/verify-payment", dependencies=[Depends(rate_limiter.get_limiter_dependency("payment"))])
 async def verify_payment(
     body: RazorpayVerifyRequest,
     current_user: dict = Depends(get_current_user),
@@ -182,7 +183,7 @@ async def verify_payment(
         raise HTTPException(status_code=500, detail="Payment verification failed")
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_status(
     current_user: dict = Depends(get_current_user),
 ) -> dict:

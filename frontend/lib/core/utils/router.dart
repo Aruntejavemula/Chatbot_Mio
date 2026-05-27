@@ -94,9 +94,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
   return GoRouter(
-    initialLocation: AppRoutes.splash,
+    initialLocation: AppRoutes.chat,
     redirect: (BuildContext context, GoRouterState state) {
       final location = state.matchedLocation;
+      // TEMP: skip auth redirect for UI preview
+      return null;
 
       const publicRoutes = [
         AppRoutes.splash,
@@ -110,12 +112,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ];
 
       if (!isAuthenticated) {
-        if (publicRoutes.contains(location) ||
-            location.startsWith('/shared/')) {
-          return null;
-        }
-        return AppRoutes.welcome;
-      }
+  if (publicRoutes.contains(location) ||
+      location.startsWith('/shared/') ||
+      location.startsWith('/chat') ||
+      location.startsWith('/settings') ||
+      location.startsWith('/legal')) {
+    return null;
+  }
+  return AppRoutes.welcome;
+}
 
       if (location == AppRoutes.splash || location == AppRoutes.welcome) {
         return AppRoutes.chat;
@@ -126,16 +131,24 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        pageBuilder: (context, state) => _buildTransitionPage(
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const SplashScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 500),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       ),
       GoRoute(
         path: AppRoutes.welcome,
-        pageBuilder: (context, state) => _buildTransitionPage(
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const WelcomeScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut), child: child),
         ),
       ),
       GoRoute(

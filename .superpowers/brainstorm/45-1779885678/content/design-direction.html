@@ -1,0 +1,108 @@
+<h2>What design direction should Mio take?</h2>
+<p class="subtitle">You mentioned Claude, Manus, and ChatGPT. Pick the direction closest to what you want — or mix below.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="claude" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0A0A;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <div style="width:28px;height:28px;background:#CC5801;border-radius:50%;"></div>
+        <span style="color:#F5F5F0;font-size:13px;font-weight:500;">Claude</span>
+      </div>
+      <div style="background:#1A1A1A;border-radius:12px;padding:12px;margin-bottom:8px;">
+        <p style="color:#E8E6E0;font-size:12px;margin:0;line-height:1.5;">Here's what I found about your question. Let me break it down clearly...</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#111;border:1px solid #333;border-radius:20px;padding:8px 14px;">
+        <span style="color:#666;font-size:11px;flex:1;">Reply to Claude...</span>
+        <div style="width:22px;height:22px;background:#CC5801;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-size:10px;">↑</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Claude-style</h3>
+      <p>Pure black dark mode. Warm serif headings. Minimal chrome. Content-first. Premium and calm. Rounded input, no clutter.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="chatgpt" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#212121;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="color:#ECECEC;font-size:13px;font-weight:600;">ChatGPT</span>
+        <div style="display:flex;gap:6px;">
+          <div style="width:6px;height:6px;background:#444;border-radius:50%;"></div>
+          <div style="width:6px;height:6px;background:#444;border-radius:50%;"></div>
+          <div style="width:6px;height:6px;background:#444;border-radius:50%;"></div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <p style="color:#ECECEC;font-size:12px;margin:0 0 6px;line-height:1.5;">The answer involves three core concepts:</p>
+        <div style="background:#2A2A2A;border-radius:6px;padding:8px;">
+          <p style="color:#ccc;font-size:11px;margin:0;font-family:monospace;">code example here</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#2A2A2A;border:1px solid #444;border-radius:16px;padding:8px 14px;">
+        <span style="color:#666;font-size:11px;flex:1;">Message ChatGPT</span>
+        <div style="width:22px;height:22px;background:#19C37D;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-size:10px;">↑</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — ChatGPT-style</h3>
+      <p>Dark grey (not black). Functional, dense. Familiar to most users. Stronger sidebar contrast. Green accents. No-frills utility.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="manus" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0D0D12;padding:16px;border-radius:8px;font-family:sans-serif;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <div style="width:8px;height:8px;background:#7C6EFF;border-radius:50%;"></div>
+        <span style="color:#E0DFF5;font-size:12px;letter-spacing:0.5px;">Manus</span>
+        <div style="margin-left:auto;background:linear-gradient(90deg,#7C6EFF22,transparent);border:1px solid #7C6EFF44;border-radius:4px;padding:2px 6px;">
+          <span style="color:#7C6EFF;font-size:10px;">AGENT</span>
+        </div>
+      </div>
+      <div style="border-left:2px solid #7C6EFF44;padding-left:10px;margin-bottom:8px;">
+        <p style="color:#C0BEDE;font-size:11px;margin:0;line-height:1.6;">Analyzing task... <span style="color:#7C6EFF;">●</span> searching web...</p>
+        <p style="color:#C0BEDE;font-size:11px;margin:4px 0 0;line-height:1.6;">Found 12 results. Summarizing...</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#16161F;border:1px solid #7C6EFF33;border-radius:12px;padding:8px 12px;">
+        <span style="color:#555;font-size:11px;flex:1;">Ask Manus...</span>
+        <div style="width:22px;height:22px;background:linear-gradient(135deg,#7C6EFF,#5B4ECC);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-size:10px;">↑</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Manus-style</h3>
+      <p>Deep near-black with purple accent. Agent-focused UI. Progress traces visible. Futuristic, agentic feel. Higher complexity.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="premium-own" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#050505;padding:16px;border-radius:8px;font-family:sans-serif;border:1px solid #CC580133;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <div style="width:6px;height:6px;background:#CC5801;border-radius:50%;"></div>
+        <span style="color:#FAF8F5;font-size:13px;font-weight:400;letter-spacing:0.3px;font-family:Georgia,serif;">Mio</span>
+        <span style="color:#444;font-size:11px;margin-left:auto;">Persian Orange brand</span>
+      </div>
+      <div style="margin-bottom:10px;">
+        <p style="color:#E8E4DE;font-size:12px;margin:0;line-height:1.7;font-family:Georgia,serif;">Mio's response flows here with warmth and clarity. Soft cream tones on deep black.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:#0F0F0F;border:1px solid #CC580155;border-radius:20px;padding:8px 14px;">
+        <span style="color:#555;font-size:11px;flex:1;">Ask Mio anything...</span>
+        <div style="width:22px;height:22px;background:#CC5801;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="color:white;font-size:10px;">↑</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D — Mio's own identity</h3>
+      <p>Pure black + Persian Orange (#CC5801) + warm cream text. Takes Claude's calmness but adds warmth. Distinct from all three. Brand-led.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px;">Can also mix — e.g. "A's layout with D's colors". Click to select, then tell me in terminal.</p>

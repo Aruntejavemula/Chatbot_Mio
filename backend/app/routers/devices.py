@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class DeviceUpdateSeenRequest(BaseModel):
     device_id: str = Field(..., description="Device ID to update")
 
 
-@router.post("/register")
+@router.post("/register", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def register_device(
     body: DeviceRegisterRequest,
     current_user: dict = Depends(get_current_user),
@@ -116,7 +117,7 @@ async def register_device(
         raise HTTPException(status_code=500, detail="Failed to register device")
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_devices(
     current_user: dict = Depends(get_current_user),
     device_id: Optional[str] = None,
@@ -148,7 +149,7 @@ async def get_devices(
         raise HTTPException(status_code=500, detail="Failed to fetch devices")
 
 
-@router.delete("/{device_id}")
+@router.delete("/{device_id}", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def remove_device(
     device_id: str,
     current_user: dict = Depends(get_current_user),
@@ -183,7 +184,7 @@ async def remove_device(
         raise HTTPException(status_code=500, detail="Failed to remove device")
 
 
-@router.post("/update-seen")
+@router.post("/update-seen", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def update_device_seen(
     body: DeviceUpdateSeenRequest,
     current_user: dict = Depends(get_current_user),

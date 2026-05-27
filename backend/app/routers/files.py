@@ -8,6 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.services.rate_limiter import rate_limiter
 from app.services.file_service import (
     MAX_FILE_SIZE,
     SUPPORTED_TYPES,
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/upload")
+@router.post("/upload", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def upload_file(
     file: UploadFile,
     current_user: dict = Depends(get_current_user),

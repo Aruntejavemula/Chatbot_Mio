@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../repositories/auth_repository.dart';
 import '../repositories/chat_repository.dart';
 import '../services/chat_service.dart';
 
@@ -40,7 +41,10 @@ class UsageNotifier extends StateNotifier<UsageState> {
   Timer? _refreshTimer;
   bool _isFirstLoad = true;
 
-  UsageNotifier(this._chatService) : super(const UsageState()) {
+  UsageNotifier(this._chatService, {bool skipInit = false})
+      : super(const UsageState(isLoading: false)) {
+    if (skipInit) return;
+
     refresh();
     _refreshTimer = Timer.periodic(
       Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
@@ -89,6 +93,10 @@ class UsageNotifier extends StateNotifier<UsageState> {
 
 final usageProvider =
     StateNotifierProvider<UsageNotifier, UsageState>((ref) {
+  final isAuthenticated = ref.watch(isAuthenticatedProvider);
+  if (!isAuthenticated) {
+    return UsageNotifier(ref.read(chatServiceProvider), skipInit: true);
+  }
   final chatService = ref.read(chatServiceProvider);
   return UsageNotifier(chatService);
 });

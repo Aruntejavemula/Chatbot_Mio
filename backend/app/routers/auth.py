@@ -10,6 +10,7 @@ from supabase import Client, create_client
 from app.config import get_settings
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.models.user import UserCreate, UserResponse
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +238,7 @@ async def _check_device_limit(
         return False
 
 
-@router.post("/google")
+@router.post("/google", dependencies=[Depends(rate_limiter.get_limiter_dependency("auth"))])
 async def google_sign_in(request: Request) -> dict:
     """
     Sign in with Google OAuth ID token.
@@ -307,7 +308,7 @@ async def google_sign_in(request: Request) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/apple")
+@router.post("/apple", dependencies=[Depends(rate_limiter.get_limiter_dependency("auth"))])
 async def apple_sign_in(request: Request) -> dict:
     """
     Sign in with Apple identity token.
@@ -376,7 +377,7 @@ async def apple_sign_in(request: Request) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.get("/profile")
+@router.get("/profile", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_profile(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Get current user profile with subscription and settings.
@@ -423,7 +424,7 @@ async def get_profile(current_user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/signout")
+@router.post("/signout", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def sign_out(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Sign out and invalidate current session.

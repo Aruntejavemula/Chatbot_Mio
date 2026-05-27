@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     # App
     ALLOWED_ORIGINS: str = "http://localhost:8080"
     ENVIRONMENT: str = "development"
+    ADMIN_EMAIL: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
+    JWT_SECRET: str = ""
+    DEEPSEEK_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
 
     class Config:
         env_file = ".env"

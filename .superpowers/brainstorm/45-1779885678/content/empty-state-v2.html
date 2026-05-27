@@ -1,0 +1,80 @@
+<h2>Empty state — pick again</h2>
+<p class="subtitle">Same 3 options. Persian Orange will be dialed way back in final design.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="greeting-prompts" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <div style="width:52px;height:52px;margin-bottom:12px;">
+        <!-- Penguin placeholder circle -->
+        <div style="width:52px;height:52px;background:#1A1A1A;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:26px;">🐧</span>
+        </div>
+      </div>
+      <p style="color:#FAF8F5;font-size:17px;font-weight:400;margin:0 0 4px;font-family:Georgia,serif;">What's on your mind?</p>
+      <p style="color:#555;font-size:11px;margin:0 0 16px;">Ask me anything</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:240px;">
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 12px;">
+          <span style="color:#777;font-size:11px;">✍️ Write something</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 12px;">
+          <span style="color:#777;font-size:11px;">🔍 Research a topic</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 12px;">
+          <span style="color:#777;font-size:11px;">💻 Help with code</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 12px;">
+          <span style="color:#777;font-size:11px;">📋 Summarize this</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Greeting + prompt chips</h3>
+      <p>Penguin icon, serif greeting, 4 suggestion chips. Chips fill the input on tap. Disappear after first message.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pure-minimal" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <div style="width:52px;height:52px;background:#1A1A1A;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        <span style="font-size:26px;">🐧</span>
+      </div>
+      <p style="color:#FAF8F5;font-size:20px;font-weight:400;margin:0;font-family:Georgia,serif;letter-spacing:-0.3px;">Mio</p>
+    </div>
+    <div class="card-body">
+      <h3>B — Pure minimal</h3>
+      <p>Just penguin + app name. Clean canvas. Confident, not hand-holdy. Like Claude's empty state.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="contextual" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <p style="color:#3A3A3A;font-size:10px;margin:0 0 8px;letter-spacing:1px;text-transform:uppercase;">Good evening, Arun</p>
+      <div style="width:44px;height:44px;background:#1A1A1A;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+        <span style="font-size:22px;">🐧</span>
+      </div>
+      <p style="color:#FAF8F5;font-size:16px;font-weight:400;margin:0 0 16px;font-family:Georgia,serif;text-align:center;">What shall we work on?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:10px;padding:10px 12px;text-align:center;width:68px;">
+          <p style="font-size:15px;margin:0;">✍️</p>
+          <p style="color:#666;font-size:10px;margin:4px 0 0;">Write</p>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:10px;padding:10px 12px;text-align:center;width:68px;">
+          <p style="font-size:15px;margin:0;">🔍</p>
+          <p style="color:#555;font-size:10px;margin:4px 0 0;">Research</p>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:10px;padding:10px 12px;text-align:center;width:68px;">
+          <p style="font-size:15px;margin:0;">💻</p>
+          <p style="color:#555;font-size:10px;margin:4px 0 0;">Code</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Contextual greeting</h3>
+      <p>Time-aware greeting with name. 3 mode tiles. Notion AI / Linear feel.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Pick one at http://localhost:57312 — then also confirm in terminal you saw the notes about Persian Orange + animations.</p>

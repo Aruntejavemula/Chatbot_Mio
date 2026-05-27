@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -69,6 +70,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   late Animation<double> _scrollButtonFadeAnimation;
   bool _showDisclaimer = true;
   bool _isOnline = true;
+  final LayerLink _plusLayerLink = LayerLink();
+  OverlayEntry? _plusOverlay;
+  bool _webSearchActive = false;
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -159,6 +163,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _scrollController.dispose();
     _sendButtonAnimController.dispose();
     _scrollButtonAnimController.dispose();
+    _plusOverlay?.remove();
+    _plusOverlay = null;
     super.dispose();
   }
 
@@ -179,6 +185,234 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     if (_isMobile) HapticFeedback.lightImpact();
     setState(() => _isPanelOpen = !_isPanelOpen);
   }
+
+  Future<void> _showAttachMenu(BuildContext ctx) async {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    final box = ctx.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(ctx).context.findRenderObject() as RenderBox;
+    final offset = box?.localToGlobal(Offset.zero, ancestor: overlay) ?? Offset.zero;
+    final size = box?.size ?? Size.zero;
+
+    final result = await showMenu<String>(
+      context: ctx,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy - 52,
+        overlay.size.width - offset.dx - size.width,
+        overlay.size.height - offset.dy,
+      ),
+      elevation: 4,
+      color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      constraints: const BoxConstraints(minWidth: 160, maxWidth: 220),
+      items: [
+        PopupMenuItem<String>(
+          value: 'files',
+          height: 40,
+          child: Row(children: [
+            Icon(Icons.attach_file_outlined, size: 16,
+                color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
+            const SizedBox(width: 10),
+            Text('Upload file',
+                style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
+          ]),
+        ),
+        if (!kIsWeb)
+          PopupMenuItem<String>(
+            value: 'photo',
+            height: 40,
+            child: Row(children: [
+              Icon(Icons.photo_library_outlined, size: 16,
+                  color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
+              const SizedBox(width: 10),
+              Text('Photo library',
+                  style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
+            ]),
+          ),
+      ],
+    );
+
+    if (result == 'files') await _pickAttachFile();
+    if (result == 'photo') await _pickAttachPhoto();
+  }
+
+  Future<void> _pickAttachFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'docx', 'txt', 'md', 'csv', 'py', 'js', 'ts', 'dart', 'json', 'yaml'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      final f = result.files.first;
+      if (f.path != null) {
+        final codeExts = {'py', 'js', 'ts', 'dart', 'json', 'yaml'};
+        final ext = f.extension ?? '';
+        setState(() {
+          _selectedFiles.add(SelectedFileInfo(
+            name: f.name,
+            path: f.path!,
+            sizeBytes: f.size,
+            type: codeExts.contains(ext) ? SelectedFileType.code : SelectedFileType.document,
+          ));
+        });
+      }
+    }
+  }
+
+  Future<void> _pickAttachPhoto() async {
+    // On non-web mobile only — image_picker not available on web
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.isNotEmpty) {
+      final f = result.files.first;
+      if (f.path != null) {
+        setState(() {
+          _selectedFiles.add(SelectedFileInfo(
+            name: f.name,
+            path: f.path!,
+            sizeBytes: f.size,
+            type: SelectedFileType.image,
+          ));
+        });
+      }
+    }
+  }
+
+  void _hidePlusMenu() {
+    _plusOverlay?.remove();
+    _plusOverlay = null;
+    setState(() => _isPanelOpen = false);
+  }
+
+  void _showPlusMenu() {
+    if (_plusOverlay != null) {
+      _hidePlusMenu();
+      return;
+    }
+    setState(() => _isPanelOpen = true);
+    const mutedColor = Color(0xFF8E8E93);
+    const dividerColor = Color(0xFF3A3A3C);
+
+    _plusOverlay = OverlayEntry(
+      builder: (ctx) => Stack(
+        children: [
+          // Full-screen dismiss layer
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _hidePlusMenu,
+              behavior: HitTestBehavior.opaque,
+              child: const ColoredBox(color: Colors.transparent),
+            ),
+          ),
+          CompositedTransformFollower(
+            link: _plusLayerLink,
+            targetAnchor: Alignment.topLeft,
+            followerAnchor: Alignment.bottomLeft,
+            offset: const Offset(-8, -8),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 320,
+                decoration: BoxDecoration(
+                  color: AppColors.darkBgTertiary,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _plusItem(icon: Icons.attach_file_rounded, label: 'Add files or photos',
+                          onTap: () { _hidePlusMenu(); _pickAttachFile(); }),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.folder_outlined, label: 'Add to project',
+                          hasArrow: true, onTap: _hidePlusMenu),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.grid_view_rounded, label: 'Skills',
+                          hasArrow: true, onTap: _hidePlusMenu),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.cable_outlined, label: 'Connectors',
+                          hasArrow: true, onTap: _hidePlusMenu),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.extension_outlined, label: 'Plugins',
+                          textColor: mutedColor, disabled: true, onTap: null),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.science_outlined, label: 'Research',
+                          onTap: _hidePlusMenu),
+                      _plusDivider(dividerColor),
+                      StatefulBuilder(
+                        builder: (_, setLocal) => _plusItem(
+                          icon: Icons.language_outlined,
+                          label: 'Web search',
+                          trailing: _webSearchActive
+                              ? const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF34C759))
+                              : null,
+                          onTap: () {
+                            setState(() => _webSearchActive = !_webSearchActive);
+                            _plusOverlay?.markNeedsBuild();
+                          },
+                        ),
+                      ),
+                      _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.edit_outlined, label: 'Use style',
+                          hasArrow: true, isLast: true, onTap: _hidePlusMenu),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    Overlay.of(context).insert(_plusOverlay!);
+  }
+
+  Widget _plusItem({
+    required IconData icon,
+    required String label,
+    Color textColor = Colors.white,
+    bool hasArrow = false,
+    bool disabled = false,
+    Widget? trailing,
+    VoidCallback? onTap,
+    bool isLast = false,
+  }) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: textColor),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(label,
+                  style: GoogleFonts.dmSans(
+                      fontSize: 15, color: textColor, fontWeight: FontWeight.w400)),
+            ),
+            if (trailing != null)
+              trailing
+            else if (hasArrow)
+              const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFF636366)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _plusDivider(Color color) =>
+      Divider(height: 1, thickness: 1, indent: 50, endIndent: 0, color: color);
 
   void _sendMessage() {
     final text = _inputController.text.trim();
@@ -276,6 +510,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     }
 
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : AppColors.bgPrimary,
       resizeToAvoidBottomInset: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -311,62 +546,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                       },
                       child: Column(
                         children: [
-                          // Offline banner
-                          if (!_isOnline)
-                            const OfflineBannerWidget(),
-                          // Top bar
+                          if (!_isOnline) const OfflineBannerWidget(),
                           _buildTopBar(isDark, showPermanentSidebar: showPermanentSidebar),
-                          // Model selector bar
-                          _buildModelSelectorBar(isDark),
-                          // BYOK banner
-                          if (!_hasApiKeys && _selectedModel == 'Think now')
-                            _buildByokBanner(isDark),
-                          // Chat messages area
                           Expanded(
-                            child: Container(
-                              color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-                              child: messages.isEmpty && !isStreaming
-                                  ? _buildEmptyState(isDark)
-                                  : _buildMessagesList(
-                                      isDark, messages, isStreaming, streamingText, loadingWordIndex,
-                                      streamingThinkingText, isThinkingStreaming),
-                            ),
+                            child: messages.isEmpty && !isStreaming
+                                ? _buildEmptyState(isDark)
+                                : Column(
+                                    children: [
+                                      Expanded(
+                                        child: _buildMessagesList(
+                                          isDark, messages, isStreaming, streamingText,
+                                          loadingWordIndex, streamingThinkingText, isThinkingStreaming),
+                                      ),
+                                      if (_showDisclaimer) _buildDisclaimerPill(isDark),
+                                      if (tokenCap != null)
+                                        TokenCapBanner(
+                                          capType: (tokenCap['cap_type'] as String?) ?? '',
+                                          used: (tokenCap['used'] as int?) ?? 0,
+                                          limit: (tokenCap['limit'] as int?) ?? 1,
+                                          resetsIn: (tokenCap['resets_in'] as String?) ?? '',
+                                          onAddKey: () => context.go(AppRoutes.apiKeys),
+                                        ),
+                                      if (_selectedFiles.isNotEmpty)
+                                        DocumentViewerWidget(
+                                          files: _selectedFiles,
+                                          onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
+                                          isDark: isDark,
+                                        ),
+                                      _buildInputBar(isDark),
+                                    ],
+                                  ),
                           ),
-                          // AI disclaimer pill
-                          if (_showDisclaimer)
-                            _buildDisclaimerPill(isDark),
-                          // Input bar
-                          if (tokenCap != null)
-                            TokenCapBanner(
-                              capType: (tokenCap['cap_type'] as String?) ?? '',
-                              used: (tokenCap['used'] as int?) ?? 0,
-                              limit: (tokenCap['limit'] as int?) ?? 1,
-                              resetsIn: (tokenCap['resets_in'] as String?) ?? '',
-                              onAddKey: () => context.go(AppRoutes.apiKeys),
-                            ),
-                          if (_selectedFiles.isNotEmpty)
-                            DocumentViewerWidget(
-                              files: _selectedFiles,
-                              onRemoveFile: (int index) {
-                                setState(() {
-                                  _selectedFiles.removeAt(index);
-                                });
-                              },
-                              isDark: isDark,
-                            ),
-                          PlusPanelWidget(
-                            isOpen: _isPanelOpen,
-                            onToggle: _togglePanel,
-                            userPlan: 'free', // TODO: wire to actual user plan
-                            connectedProviders: const [], // TODO: wire to actual data
-                            onFilesSelected: (List<SelectedFileInfo> files) {
-                              setState(() {
-                                _selectedFiles.addAll(files);
-                                _isPanelOpen = false;
-                              });
-                            },
-                          ),
-                          _buildInputBar(isDark),
                         ],
                       ),
                     ),
@@ -445,13 +655,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     return Container(
       height: AppSizes.topBarHeight,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-            width: 1,
-          ),
-        ),
+        color: isDark ? Colors.black : AppColors.bgPrimary,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SafeArea(
@@ -474,18 +678,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (isEmptyState)
-                    Text(
-                      'Mio',
-                      style: GoogleFonts.dmSerifDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        color: textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  else ...[
+                  if (!isEmptyState) ...[
                     Text(
                       currentChat?.title ?? 'New Chat',
                       style: GoogleFonts.dmSans(
@@ -862,67 +1055,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildModelSelectorBar(bool isDark) {
-    return Container(
-      height: AppSizes.modelBarHeight,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-            width: 1,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: GestureDetector(
-          onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgTertiary : AppColors.bgTertiary,
-              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _selectedModel,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: _selectedModel == 'Think now'
-                        ? AppColors.persian
-                        : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                AnimatedRotation(
-                  turns: _isModelDropdownOpen ? 0.5 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 18,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildModelSelectorBar(bool isDark) => const SizedBox.shrink();
 
   Widget _buildModelDropdown(bool isDark) {
     return Positioned(
-      top: AppSizes.topBarHeight + AppSizes.modelBarHeight + MediaQuery.of(context).padding.top + 4,
+      bottom: 90 + MediaQuery.of(context).viewPadding.bottom,
       left: 16,
       right: 16,
       child: Material(
@@ -1173,32 +1310,158 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 48,
-            height: 48,
-            // TODO: Replace with mascot
-            child: Center(child: PenguinMascot(size: 48)),
-          ),
-          const SizedBox(height: 16),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 280),
-            child: Text(
-              AppStrings.getGreeting(),
-              style: GoogleFonts.dmSerifDisplay(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+    final currentUser = ref.watch(currentUserProvider);
+    final firstName = currentUser?.name?.split(' ').first ?? '';
+    final greeting = _getGreeting(firstName);
+    final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
+    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
+    final badgeBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
+
+    return Column(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              if (_isModelDropdownOpen) setState(() => _isModelDropdownOpen = false);
+              FocusScope.of(context).unfocus();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Plan badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Free plan',
+                                  style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                child: Text('·',
+                                    style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
+                              ),
+                              GestureDetector(
+                                onTap: () => context.go(AppRoutes.subscription),
+                                child: Text('Upgrade',
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 13,
+                                        color: AppColors.persian,
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Greeting with inline icon
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.auto_awesome, size: 26, color: AppColors.persian),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            greeting,
+                            style: GoogleFonts.dmSerifDisplay(
+                              fontSize: 32,
+                              color: textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    // Centered input
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 680),
+                      child: _buildInputContent(isDark),
+                    ),
+                    const SizedBox(height: 14),
+                    // Suggestion pills
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 680),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _suggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
+                            _suggestionPill(Icons.school_outlined, 'Learn', textPrimary, textMuted, isDark),
+                            _suggestionPill(Icons.code_outlined, 'Code', textPrimary, textMuted, isDark),
+                            _suggestionPill(Icons.favorite_outline, 'Life stuff', textPrimary, textMuted, isDark),
+                            _suggestionPill(Icons.auto_awesome_outlined, 'Mio\'s choice', textPrimary, textMuted, isDark),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
           ),
-        ],
+        ),
+        // Files attached preview
+        if (_selectedFiles.isNotEmpty)
+          DocumentViewerWidget(
+            files: _selectedFiles,
+            onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
+            isDark: isDark,
+          ),
+      ],
+    );
+  }
+
+  Widget _suggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
+    final bg = isDark ? const Color(0xFF111111) : Colors.white;
+    final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
+    return GestureDetector(
+      onTap: () {
+        _inputController.text = label;
+        setState(() => _hasText = true);
+        _focusNode.requestFocus();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: border, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: textMuted),
+            const SizedBox(width: 6),
+            Text(label,
+                style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400)),
+          ],
+        ),
       ),
     );
+  }
+
+  String _getGreeting(String name) {
+    final hour = DateTime.now().hour;
+    final suffix = name.isNotEmpty ? ', $name' : '';
+    if (hour < 12) return 'Good morning$suffix';
+    if (hour < 17) return 'Good afternoon$suffix';
+    return 'Good evening$suffix';
   }
 
   Widget _buildMessagesList(
@@ -1353,218 +1616,177 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   Widget _buildInputBar(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-            width: 1,
-          ),
-        ),
+        color: isDark ? Colors.black : AppColors.bgPrimary,
       ),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        8,
-        16,
-        8 + MediaQuery.of(context).viewPadding.bottom,
-      ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-          borderRadius: BorderRadius.circular(AppSizes.radiusInput),
-          border: Border.all(
-            color: _isFocused
-                ? AppColors.persian
-                : (isDark ? AppColors.darkBorderDefault : AppColors.borderDefault),
-            width: 1,
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.of(context).viewPadding.bottom),
+      child: _buildInputContent(isDark),
+    );
+  }
+
+  Widget _buildInputContent(bool isDark) {
+    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
+    final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
+    final inputBg = isDark ? const Color(0xFF0D0D0D) : Colors.white;
+    final borderColor = _isFocused
+        ? AppColors.persian.withValues(alpha: 0.5)
+        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5));
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Plus button with rotation and file badge
-            GestureDetector(
-              onTap: _togglePanel,
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Center(
-                      child: AnimatedRotation(
-                        turns: _isPanelOpen ? 0.125 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOutCubic,
-                        child: Icon(
-                          Icons.add,
-                          size: 22,
-                          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Transparent textarea — no inner border, no inner bg
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (_isDesktop && event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.enter) {
+                  if (!HardwareKeyboard.instance.isShiftPressed) {
+                    _sendMessage();
+                    return KeyEventResult.handled;
+                  }
+                }
+                return KeyEventResult.ignored;
+              },
+              child: TextField(
+                controller: _inputController,
+                focusNode: _focusNode,
+                decoration: InputDecoration(
+                  hintText: 'How can I help you today?',
+                  hintStyle: GoogleFonts.dmSans(fontSize: 15, color: textMuted),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                style: GoogleFonts.dmSans(fontSize: 15, color: textPrimary),
+                maxLines: 6,
+                minLines: 3,
+                textInputAction: TextInputAction.newline,
+                onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
+              ),
+            ),
+          ),
+          // Bottom toolbar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 2, 10, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // + button with LayerLink anchor
+                CompositedTransformTarget(
+                  link: _plusLayerLink,
+                  child: GestureDetector(
+                    onTap: _showPlusMenu,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.add, size: 20,
+                          color: _isPanelOpen ? AppColors.persian : textMuted),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Model selector — plain gray text + chevron only
+                GestureDetector(
+                  onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          color: textMuted,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                    ),
-                    if (_selectedFiles.isNotEmpty)
-                      Positioned(
-                        top: -2,
-                        right: -2,
-                        child: Container(
-                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.persian,
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                      const SizedBox(width: 3),
+                      AnimatedRotation(
+                        turns: _isModelDropdownOpen ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Mic
+                if (!_hasText) ...[
+                  VoiceInputWidget(
+                    onTranscript: (text) => setState(() {
+                      _inputController.text = text;
+                      _hasText = text.isNotEmpty;
+                    }),
+                    onCancel: () {},
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                // Send button
+                AnimatedBuilder(
+                  animation: _sendButtonAnimController,
+                  builder: (context, child) {
+                    return GestureDetector(
+                      onTapDown: _hasText
+                          ? (_) => _sendButtonAnimController.animateTo(0.88,
+                              duration: const Duration(milliseconds: 150), curve: Curves.easeOut)
+                          : null,
+                      onTapUp: _hasText
+                          ? (_) {
+                              final sim = SpringSimulation(MioAnimations.spring,
+                                  _sendButtonAnimController.value, 1.0, 0);
+                              _sendButtonAnimController.animateWith(sim);
+                              _sendMessage();
+                            }
+                          : null,
+                      onTapCancel: _hasText
+                          ? () {
+                              final sim = SpringSimulation(MioAnimations.spring,
+                                  _sendButtonAnimController.value, 1.0, 0);
+                              _sendButtonAnimController.animateWith(sim);
+                            }
+                          : null,
+                      child: Transform.scale(
+                        scale: _sendButtonAnimController.value,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutCubic,
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: _hasText
+                                ? AppColors.persian
+                                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8)),
                           ),
                           child: Center(
-                            child: Text(
-                              _selectedFiles.length > 9
-                                  ? '9+'
-                                  : '${_selectedFiles.length}',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: Icon(Icons.arrow_upward_rounded, size: 17,
+                                color: _hasText ? Colors.white : textMuted),
                           ),
                         ),
                       ),
-                  ],
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 8),
-            // Prompt maker button
-            PromptMakerWidget(
-              hasText: _hasText,
-              inputController: _inputController,
-              onPromptImproved: (String text) {
-                setState(() {
-                  _inputController.text = text;
-                  _hasText = text.isNotEmpty;
-                });
-              },
-              selectedProvider: _selectedProvider,
-              selectedModel: _selectedModel,
-              chatService: _chatService,
-            ),
-            const SizedBox(width: 8),
-            // Text field
-            Expanded(
-              child: Focus(
-                onKeyEvent: (node, event) {
-                  if (_isDesktop &&
-                      event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.enter) {
-                    if (!HardwareKeyboard.instance.isShiftPressed) {
-                      _sendMessage();
-                      return KeyEventResult.handled;
-                    }
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: TextField(
-                  controller: _inputController,
-                  focusNode: _focusNode,
-                  decoration: InputDecoration(
-                    hintText: AppStrings.chatPlaceholder,
-                    hintStyle: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  style: GoogleFonts.dmSans(
-                    fontSize: 15,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-                  maxLines: 6,
-                  minLines: 1,
-                  textInputAction: TextInputAction.newline,
-                  onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Mic button (only when no text)
-            if (!_hasText) ...[
-              VoiceInputWidget(
-                onTranscript: (text) {
-                  setState(() {
-                    _inputController.text = text;
-                    _hasText = text.isNotEmpty;
-                  });
-                },
-                onCancel: () {},
-              ),
-              const SizedBox(width: 8),
-            ],
-            // Send button
-            AnimatedBuilder(
-              animation: _sendButtonAnimController,
-              builder: (context, child) {
-                return GestureDetector(
-                  onTapDown: _hasText
-                      ? (_) {
-                          _sendButtonAnimController.animateTo(
-                            0.88,
-                            duration: const Duration(milliseconds: 150),
-                            curve: Curves.easeOut,
-                          );
-                        }
-                      : null,
-                  onTapUp: _hasText
-                      ? (_) {
-                          final simulation = SpringSimulation(
-                            MioAnimations.spring,
-                            _sendButtonAnimController.value,
-                            1.0,
-                            0,
-                          );
-                          _sendButtonAnimController.animateWith(simulation);
-                          _sendMessage();
-                        }
-                      : null,
-                  onTapCancel: _hasText
-                      ? () {
-                          final simulation = SpringSimulation(
-                            MioAnimations.spring,
-                            _sendButtonAnimController.value,
-                            1.0,
-                            0,
-                          );
-                          _sendButtonAnimController.animateWith(simulation);
-                        }
-                      : null,
-                  child: Transform.scale(
-                    scale: _sendButtonAnimController.value,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOutCubic,
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: _hasText
-                            ? AppColors.persian
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.arrow_upward_rounded,
-                          size: 22,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

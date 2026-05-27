@@ -9,6 +9,7 @@ from supabase import Client
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.services.encryption_service import EncryptionService
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ async def get_decrypted_key(
         raise HTTPException(status_code=500, detail="Failed to retrieve API key")
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(rate_limiter.get_limiter_dependency("keys"))])
 async def get_keys(current_user: dict = Depends(get_current_user)) -> list[dict]:
     """
     Get list of connected providers for current user.
@@ -119,7 +120,7 @@ async def get_keys(current_user: dict = Depends(get_current_user)) -> list[dict]
         raise HTTPException(status_code=500, detail="Failed to fetch keys")
 
 
-@router.post("/")
+@router.post("/", dependencies=[Depends(rate_limiter.get_limiter_dependency("keys"))])
 async def save_key(
     body: KeySaveRequest,
     current_user: dict = Depends(get_current_user),
@@ -173,7 +174,7 @@ async def save_key(
         del raw_key
 
 
-@router.delete("/{provider}")
+@router.delete("/{provider}", dependencies=[Depends(rate_limiter.get_limiter_dependency("keys"))])
 async def delete_key(
     provider: str,
     current_user: dict = Depends(get_current_user),
@@ -205,7 +206,7 @@ async def delete_key(
         raise HTTPException(status_code=500, detail="Failed to delete key")
 
 
-@router.post("/test")
+@router.post("/test", dependencies=[Depends(rate_limiter.get_limiter_dependency("keys"))])
 async def test_key(
     body: KeyTestRequest,
     current_user: dict = Depends(get_current_user),

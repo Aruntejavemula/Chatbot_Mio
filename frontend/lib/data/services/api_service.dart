@@ -12,7 +12,7 @@ class ApiService {
       BaseOptions(
         baseUrl: const String.fromEnvironment(
           'API_BASE_URL',
-          defaultValue: 'http://localhost:8000',
+          defaultValue: 'http://127.0.0.1:8000',
         ),
         headers: {
           'Content-Type': 'application/json',

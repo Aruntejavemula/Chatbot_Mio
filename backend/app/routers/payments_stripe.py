@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.config import get_settings
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class StripeCheckoutRequest(BaseModel):
     period: str = Field(default="monthly", description="Period: monthly or annual")
 
 
-@router.post("/create-checkout")
+@router.post("/create-checkout", dependencies=[Depends(rate_limiter.get_limiter_dependency("payment"))])
 async def create_checkout(
     body: StripeCheckoutRequest,
     current_user: dict = Depends(get_current_user),
@@ -111,7 +112,7 @@ async def create_checkout(
         raise HTTPException(status_code=500, detail="Failed to create checkout")
 
 
-@router.post("/create-portal")
+@router.post("/create-portal", dependencies=[Depends(rate_limiter.get_limiter_dependency("payment"))])
 async def create_portal(
     current_user: dict = Depends(get_current_user),
 ) -> dict:
@@ -149,7 +150,7 @@ async def create_portal(
         raise HTTPException(status_code=500, detail="Failed to create portal")
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_status(
     current_user: dict = Depends(get_current_user),
 ) -> dict:

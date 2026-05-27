@@ -1,0 +1,74 @@
+<h2>New chat empty state — what should users see?</h2>
+<p class="subtitle">The screen before any message is sent. Sets the tone for the whole app.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="greeting-prompts" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <div style="width:36px;height:36px;background:#CC5801;border-radius:50%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:white;font-size:16px;">👻</span>
+      </div>
+      <p style="color:#E8E4DE;font-size:16px;font-weight:600;margin:0 0 4px;font-family:Georgia,serif;">What's on your mind?</p>
+      <p style="color:#444;font-size:11px;margin:0 0 14px;">Ask me anything</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:240px;">
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 10px;">
+          <span style="color:#888;font-size:10px;">✍️ Write something</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 10px;">
+          <span style="color:#888;font-size:10px;">🔍 Research a topic</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 10px;">
+          <span style="color:#888;font-size:10px;">💻 Help with code</span>
+        </div>
+        <div style="background:#111;border:1px solid #1E1E1E;border-radius:20px;padding:5px 10px;">
+          <span style="color:#888;font-size:10px;">📋 Summarize this</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Greeting + prompt chips</h3>
+      <p>Mascot icon, greeting heading, 4 suggestion chips. ChatGPT/Claude approach. Helps new users start. Chips disappear after first message.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pure-minimal" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <div style="width:40px;height:40px;background:#CC5801;border-radius:50%;margin-bottom:12px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:white;font-size:18px;">👻</span>
+      </div>
+      <p style="color:#E8E4DE;font-size:18px;font-weight:400;margin:0;font-family:Georgia,serif;letter-spacing:-0.3px;">Mio</p>
+    </div>
+    <div class="card-body">
+      <h3>B — Pure minimal</h3>
+      <p>Just the mascot icon + app name. Nothing else. Completely clean canvas. Like Claude's empty state. Confident, not hand-holdy. Let the input speak.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="contextual" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;padding:16px;border-radius:8px;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;">
+      <p style="color:#444;font-size:11px;margin:0 0 8px;letter-spacing:0.5px;">GOOD EVENING, ARUN</p>
+      <p style="color:#E8E4DE;font-size:15px;font-weight:400;margin:0 0 16px;font-family:Georgia,serif;text-align:center;">What shall we work on?</p>
+      <div style="display:flex;gap:8px;">
+        <div style="background:#0D0D0D;border:1px solid #CC580133;border-radius:10px;padding:10px 12px;text-align:center;width:70px;">
+          <p style="color:#CC5801;font-size:16px;margin:0;">✍️</p>
+          <p style="color:#666;font-size:10px;margin:4px 0 0;">Write</p>
+        </div>
+        <div style="background:#0D0D0D;border:1px solid #1A1A1A;border-radius:10px;padding:10px 12px;text-align:center;width:70px;">
+          <p style="color:#555;font-size:16px;margin:0;">🔍</p>
+          <p style="color:#555;font-size:10px;margin:4px 0 0;">Research</p>
+        </div>
+        <div style="background:#0D0D0D;border:1px solid #1A1A1A;border-radius:10px;padding:10px 12px;text-align:center;width:70px;">
+          <p style="color:#555;font-size:16px;margin:0;">💻</p>
+          <p style="color:#555;font-size:10px;margin:4px 0 0;">Code</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Contextual greeting</h3>
+      <p>Time-aware greeting with username. 3 large mode tiles (write, research, code). Sets intent before typing. Notion AI / Linear-inspired.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Last question — then I write the full design doc. Pick one at http://localhost:57312</p>

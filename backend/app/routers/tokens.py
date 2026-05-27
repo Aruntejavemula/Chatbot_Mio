@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
 from app.services.token_service import TokenService
+from app.services.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ async def _get_redis_client():
         return None
 
 
-@router.get("/usage")
+@router.get("/usage", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_usage(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Get token usage summary for current user.
@@ -78,7 +79,7 @@ async def get_usage(current_user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Failed to get usage data")
 
 
-@router.get("/loading-word")
+@router.get("/loading-word", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def get_loading_word(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Get next loading word in sequence.
@@ -118,7 +119,7 @@ async def get_loading_word(current_user: dict = Depends(get_current_user)) -> di
         raise HTTPException(status_code=500, detail="Failed to get loading word")
 
 
-@router.post("/track")
+@router.post("/track", dependencies=[Depends(rate_limiter.get_limiter_dependency("general"))])
 async def track_usage(
     body: TrackUsageRequest,
     current_user: dict = Depends(get_current_user),

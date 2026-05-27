@@ -11,7 +11,7 @@ from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_supabase_client() -> Client:
@@ -28,11 +28,11 @@ async def verify_token(
     Returns user payload if valid.
     Raises 401 if invalid or missing.
     """
-    token = credentials.credentials
-
-    if not token:
+    if not credentials:
         logger.warning("No token provided in request")
         raise HTTPException(status_code=401, detail="No token provided")
+
+    token = credentials.credentials
 
     try:
         supabase = get_supabase_client()
