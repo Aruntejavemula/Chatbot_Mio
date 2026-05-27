@@ -16,5 +16,6 @@ class AppSizes {
   static const mascotSizeSmall = 32.0;
   static const mascotSizeMedium = 48.0;
   static const mascotSizeLarge = 80.0;
+  static const mascotSizeSplash = 120.0;
   static const minTouchTarget = 44.0;
 }

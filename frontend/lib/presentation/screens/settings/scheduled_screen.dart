@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../data/models/scheduled_task_model.dart';
 import '../../../data/services/scheduled_service.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/scheduled/create_task_sheet.dart';
 
 class ScheduledScreen extends StatefulWidget {
@@ -126,7 +126,7 @@ class _ScheduledScreenState extends State<ScheduledScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const PenguinMascot(size: AppSizes.mascotSizeMedium),
+          const ShakingHands(size: AppSizes.mascotSizeMedium),
           const SizedBox(height: 16),
           Text(
             'No scheduled tasks yet',

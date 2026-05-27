@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
-class PenguinMascot extends StatefulWidget {
+/// App mascot widget with optional floating animation.
+/// Named generically so it survives any app name changes.
+class MioMascot extends StatefulWidget {
   final double size;
   final bool animate;
 
-  const PenguinMascot({
+  const MioMascot({
     super.key,
     this.size = 48,
     this.animate = true,
   });
 
   @override
-  State<PenguinMascot> createState() => _PenguinMascotState();
+  State<MioMascot> createState() => _MioMascotState();
 }
 
-class _PenguinMascotState extends State<PenguinMascot>
+class _MioMascotState extends State<MioMascot>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -52,7 +54,7 @@ class _PenguinMascotState extends State<PenguinMascot>
       height: widget.size,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stack) => Text(
-        '\u{1F427}',
+        '\u{1F47B}',
         style: TextStyle(fontSize: widget.size * 0.7),
       ),
     );

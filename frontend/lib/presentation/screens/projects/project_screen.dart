@@ -8,7 +8,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/services/project_service.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class ProjectScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -134,7 +134,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const PenguinMascot(size: AppSizes.mascotSizeMedium),
+          const ShakingHands(size: AppSizes.mascotSizeMedium),
           const SizedBox(height: 16),
           Text(
             'No chats yet',

@@ -31,7 +31,7 @@ import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/funny_snackbar.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/common/offline_banner_widget.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
@@ -1181,7 +1181,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             width: 48,
             height: 48,
             // TODO: Replace with mascot
-            child: Center(child: PenguinMascot(size: 48)),
+            child: Center(child: ShakingHands(size: 48)),
           ),
           const SizedBox(height: 16),
           ConstrainedBox(

@@ -10,7 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -90,7 +90,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           children: [
             const Spacer(flex: 2),
             // Mascot placeholder
-            const PenguinMascot(size: 80),
+            const ShakingHands(size: 80),
             const SizedBox(height: 20),
             // App name
             Text(

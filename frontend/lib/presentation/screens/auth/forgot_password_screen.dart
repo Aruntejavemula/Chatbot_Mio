@@ -7,7 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const PenguinMascot(size: 60),
+        const ShakingHands(size: 60),
         const SizedBox(height: 24),
         Text(
           'Forgot password',
@@ -218,7 +218,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const PenguinMascot(size: 60),
+        const ShakingHands(size: 60),
         const SizedBox(height: 24),
         Icon(
           Icons.mark_email_read_outlined,

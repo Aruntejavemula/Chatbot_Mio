@@ -9,7 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String email;
@@ -90,7 +90,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const PenguinMascot(size: 60),
+                  const ShakingHands(size: 60),
                   const SizedBox(height: 24),
                   Text(
                     'Verify your email',

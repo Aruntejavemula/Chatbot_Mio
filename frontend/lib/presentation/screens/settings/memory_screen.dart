@@ -6,7 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../data/models/memory_model.dart';
 import '../../../data/services/memory_service.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class MemoryScreen extends ConsumerStatefulWidget {
   const MemoryScreen({super.key});
@@ -153,7 +153,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen> {
       return Center(
         child: Column(
           children: [
-            const PenguinMascot(size: 48),
+            const ShakingHands(size: 48),
             const SizedBox(height: 12),
             Text('No memories yet.', style: GoogleFonts.dmSans(fontSize: 14, color: isDark ? AppColors.darkTextMuted : AppColors.textMuted)),
           ],

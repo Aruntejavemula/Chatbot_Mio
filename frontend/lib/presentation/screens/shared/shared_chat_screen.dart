@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../data/services/chat_service.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class SharedChatScreen extends ConsumerStatefulWidget {
   final String slug;
@@ -74,7 +74,7 @@ class _SharedChatScreenState extends ConsumerState<SharedChatScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const PenguinMascot(size: 64),
+            const ShakingHands(size: 64),
             const SizedBox(height: 16),
             Text(
               _error!,
@@ -144,7 +144,7 @@ class _SharedChatScreenState extends ConsumerState<SharedChatScreen> {
         children: [
           Row(
             children: [
-              const PenguinMascot(size: 28, animate: false),
+              const ShakingHands(size: 28, animate: false),
               const SizedBox(width: 8),
               Text(
                 'Shared via Mio',
@@ -245,7 +245,7 @@ class _SharedChatScreenState extends ConsumerState<SharedChatScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const PenguinMascot(size: 20, animate: false),
+          const ShakingHands(size: 20, animate: false),
           const SizedBox(width: 8),
           Text(
             'Made with Mio',
