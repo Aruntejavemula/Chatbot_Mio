@@ -11,7 +11,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/region_service.dart';
 import '../../../core/utils/router.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/settings/ollama_setup_sheet.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -297,7 +297,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const PenguinMascot(size: 56, animate: true),
+            const ShakingHands(size: 56, animate: true),
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
@@ -1479,7 +1479,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const PenguinMascot(size: 100, animate: true),
+          const ShakingHands(size: 100, animate: true),
           const SizedBox(height: 24),
           Text(
             _getReadyText(),

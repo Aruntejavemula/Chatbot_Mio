@@ -12,7 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 enum _AuthMode { signIn, signUp, forgot }
 
@@ -227,7 +227,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with TickerProvid
             delay: 0.0,
             child: Row(
               children: [
-                const PenguinMascot(size: 44, animate: false),
+                const ShakingHands(size: 44, animate: false),
                 const SizedBox(width: 10),
                 Text('Mio', style: GoogleFonts.dmSerifDisplay(fontSize: 28, color: AppColors.persian)),
               ],

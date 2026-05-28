@@ -9,7 +9,7 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/repositories/chat_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/sidebar/chat_item.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
@@ -151,7 +151,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const PenguinMascot(size: AppSizes.mascotSizeMedium),
+            const ShakingHands(size: AppSizes.mascotSizeMedium),
             const SizedBox(height: 16),
             Text(
               'Select a chat to continue',

@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/region_service.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -82,7 +82,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 48),
-              const PenguinMascot(size: 80, animate: true),
+              const ShakingHands(size: 80, animate: true),
               const SizedBox(height: 24),
               Text(
                 'Subscribe to Mio',

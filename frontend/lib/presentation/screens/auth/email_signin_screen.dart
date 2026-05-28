@@ -8,7 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 
 class EmailSignInScreen extends ConsumerStatefulWidget {
   const EmailSignInScreen({super.key});
@@ -130,7 +130,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                const PenguinMascot(size: 60),
+                const ShakingHands(size: 60),
                 const SizedBox(height: 20),
                 Text(
                   _isSignUp ? 'Create account' : 'Welcome back',
