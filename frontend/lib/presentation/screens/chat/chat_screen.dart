@@ -32,7 +32,7 @@ import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/funny_snackbar.dart';
-import '../../widgets/common/ghost_mascot.dart';
+import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/common/offline_banner_widget.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
@@ -550,7 +550,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                           _buildTopBar(isDark, showPermanentSidebar: showPermanentSidebar),
                           Expanded(
                             child: messages.isEmpty && !isStreaming
-                                ? _buildEmptyState(isDark)
+                                ? _buildEmptyState(isDark, isDesktop: showPermanentSidebar)
                                 : Column(
                                     children: [
                                       Expanded(
@@ -573,7 +573,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                           onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
                                           isDark: isDark,
                                         ),
-                                      _buildInputBar(isDark),
+                                      if (showPermanentSidebar)
+                                        Center(
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(maxWidth: 640),
+                                            child: Padding(
+                                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                                              child: _buildInputContent(isDark, isDesktop: true),
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        _buildInputBar(isDark),
+                                      if (showPermanentSidebar)
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 8),
+                                          child: Text(
+                                            '${AppStrings.appName} is AI and can make mistakes. Please double-check responses.',
+                                            style: GoogleFonts.dmSans(
+                                              fontSize: 11,
+                                              color: isDark ? const Color(0xFF555555) : const Color(0xFFAAAAAA),
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
                                     ],
                                   ),
                           ),
@@ -649,8 +672,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final currentChat = ref.watch(currentChatProvider);
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textMuted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final circleBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final circleBorder = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E4DE);
 
     final bool isEmptyState = widget.chatId == null && currentChat == null && messages.isEmpty;
+    final bool hasMessages = messages.isNotEmpty;
 
     return Container(
       height: AppSizes.topBarHeight,
@@ -662,109 +688,126 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         bottom: false,
         child: Row(
           children: [
+            // Left: sidebar toggle (mobile only)
             if (!showPermanentSidebar)
-              IconButton(
-                onPressed: () => setState(() => _isSidebarOpen = true),
-                icon: Icon(
-                  Icons.menu_rounded,
-                  size: 20,
-                  color: textMuted,
+              GestureDetector(
+                onTap: () => setState(() => _isSidebarOpen = true),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleBg,
+                    border: Border.all(color: circleBorder, width: 1),
+                  ),
+                  child: Icon(Icons.tune_rounded, size: 18, color: textMuted),
                 ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
+            // Center content
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (!isEmptyState) ...[
-                    Text(
-                      currentChat?.title ?? 'New Chat',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.projectId != null && widget.projectId!.isNotEmpty)
-                      Text(
-                        'Project',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11,
-                          color: AppColors.persian,
+              child: Center(
+                child: (isEmptyState || !hasMessages)
+                    // Empty state: mobile=model selector, desktop=nothing (model is in input bar)
+                    ? (showPermanentSidebar
+                        ? const SizedBox.shrink()
+                        : GestureDetector(
+                            onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                AnimatedRotation(
+                                  turns: _isModelDropdownOpen ? 0.5 : 0.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ))
+                    // Active chat: title with dropdown
+                    : GestureDetector(
+                        onTap: () => _showMoreOptionsSheet(isDark),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                currentChat?.title ?? 'New Chat',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: textMuted),
+                          ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                  ],
-                ],
               ),
             ),
-            if (!isEmptyState) ...[
+            // Right side
+            if (isEmptyState || !hasMessages)
+              // Empty: new chat icon
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.chat),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleBg,
+                    border: Border.all(color: circleBorder, width: 1),
+                  ),
+                  child: Icon(Icons.chat_bubble_outline_rounded, size: 18, color: textMuted),
+                ),
+              )
+            else
+              // Active: Share button (desktop text, mobile icon)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: GestureDetector(
-                        onTap: () {
-                          ExportMenuWidget.showExportSheet(
-                            context: context,
-                            chatId: widget.chatId!,
-                            userPlan: 'free',
-                          );
-                        },
-                        child: Icon(
-                          Icons.download_outlined,
-                          size: 20,
-                          color: textMuted,
-                        ),
-                      ),
-                    ),
-                  if (messages.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: showPermanentSidebar
-                          ? TextButton(
-                              onPressed: _shareChat,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Share',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: textMuted,
-                                ),
-                              ),
-                            )
-                          : GestureDetector(
-                              onTap: _shareChat,
-                              child: Icon(
-                                Icons.ios_share_outlined,
-                                size: 20,
-                                color: textMuted,
-                              ),
+                  if (hasMessages)
+                    showPermanentSidebar
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2), width: 1),
                             ),
-                    ),
-                  GestureDetector(
-                    onTap: () => _showMoreOptionsSheet(isDark),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      size: 20,
-                      color: textMuted,
-                    ),
-                  ),
+                            child: GestureDetector(
+                              onTap: _shareChat,
+                              child: Text('Share',
+                                  style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: _shareChat,
+                                child: Icon(Icons.ios_share_outlined, size: 20, color: textMuted),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _showMoreOptionsSheet(isDark),
+                                child: Icon(Icons.more_horiz_rounded, size: 20, color: textMuted),
+                              ),
+                            ],
+                          ),
                 ],
               ),
-            ],
           ],
         ),
       ),
@@ -1309,124 +1352,128 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    final currentUser = ref.watch(currentUserProvider);
-    final firstName = currentUser?.name?.split(' ').first ?? '';
-    final greeting = _getGreeting(firstName);
+  Widget _buildEmptyState(bool isDark, {bool isDesktop = false}) {
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
-    final badgeBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
+    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
 
-    return Column(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (_isModelDropdownOpen) setState(() => _isModelDropdownOpen = false);
-              FocusScope.of(context).unfocus();
-            },
-            behavior: HitTestBehavior.translucent,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Plan badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: badgeBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Free plan',
-                                  style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: Text('·',
-                                    style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              ),
-                              GestureDetector(
-                                onTap: () => context.go(AppRoutes.subscription),
-                                child: Text('Upgrade',
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        color: AppColors.persian,
-                                        fontWeight: FontWeight.w500)),
-                              ),
-                            ],
-                          ),
+    if (!isDesktop) {
+      // Mobile: simple mascot + greeting + input bar at bottom
+      return Column(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (_isModelDropdownOpen) setState(() => _isModelDropdownOpen = false);
+                FocusScope.of(context).unfocus();
+              },
+              behavior: HitTestBehavior.translucent,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const ShakingHands(size: 48, animate: false),
+                      const SizedBox(height: 24),
+                      Text(
+                        _getTimeGreeting(),
+                        style: GoogleFonts.dmSerifDisplay(
+                          fontSize: 28,
+                          height: 1.3,
+                          color: textPrimary,
+                          letterSpacing: -0.5,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Greeting with inline icon
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.auto_awesome, size: 26, color: AppColors.persian),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            greeting,
-                            style: GoogleFonts.dmSerifDisplay(
-                              fontSize: 32,
-                              color: textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    // Centered input
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: _buildInputContent(isDark),
-                    ),
-                    const SizedBox(height: 14),
-                    // Suggestion pills
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _suggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.school_outlined, 'Learn', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.code_outlined, 'Code', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.favorite_outline, 'Life stuff', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.auto_awesome_outlined, 'Mio\'s choice', textPrimary, textMuted, isDark),
-                          ],
-                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        // Files attached preview
-        if (_selectedFiles.isNotEmpty)
-          DocumentViewerWidget(
-            files: _selectedFiles,
-            onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
-            isDark: isDark,
+          if (_selectedFiles.isNotEmpty)
+            DocumentViewerWidget(
+              files: _selectedFiles,
+              onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
+              isDark: isDark,
+            ),
+          _buildInputBar(isDark),
+        ],
+      );
+    }
+
+    // Desktop: Claude-style centered greeting + input with model selector + suggestion pills
+    final currentUser = ref.watch(currentUserProvider);
+    final userName = currentUser?.name;
+    final hasName = userName != null && userName.isNotEmpty;
+    final firstName = hasName ? userName.split(' ').first : '';
+
+    return GestureDetector(
+      onTap: () {
+        if (_isModelDropdownOpen) setState(() => _isModelDropdownOpen = false);
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.translucent,
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Greeting with mascot inline
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const ShakingHands(size: 40, animate: true),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
+                              _getDesktopGreeting(firstName),
+                              style: GoogleFonts.dmSerifDisplay(
+                                fontSize: 32,
+                                height: 1.2,
+                                color: textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      // Input bar with model selector inside
+                      _buildInputBar(isDark, isDesktop: true),
+                      const SizedBox(height: 16),
+                      // Suggestion pills
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _desktopSuggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
+                          _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark),
+                          _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark),
+                          _desktopSuggestionPill(Icons.home_outlined, 'Life stuff', textPrimary, textMuted, isDark),
+                          _desktopSuggestionPill(Icons.lightbulb_outline, "Mio's choice", textPrimary, textMuted, isDark),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _suggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
+  Widget _desktopSuggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
     final bg = isDark ? const Color(0xFF111111) : Colors.white;
     final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
     return GestureDetector(
@@ -1436,7 +1483,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         _focusNode.requestFocus();
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
@@ -1456,12 +1502,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  String _getGreeting(String name) {
+  String _getDesktopGreeting(String name) {
     final hour = DateTime.now().hour;
     final suffix = name.isNotEmpty ? ', $name' : '';
-    if (hour < 12) return 'Good morning$suffix';
-    if (hour < 17) return 'Good afternoon$suffix';
+    if (hour >= 5 && hour < 12) return 'Good morning$suffix';
+    if (hour >= 12 && hour < 17) return 'Good afternoon$suffix';
+    if (hour >= 17 && hour < 21) return 'Good evening$suffix';
     return 'Good evening$suffix';
+  }
+
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'How can I help you\nthis morning?';
+    if (hour >= 12 && hour < 17) return 'How can I help you\nthis afternoon?';
+    if (hour >= 17 && hour < 21) return 'How can I help you\nthis evening?';
+    return 'How can I help you\nthis late night?';
   }
 
   Widget _buildMessagesList(
@@ -1613,42 +1668,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildInputBar(bool isDark) {
+  Widget _buildInputBar(bool isDark, {bool isDesktop = false}) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? Colors.black : AppColors.bgPrimary,
       ),
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.of(context).viewPadding.bottom),
-      child: _buildInputContent(isDark),
+      padding: EdgeInsets.fromLTRB(
+        isDesktop ? 0 : 16,
+        8,
+        isDesktop ? 0 : 16,
+        isDesktop ? 0 : 8 + MediaQuery.of(context).viewPadding.bottom,
+      ),
+      child: _buildInputContent(isDark, isDesktop: isDesktop),
     );
   }
 
-  Widget _buildInputContent(bool isDark) {
+  Widget _buildInputContent(bool isDark, {bool isDesktop = false}) {
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final inputBg = isDark ? const Color(0xFF0D0D0D) : Colors.white;
+    final inputBg = isDark ? const Color(0xFF141414) : const Color(0xFFF0ECE5);
     final borderColor = _isFocused
-        ? AppColors.persian.withValues(alpha: 0.5)
-        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5));
+        ? AppColors.persian.withValues(alpha: 0.4)
+        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2));
+
+    // Desktop: white bg with subtle border; Mobile: warm bg
+    final desktopInputBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final effectiveInputBg = isDesktop ? desktopInputBg : inputBg;
+    final desktopBorder = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2);
+    final effectiveBorder = isDesktop ? (_isFocused ? AppColors.persian.withValues(alpha: 0.4) : desktopBorder) : borderColor;
+
+    // Active chat on desktop: hint says "Reply..." instead of "Chat with Mio"
+    final messages = ref.watch(messagesProvider);
+    final isActiveChat = messages.isNotEmpty;
+    final hintText = (isDesktop && isActiveChat) ? 'Reply...' : 'How can I help you today?';
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1),
-        boxShadow: [
+        color: effectiveInputBg,
+        borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
+        border: Border.all(color: effectiveBorder, width: 1),
+        boxShadow: isDesktop ? [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 8,
+            color: (isDark ? Colors.black : Colors.black).withValues(alpha: 0.06),
+            blurRadius: 12,
             offset: const Offset(0, 2),
           ),
-        ],
+        ] : null,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Transparent textarea — no inner border, no inner bg
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
             child: Focus(
@@ -1666,7 +1736,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 controller: _inputController,
                 focusNode: _focusNode,
                 decoration: InputDecoration(
-                  hintText: 'How can I help you today?',
+                  hintText: hintText,
                   hintStyle: GoogleFonts.dmSans(fontSize: 15, color: textMuted),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -1677,56 +1747,54 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 ),
                 style: GoogleFonts.dmSans(fontSize: 15, color: textPrimary),
                 maxLines: 6,
-                minLines: 3,
+                minLines: 1,
                 textInputAction: TextInputAction.newline,
                 onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
               ),
             ),
           ),
-          // Bottom toolbar
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 2, 10, 10),
+            padding: const EdgeInsets.fromLTRB(12, 4, 10, 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // + button with LayerLink anchor
                 CompositedTransformTarget(
                   link: _plusLayerLink,
                   child: GestureDetector(
                     onTap: _showPlusMenu,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.add, size: 20,
+                      child: Icon(Icons.add, size: 22,
                           color: _isPanelOpen ? AppColors.persian : textMuted),
                     ),
                   ),
                 ),
                 const Spacer(),
-                // Model selector — plain gray text + chevron only
-                GestureDetector(
-                  onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          color: textMuted,
-                          fontWeight: FontWeight.w400,
-                        ),
+                // Desktop: model selector inside input bar
+                if (isDesktop) ...[  
+                  GestureDetector(
+                    onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F2ED),
                       ),
-                      const SizedBox(width: 3),
-                      AnimatedRotation(
-                        turns: _isModelDropdownOpen ? 0.5 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
+                            style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textMuted),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                // Mic
+                  const SizedBox(width: 8),
+                ],
                 if (!_hasText) ...[
                   VoiceInputWidget(
                     onTranscript: (text) => setState(() {
@@ -1735,9 +1803,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     }),
                     onCancel: () {},
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                 ],
-                // Send button
                 AnimatedBuilder(
                   animation: _sendButtonAnimController,
                   builder: (context, child) {
@@ -1766,17 +1833,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           curve: Curves.easeOutCubic,
-                          width: 32,
-                          height: 32,
+                          width: 34,
+                          height: 34,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(17),
                             color: _hasText
-                                ? AppColors.persian
-                                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8)),
+                                ? (isDark ? Colors.white : const Color(0xFF1A1814))
+                                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD6D0C6)),
                           ),
                           child: Center(
-                            child: Icon(Icons.arrow_upward_rounded, size: 17,
-                                color: _hasText ? Colors.white : textMuted),
+                            child: Icon(Icons.arrow_upward_rounded, size: 18,
+                                color: _hasText
+                                    ? (isDark ? Colors.black : Colors.white)
+                                    : textMuted),
                           ),
                         ),
                       ),

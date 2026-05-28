@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class PenguinMascot extends StatelessWidget {
+class ShakingHands extends StatelessWidget {
   final double size;
   final bool animate;
 
-  const PenguinMascot({
+  const ShakingHands({
     super.key,
     this.size = 48,
     this.animate = true,

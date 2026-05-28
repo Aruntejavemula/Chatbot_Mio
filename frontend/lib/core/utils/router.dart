@@ -29,6 +29,7 @@ import '../../presentation/screens/legal/terms_screen.dart';
 import '../../presentation/screens/shared/shared_chat_screen.dart';
 import '../../presentation/screens/projects/project_list_screen.dart';
 import '../../presentation/screens/projects/project_screen.dart';
+import '../../presentation/screens/prompts/prompts_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 import 'animations.dart';
 
@@ -58,6 +59,7 @@ class AppRoutes {
   static const projects = '/projects';
   static const projectDetail = '/projects/:projectId';
   static const projectNewChat = '/projects/:projectId/new-chat';
+  static const prompts = '/prompts';
   static const referral = '/settings/referral';
   static const launch = '/launch';
   static const launchChecklist = '/launch/checklist';
@@ -315,6 +317,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: ChatScreen(chatId: null, projectId: projectId),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.prompts,
+        pageBuilder: (context, state) => _buildTransitionPage(
+          key: state.pageKey,
+          child: const PromptsScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.referral,
