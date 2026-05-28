@@ -28,6 +28,7 @@ import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
+import '../../widgets/chat/streaming_text.dart';
 import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
@@ -1601,21 +1602,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     isStreaming: isThinkingStreaming,
                   ),
                 if (streamingText.isEmpty && streamingThinkingText.isEmpty)
-                  Text(
-                    '${LoadingWords.getWord(loadingWordIndex)}...',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                    ),
-                  )
+                  const TypingIndicator()
                 else if (streamingText.isNotEmpty)
-                  Text(
-                    streamingText,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                  StreamingText(
+                    text: streamingText,
+                    textColor: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
               ],
             ),
