@@ -136,6 +136,21 @@ class ChatRepository {
 
       final buffer = StringBuffer();
       final thinkingBuffer = StringBuffer();
+      var dirty = false;
+      var thinkingDirty = false;
+      Timer? flushTimer;
+
+      void flush() {
+        if (dirty) {
+          _ref.read(streamingTextProvider.notifier).state = buffer.toString();
+          dirty = false;
+        }
+        if (thinkingDirty) {
+          _ref.read(streamingThinkingTextProvider.notifier).state =
+              thinkingBuffer.toString();
+          thinkingDirty = false;
+        }
+      }
 
       await for (final event in stream) {
         switch (event.type) {
@@ -144,19 +159,28 @@ class ChatRepository {
               _ref.read(isThinkingStreamingProvider.notifier).state = true;
             }
             thinkingBuffer.write(event.content);
-            _ref.read(streamingThinkingTextProvider.notifier).state =
-                thinkingBuffer.toString();
+            thinkingDirty = true;
+            flushTimer ??= Timer(const Duration(milliseconds: 80), () {
+              flush();
+              flushTimer = null;
+            });
           case ChatStreamEventType.text:
             if (_ref.read(isThinkingStreamingProvider)) {
               _ref.read(isThinkingStreamingProvider.notifier).state = false;
             }
             buffer.write(event.content);
-            _ref.read(streamingTextProvider.notifier).state =
-                buffer.toString();
+            dirty = true;
+            flushTimer ??= Timer(const Duration(milliseconds: 80), () {
+              flush();
+              flushTimer = null;
+            });
           case ChatStreamEventType.done:
             break;
         }
       }
+
+      flushTimer?.cancel();
+      flush();
 
       final capWarning = _chatService.lastCapWarning;
       if (capWarning != null) {
