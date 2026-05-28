@@ -13,6 +13,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../screens/projects/create_project_sheet.dart';
+import '../referral/referral_dialog.dart';
 import '../settings/preferences_dialog.dart';
 import 'chat_item.dart';
 
@@ -188,6 +189,9 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
                           fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.persian)),
                 ),
               ),
+              const SizedBox(height: 8),
+              _navRow(icon: Icons.card_giftcard_outlined, label: 'Refer a friend', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () => ReferralDialog.show(context)),
             ] else ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
