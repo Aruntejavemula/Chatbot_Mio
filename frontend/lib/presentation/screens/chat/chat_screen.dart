@@ -649,8 +649,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final currentChat = ref.watch(currentChatProvider);
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textMuted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final circleBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final circleBorder = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E4DE);
 
     final bool isEmptyState = widget.chatId == null && currentChat == null && messages.isEmpty;
+    final bool hasMessages = messages.isNotEmpty;
 
     return Container(
       height: AppSizes.topBarHeight,
@@ -662,52 +665,91 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         bottom: false,
         child: Row(
           children: [
+            // Left: sidebar toggle (circular button)
             if (!showPermanentSidebar)
-              IconButton(
-                onPressed: () => setState(() => _isSidebarOpen = true),
-                icon: Icon(
-                  Icons.menu_rounded,
-                  size: 20,
-                  color: textMuted,
+              GestureDetector(
+                onTap: () => setState(() => _isSidebarOpen = true),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleBg,
+                    border: Border.all(color: circleBorder, width: 1),
+                  ),
+                  child: Icon(Icons.tune_rounded, size: 18, color: textMuted),
                 ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
+            // Center: model selector or chat title
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (!isEmptyState) ...[
-                    Text(
-                      currentChat?.title ?? 'New Chat',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (widget.projectId != null && widget.projectId!.isNotEmpty)
-                      Text(
-                        'Project',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11,
-                          color: AppColors.persian,
+              child: Center(
+                child: isEmptyState || !hasMessages
+                    ? GestureDetector(
+                        onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            AnimatedRotation(
+                              turns: _isModelDropdownOpen ? 0.5 : 0.0,
+                              duration: const Duration(milliseconds: 200),
+                              child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: textMuted),
+                            ),
+                          ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            currentChat?.title ?? 'New Chat',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (widget.projectId != null && widget.projectId!.isNotEmpty)
+                            Text(
+                              'Project',
+                              style: GoogleFonts.dmSans(fontSize: 11, color: AppColors.persian),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
-                  ],
-                ],
               ),
             ),
-            if (!isEmptyState) ...[
+            // Right: new chat or more options (circular button)
+            if (isEmptyState || !hasMessages)
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.chat),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: circleBg,
+                    border: Border.all(color: circleBorder, width: 1),
+                  ),
+                  child: Icon(Icons.chat_bubble_outline_rounded, size: 18, color: textMuted),
+                ),
+              )
+            else
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (messages.isNotEmpty && widget.chatId != null && widget.chatId!.isNotEmpty)
+                  if (hasMessages && widget.chatId != null && widget.chatId!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
                       child: GestureDetector(
@@ -718,14 +760,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                             userPlan: 'free',
                           );
                         },
-                        child: Icon(
-                          Icons.download_outlined,
-                          size: 20,
-                          color: textMuted,
-                        ),
+                        child: Icon(Icons.download_outlined, size: 20, color: textMuted),
                       ),
                     ),
-                  if (messages.isNotEmpty)
+                  if (hasMessages)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
                       child: showPermanentSidebar
@@ -736,35 +774,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: Text(
-                                'Share',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: textMuted,
-                                ),
-                              ),
+                              child: Text('Share',
+                                  style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                             )
                           : GestureDetector(
                               onTap: _shareChat,
-                              child: Icon(
-                                Icons.ios_share_outlined,
-                                size: 20,
-                                color: textMuted,
-                              ),
+                              child: Icon(Icons.ios_share_outlined, size: 20, color: textMuted),
                             ),
                     ),
                   GestureDetector(
                     onTap: () => _showMoreOptionsSheet(isDark),
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      size: 20,
-                      color: textMuted,
-                    ),
+                    child: Icon(Icons.more_horiz_rounded, size: 20, color: textMuted),
                   ),
                 ],
               ),
-            ],
           ],
         ),
       ),
@@ -1310,12 +1333,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   }
 
   Widget _buildEmptyState(bool isDark) {
-    final currentUser = ref.watch(currentUserProvider);
-    final firstName = currentUser?.name?.split(' ').first ?? '';
-    final greeting = _getGreeting(firstName);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
-    final badgeBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
 
     return Column(
       children: [
@@ -1327,87 +1345,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             },
             behavior: HitTestBehavior.translucent,
             child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Plan badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: badgeBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Free plan',
-                                  style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: Text('·',
-                                    style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              ),
-                              GestureDetector(
-                                onTap: () => context.go(AppRoutes.subscription),
-                                child: Text('Upgrade',
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        color: AppColors.persian,
-                                        fontWeight: FontWeight.w500)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    const ShakingHands(size: 48, animate: false),
                     const SizedBox(height: 24),
-                    // Greeting with inline icon
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.auto_awesome, size: 26, color: AppColors.persian),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            greeting,
-                            style: GoogleFonts.dmSerifDisplay(
-                              fontSize: 32,
-                              color: textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    // Centered input
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: _buildInputContent(isDark),
-                    ),
-                    const SizedBox(height: 14),
-                    // Suggestion pills
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _suggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.school_outlined, 'Learn', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.code_outlined, 'Code', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.favorite_outline, 'Life stuff', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.auto_awesome_outlined, 'Mio\'s choice', textPrimary, textMuted, isDark),
-                          ],
-                        ),
+                    Text(
+                      _getTimeGreeting(),
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 28,
+                        height: 1.3,
+                        color: textPrimary,
+                        letterSpacing: -0.5,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -1415,53 +1368,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             ),
           ),
         ),
-        // Files attached preview
         if (_selectedFiles.isNotEmpty)
           DocumentViewerWidget(
             files: _selectedFiles,
             onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
             isDark: isDark,
           ),
+        _buildInputBar(isDark),
       ],
     );
   }
 
-  Widget _suggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
-    final bg = isDark ? const Color(0xFF111111) : Colors.white;
-    final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
-    return GestureDetector(
-      onTap: () {
-        _inputController.text = label;
-        setState(() => _hasText = true);
-        _focusNode.requestFocus();
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border, width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: textMuted),
-            const SizedBox(width: 6),
-            Text(label,
-                style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getGreeting(String name) {
+  String _getTimeGreeting() {
     final hour = DateTime.now().hour;
-    final suffix = name.isNotEmpty ? ', $name' : '';
-    if (hour < 12) return 'Good morning$suffix';
-    if (hour < 17) return 'Good afternoon$suffix';
-    return 'Good evening$suffix';
+    if (hour >= 5 && hour < 12) return 'How can I help you\nthis morning?';
+    if (hour >= 12 && hour < 17) return 'How can I help you\nthis afternoon?';
+    if (hour >= 17 && hour < 21) return 'How can I help you\nthis evening?';
+    return 'How can I help you\nthis late night?';
   }
 
   Widget _buildMessagesList(
@@ -1626,29 +1549,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   Widget _buildInputContent(bool isDark) {
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final inputBg = isDark ? const Color(0xFF0D0D0D) : Colors.white;
+    final inputBg = isDark ? const Color(0xFF141414) : const Color(0xFFF0ECE5);
     final borderColor = _isFocused
-        ? AppColors.persian.withValues(alpha: 0.5)
-        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5));
+        ? AppColors.persian.withValues(alpha: 0.4)
+        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: inputBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Transparent textarea — no inner border, no inner bg
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
             child: Focus(
@@ -1666,7 +1581,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 controller: _inputController,
                 focusNode: _focusNode,
                 decoration: InputDecoration(
-                  hintText: 'How can I help you today?',
+                  hintText: 'Chat with ${AppStrings.appName}',
                   hintStyle: GoogleFonts.dmSans(fontSize: 15, color: textMuted),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -1677,56 +1592,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 ),
                 style: GoogleFonts.dmSans(fontSize: 15, color: textPrimary),
                 maxLines: 6,
-                minLines: 3,
+                minLines: 1,
                 textInputAction: TextInputAction.newline,
                 onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
               ),
             ),
           ),
-          // Bottom toolbar
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 2, 10, 10),
+            padding: const EdgeInsets.fromLTRB(12, 4, 10, 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // + button with LayerLink anchor
                 CompositedTransformTarget(
                   link: _plusLayerLink,
                   child: GestureDetector(
                     onTap: _showPlusMenu,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.add, size: 20,
+                      child: Icon(Icons.add, size: 22,
                           color: _isPanelOpen ? AppColors.persian : textMuted),
                     ),
                   ),
                 ),
                 const Spacer(),
-                // Model selector — plain gray text + chevron only
-                GestureDetector(
-                  onTap: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _selectedModel == 'Think now' ? 'Select model' : _selectedModel,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          color: textMuted,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      AnimatedRotation(
-                        turns: _isModelDropdownOpen ? 0.5 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Mic
                 if (!_hasText) ...[
                   VoiceInputWidget(
                     onTranscript: (text) => setState(() {
@@ -1735,9 +1623,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     }),
                     onCancel: () {},
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                 ],
-                // Send button
                 AnimatedBuilder(
                   animation: _sendButtonAnimController,
                   builder: (context, child) {
@@ -1766,17 +1653,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           curve: Curves.easeOutCubic,
-                          width: 32,
-                          height: 32,
+                          width: 34,
+                          height: 34,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(17),
                             color: _hasText
-                                ? AppColors.persian
-                                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8)),
+                                ? (isDark ? Colors.white : const Color(0xFF1A1814))
+                                : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD6D0C6)),
                           ),
                           child: Center(
-                            child: Icon(Icons.arrow_upward_rounded, size: 17,
-                                color: _hasText ? Colors.white : textMuted),
+                            child: Icon(Icons.arrow_upward_rounded, size: 18,
+                                color: _hasText
+                                    ? (isDark ? Colors.black : Colors.white)
+                                    : textMuted),
                           ),
                         ),
                       ),

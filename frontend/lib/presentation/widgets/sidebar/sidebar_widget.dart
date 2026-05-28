@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/project_model.dart';
@@ -133,6 +134,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     final borderColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
+    final tabActiveBg = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFECE8E1);
 
     return Container(
       width: width,
@@ -146,82 +148,94 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Brand row
+            // Brand
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 12, 6),
-              child: Text('Mio',
+              padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
+              child: Text(AppStrings.appName,
                   style: GoogleFonts.dmSerifDisplay(
-                      fontSize: 17, color: textPrimary, fontWeight: FontWeight.w400)),
+                      fontSize: 28, color: textPrimary)),
             ),
-            // Top nav items
-            _navRow(icon: Icons.add, label: 'New chat', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () { widget.onNewChat(); if (isMobile) widget.onClose(); }),
-            _navRow(icon: Icons.search, label: 'Search', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () {}),
-            _navRow(icon: Icons.tune_outlined, label: 'Customize', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () => context.go(AppRoutes.settings)),
-            const SizedBox(height: 8),
-            // Section nav
-            _navRow(icon: Icons.chat_bubble_outline, label: 'Chats', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () {}),
-            _navRow(icon: Icons.folder_outlined, label: 'Projects', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () { context.go(AppRoutes.projects); if (isMobile) widget.onClose(); }),
-            _navRow(icon: Icons.auto_awesome_outlined, label: 'Capabilities', textPrimary: textPrimary, textMuted: textMuted,
-                onTap: () {}),
-            _navRow(
-              icon: Icons.code_outlined,
-              label: 'Connectors',
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              onTap: () {},
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFECE8E1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('Upgrade',
-                    style: GoogleFonts.dmSans(
-                        fontSize: 10, fontWeight: FontWeight.w500, color: textMuted)),
+            // Tabs: Chats / Projects
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                children: [
+                  _tabItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    label: 'Chats',
+                    isActive: true,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    activeBg: tabActiveBg,
+                    onTap: () {},
+                  ),
+                  _tabItem(
+                    icon: Icons.folder_outlined,
+                    label: 'Projects',
+                    isActive: false,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    activeBg: tabActiveBg,
+                    onTap: () {
+                      context.go(AppRoutes.projects);
+                      if (isMobile) widget.onClose();
+                    },
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            // Recents
+            const SizedBox(height: 16),
+            // Recents section
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+              padding: const EdgeInsets.fromLTRB(20, 0, 16, 6),
               child: Text('Recents',
-                  style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500, color: textMuted)),
+                  style: GoogleFonts.dmSans(
+                      fontSize: 13, fontWeight: FontWeight.w500,
+                      color: AppColors.persian)),
             ),
             Expanded(child: _buildChatList(chats: chats, currentChat: currentChat, textMuted: textMuted, textPrimary: textPrimary, isMobile: isMobile)),
-            // Bottom profile
-            _buildProfile(isDark: isDark, currentUser: currentUser, textPrimary: textPrimary, textMuted: textMuted, borderColor: borderColor),
+            // Bottom: profile + new chat FAB
+            _buildBottomBar(
+              isDark: isDark,
+              currentUser: currentUser,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              borderColor: borderColor,
+              isMobile: isMobile,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _navRow({
+  Widget _tabItem({
     required IconData icon,
     required String label,
+    required bool isActive,
     required Color textPrimary,
     required Color textMuted,
+    required Color activeBg,
     required VoidCallback onTap,
-    Widget? trailing,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? activeBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: textMuted),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(label,
-                  style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w400)),
-            ),
-            if (trailing != null) trailing,
+            Icon(icon, size: 18, color: isActive ? textPrimary : textMuted),
+            const SizedBox(width: 12),
+            Text(label,
+                style: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+                    color: isActive ? textPrimary : textMuted)),
           ],
         ),
       ),
@@ -300,59 +314,91 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     );
   }
 
-  Widget _buildProfile({
+  Widget _buildBottomBar({
     required bool isDark,
     required dynamic currentUser,
     required Color textPrimary,
     required Color textMuted,
     required Color borderColor,
+    required bool isMobile,
   }) {
     final userName = currentUser?.name;
     final hasName = userName != null && userName.isNotEmpty;
+    final initials = hasName
+        ? userName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(2).join()
+        : '';
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Divider(height: 1, thickness: 1, color: borderColor),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
-          child: Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Row(
+          children: [
+            // Profile pill
+            GestureDetector(
+              onTap: () => context.go(AppRoutes.settings),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(4, 4, 14, 4),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.persian.withValues(alpha: 0.15),
+                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: borderColor, width: 1),
                 ),
-                child: Center(
-                  child: hasName
-                      ? Text(userName[0].toUpperCase(),
-                          style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.persian))
-                      : Icon(Icons.person, size: 15, color: textMuted),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.persian.withValues(alpha: 0.15),
+                      ),
+                      child: Center(
+                        child: hasName
+                            ? Text(initials,
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 12, fontWeight: FontWeight.w600,
+                                    color: AppColors.persian))
+                            : Icon(Icons.person, size: 16, color: textMuted),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Text(hasName ? userName : 'Guest',
-                        style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('Free plan',
-                        style: GoogleFonts.dmSans(fontSize: 11, color: textMuted)),
+                        style: GoogleFonts.dmSans(
+                            fontSize: 14, fontWeight: FontWeight.w500,
+                            color: textPrimary)),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => context.go(AppRoutes.settings),
-                child: Icon(Icons.settings_outlined, size: 17, color: textMuted),
+            ),
+            const Spacer(),
+            // New chat FAB
+            GestureDetector(
+              onTap: () {
+                widget.onNewChat();
+                if (isMobile) widget.onClose();
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.persian,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.persian.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
