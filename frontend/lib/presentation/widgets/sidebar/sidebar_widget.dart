@@ -13,6 +13,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../screens/projects/create_project_sheet.dart';
+import '../settings/preferences_dialog.dart';
 import 'chat_item.dart';
 
 final projectsProvider = StateProvider<List<ProjectModel>>((ref) => []);
@@ -162,7 +163,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
               _navRow(icon: Icons.search, label: 'Search', textPrimary: textPrimary, textMuted: textMuted,
                   onTap: () {}),
               _navRow(icon: Icons.tune_outlined, label: 'Customize', textPrimary: textPrimary, textMuted: textMuted,
-                  onTap: () => context.go(AppRoutes.settings)),
+                  onTap: () => PreferencesDialog.show(context)),
               const SizedBox(height: 8),
               _navRow(icon: Icons.chat_bubble_outline, label: 'Chats', textPrimary: textPrimary, textMuted: textMuted,
                   onTap: () => context.go('/chat')),
@@ -395,7 +396,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
           children: [
             // Profile pill
             GestureDetector(
-              onTap: () => context.go(AppRoutes.settings),
+              onTap: () => PreferencesDialog.show(context),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(4, 4, 14, 4),
                 decoration: BoxDecoration(
