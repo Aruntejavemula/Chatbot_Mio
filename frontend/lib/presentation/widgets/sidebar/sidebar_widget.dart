@@ -150,51 +150,83 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
           children: [
             // Brand
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
               child: Text(AppStrings.appName,
                   style: GoogleFonts.dmSerifDisplay(
-                      fontSize: 28, color: textPrimary)),
+                      fontSize: isMobile ? 28 : 20, color: textPrimary)),
             ),
-            // Tabs: Chats / Projects
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                children: [
-                  _tabItem(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    label: 'Chats',
-                    isActive: true,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    activeBg: tabActiveBg,
-                    onTap: () {},
+            // Nav items (desktop: full Claude-style, mobile: simplified tabs)
+            if (!isMobile) ...[
+              _navRow(icon: Icons.add, label: 'New chat', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () { widget.onNewChat(); }),
+              _navRow(icon: Icons.search, label: 'Search', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () {}),
+              _navRow(icon: Icons.tune_outlined, label: 'Customize', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () => context.go(AppRoutes.settings)),
+              const SizedBox(height: 8),
+              _navRow(icon: Icons.chat_bubble_outline, label: 'Chats', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () {}),
+              _navRow(icon: Icons.folder_outlined, label: 'Projects', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () => context.go(AppRoutes.projects)),
+              _navRow(icon: Icons.auto_awesome_outlined, label: 'Capabilities', textPrimary: textPrimary, textMuted: textMuted,
+                  onTap: () {}),
+              _navRow(
+                icon: Icons.code_outlined,
+                label: 'Code',
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                onTap: () {},
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFECE8E1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  _tabItem(
-                    icon: Icons.folder_outlined,
-                    label: 'Projects',
-                    isActive: false,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    activeBg: tabActiveBg,
-                    onTap: () {
-                      context.go(AppRoutes.projects);
-                      if (isMobile) widget.onClose();
-                    },
-                  ),
-                ],
+                  child: Text('Upgrade',
+                      style: GoogleFonts.dmSans(
+                          fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.persian)),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+            ] else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    _tabItem(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      label: 'Chats',
+                      isActive: true,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      activeBg: tabActiveBg,
+                      onTap: () {},
+                    ),
+                    _tabItem(
+                      icon: Icons.folder_outlined,
+                      label: 'Projects',
+                      isActive: false,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      activeBg: tabActiveBg,
+                      onTap: () {
+                        context.go(AppRoutes.projects);
+                        widget.onClose();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
             // Recents section
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
               child: Text('Recents',
                   style: GoogleFonts.dmSans(
-                      fontSize: 13, fontWeight: FontWeight.w500,
-                      color: AppColors.persian)),
+                      fontSize: 12, fontWeight: FontWeight.w500, color: textMuted)),
             ),
             Expanded(child: _buildChatList(chats: chats, currentChat: currentChat, textMuted: textMuted, textPrimary: textPrimary, isMobile: isMobile)),
-            // Bottom: profile + new chat FAB
+            // Bottom: profile
             _buildBottomBar(
               isDark: isDark,
               currentUser: currentUser,
@@ -203,6 +235,33 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
               borderColor: borderColor,
               isMobile: isMobile,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navRow({
+    required IconData icon,
+    required String label,
+    required Color textPrimary,
+    required Color textMuted,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w400)),
+            ),
+            if (trailing != null) trailing,
           ],
         ),
       ),
