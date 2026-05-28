@@ -14,7 +14,9 @@ import '../../presentation/screens/chat/chat_screen.dart';
 import '../../presentation/screens/settings/api_keys_screen.dart';
 import '../../presentation/screens/settings/devices_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/settings/checkout_screen.dart';
 import '../../presentation/screens/settings/subscription_screen.dart';
+import '../../presentation/screens/settings/subscription_welcome_screen.dart';
 import '../../presentation/screens/settings/connectors_screen.dart';
 import '../../presentation/screens/settings/connector_detail_screen.dart';
 import '../../presentation/screens/settings/memory_screen.dart';
@@ -49,6 +51,8 @@ class AppRoutes {
   static const settings = '/settings';
   static const apiKeys = '/settings/api-keys';
   static const subscription = '/settings/subscription';
+  static const subscriptionCheckout = '/settings/subscription/checkout';
+  static const subscriptionWelcome = '/settings/subscription/welcome';
   static const devices = '/settings/devices';
   static const usage = '/settings/usage';
   static const storage = '/settings/storage';
@@ -75,18 +79,24 @@ Page<void> _buildTransitionPage({
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: MioAnimations.standard,
+    transitionDuration: MioAnimations.pageTransition,
     reverseTransitionDuration: MioAnimations.standard,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: MioAnimations.curve,
-        )),
-        child: child,
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: MioAnimations.swiftOut,
+      );
+      return FadeTransition(
+        opacity: Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(parent: animation, curve: const Interval(0, 0.5, curve: Curves.easeOut)),
+        ),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.03, 0),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: child,
+        ),
       );
     },
   );
@@ -238,6 +248,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const SubscriptionScreen(),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.subscriptionCheckout,
+        pageBuilder: (context, state) {
+          final plan = state.uri.queryParameters['plan'] ?? 'pro';
+          final annual = state.uri.queryParameters['annual'] == 'true';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: CheckoutScreen(plan: plan, isAnnual: annual),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.subscriptionWelcome,
+        pageBuilder: (context, state) {
+          final plan = state.uri.queryParameters['plan'] ?? 'pro';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: SubscriptionWelcomeScreen(plan: plan),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.devices,

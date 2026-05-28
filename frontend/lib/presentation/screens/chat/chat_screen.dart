@@ -28,6 +28,7 @@ import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
 import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
+import '../../widgets/chat/streaming_text.dart';
 import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
@@ -1373,17 +1374,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const ShakingHands(size: 48, animate: false),
+                      FadeSlideIn(
+                        duration: MioAnimations.slow,
+                        child: const ShakingHands(size: 48, animate: false),
+                      ),
                       const SizedBox(height: 24),
-                      Text(
-                        _getTimeGreeting(),
-                        style: GoogleFonts.dmSerifDisplay(
-                          fontSize: 28,
-                          height: 1.3,
-                          color: textPrimary,
-                          letterSpacing: -0.5,
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 150),
+                        duration: MioAnimations.slow,
+                        child: Text(
+                          _getTimeGreeting(),
+                          style: GoogleFonts.dmSerifDisplay(
+                            fontSize: 28,
+                            height: 1.3,
+                            color: textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -1426,41 +1434,52 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Greeting with mascot inline
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const ShakingHands(size: 40, animate: true),
-                          const SizedBox(width: 12),
-                          Flexible(
-                            child: Text(
-                              _getDesktopGreeting(firstName),
-                              style: GoogleFonts.dmSerifDisplay(
-                                fontSize: 32,
-                                height: 1.2,
-                                color: textPrimary,
-                                letterSpacing: -0.5,
+                      FadeSlideIn(
+                        duration: MioAnimations.slow,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const ShakingHands(size: 40, animate: true),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                _getDesktopGreeting(firstName),
+                                style: GoogleFonts.dmSerifDisplay(
+                                  fontSize: 32,
+                                  height: 1.2,
+                                  color: textPrimary,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 28),
                       // Input bar with model selector inside
-                      _buildInputBar(isDark, isDesktop: true),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 200),
+                        duration: MioAnimations.slow,
+                        child: _buildInputBar(isDark, isDesktop: true),
+                      ),
                       const SizedBox(height: 16),
                       // Suggestion pills
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          _desktopSuggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                          _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark),
-                          _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark),
-                          _desktopSuggestionPill(Icons.home_outlined, 'Life stuff', textPrimary, textMuted, isDark),
-                          _desktopSuggestionPill(Icons.lightbulb_outline, "Mio's choice", textPrimary, textMuted, isDark),
-                        ],
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 350),
+                        duration: MioAnimations.slow,
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            _desktopSuggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
+                            _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark),
+                            _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark),
+                            _desktopSuggestionPill(Icons.home_outlined, 'Life stuff', textPrimary, textMuted, isDark),
+                            _desktopSuggestionPill(Icons.lightbulb_outline, "Mio's choice", textPrimary, textMuted, isDark),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1476,27 +1495,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   Widget _desktopSuggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
     final bg = isDark ? const Color(0xFF111111) : Colors.white;
     final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
-    return GestureDetector(
+    return ScaleTap(
       onTap: () {
         _inputController.text = label;
         setState(() => _hasText = true);
         _focusNode.requestFocus();
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border, width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: textMuted),
-            const SizedBox(width: 6),
-            Text(label,
-                style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400)),
-          ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: MioAnimations.fast,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: border, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: textMuted),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400)),
+            ],
+          ),
         ),
       ),
     );
@@ -1601,21 +1624,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                     isStreaming: isThinkingStreaming,
                   ),
                 if (streamingText.isEmpty && streamingThinkingText.isEmpty)
-                  Text(
-                    '${LoadingWords.getWord(loadingWordIndex)}...',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                    ),
-                  )
+                  const TypingIndicator()
                 else if (streamingText.isNotEmpty)
-                  Text(
-                    streamingText,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                  StreamingText(
+                    text: streamingText,
+                    textColor: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
               ],
             ),
