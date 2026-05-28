@@ -769,24 +769,19 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
           child: child,
         ),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    const Color(0xFF1A1410),
-                    const Color(0xFF0F0D0A),
-                    const Color(0xFF141210),
-                  ]
-                : [
-                    const Color(0xFFF5F0E8),
-                    const Color(0xFFF0EBE3),
-                    const Color(0xFFEDE7DC),
-                  ],
+      child: Stack(
+        children: [
+          // Same snow mountains background as onboarding
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/sky_clouds.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+          if (isDark)
+            Positioned.fill(
+                child: Container(color: Colors.black.withOpacity(0.55))),
+          Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: ConstrainedBox(
@@ -811,8 +806,17 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.persian.withOpacity(0.1),
+                      color: isDark
+                          ? AppColors.persian.withOpacity(0.2)
+                          : Colors.white.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Text(
                       conversation.topic,
@@ -847,13 +851,22 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1A1714) : Colors.white,
+                      color: isDark
+                          ? const Color(0xFF141414).withOpacity(0.88)
+                          : Colors.white.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.persian.withOpacity(0.15)
-                            : const Color(0xFFE8E4DE),
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.white.withOpacity(0.6),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 600),
@@ -890,20 +903,27 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Prompt bar — smooth crossfade
+                // Prompt bar — glass morphism
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1A1714)
-                        : Colors.white,
+                        ? const Color(0xFF141414).withOpacity(0.88)
+                        : Colors.white.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? AppColors.persian.withOpacity(0.15)
-                          : const Color(0xFFE8E4DE),
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.white.withOpacity(0.6),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -958,6 +978,8 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
             ),
           ),
         ),
+          ),
+        ],
       ),
     );
   }
