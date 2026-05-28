@@ -8,13 +8,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/animations.dart';
 import '../../../core/utils/connectivity_service.dart';
@@ -22,17 +23,13 @@ import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
-import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/document_viewer_widget.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
-import '../../widgets/chat/plus_panel_widget.dart';
-import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/thinking_block_widget.dart';
 import '../../widgets/chat/token_cap_banner.dart';
 import '../../widgets/chat/voice_input_widget.dart';
 import '../../widgets/common/funny_snackbar.dart';
-import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/common/offline_banner_widget.dart';
 import '../../widgets/sidebar/sidebar_widget.dart';
 import '../../../core/utils/responsive.dart';
@@ -55,12 +52,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   String _selectedProvider = '';
   bool _hasText = false;
   bool _isFocused = false;
-  final bool _hasApiKeys = false; // TODO: wire to actual data
   String _searchQuery = '';
   late TextEditingController _inputController;
   late FocusNode _focusNode;
   late ScrollController _scrollController;
-  final ChatService _chatService = ChatService();
   List<SelectedFileInfo> _selectedFiles = [];
   late AnimationController _sendButtonAnimController;
   bool _isPanelOpen = false;
@@ -181,64 +176,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _appLifecycleState = state;
   }
 
-  void _togglePanel() {
-    if (_isMobile) HapticFeedback.lightImpact();
-    setState(() => _isPanelOpen = !_isPanelOpen);
-  }
 
-  Future<void> _showAttachMenu(BuildContext ctx) async {
-    final isDark = Theme.of(ctx).brightness == Brightness.dark;
-    final box = ctx.findRenderObject() as RenderBox?;
-    final overlay = Overlay.of(ctx).context.findRenderObject() as RenderBox;
-    final offset = box?.localToGlobal(Offset.zero, ancestor: overlay) ?? Offset.zero;
-    final size = box?.size ?? Size.zero;
-
-    final result = await showMenu<String>(
-      context: ctx,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy - 52,
-        overlay.size.width - offset.dx - size.width,
-        overlay.size.height - offset.dy,
-      ),
-      elevation: 4,
-      color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      constraints: const BoxConstraints(minWidth: 160, maxWidth: 220),
-      items: [
-        PopupMenuItem<String>(
-          value: 'files',
-          height: 40,
-          child: Row(children: [
-            Icon(Icons.attach_file_outlined, size: 16,
-                color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
-            const SizedBox(width: 10),
-            Text('Upload file',
-                style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
-          ]),
-        ),
-        if (!kIsWeb)
-          PopupMenuItem<String>(
-            value: 'photo',
-            height: 40,
-            child: Row(children: [
-              Icon(Icons.photo_library_outlined, size: 16,
-                  color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
-              const SizedBox(width: 10),
-              Text('Photo library',
-                  style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
-            ]),
-          ),
-      ],
-    );
-
-    if (result == 'files') await _pickAttachFile();
-    if (result == 'photo') await _pickAttachPhoto();
-  }
 
   Future<void> _pickAttachFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -262,23 +200,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     }
   }
 
-  Future<void> _pickAttachPhoto() async {
-    // On non-web mobile only — image_picker not available on web
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.isNotEmpty) {
-      final f = result.files.first;
-      if (f.path != null) {
-        setState(() {
-          _selectedFiles.add(SelectedFileInfo(
-            name: f.name,
-            path: f.path!,
-            sizeBytes: f.size,
-            type: SelectedFileType.image,
-          ));
-        });
-      }
-    }
-  }
 
   void _hidePlusMenu() {
     _plusOverlay?.remove();
@@ -1055,7 +976,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildModelSelectorBar(bool isDark) => const SizedBox.shrink();
 
   Widget _buildModelDropdown(bool isDark) {
     return Positioned(
@@ -1081,40 +1001,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
               ),
             ],
           ),
-          child: _hasApiKeys ? _buildModelList(isDark) : _buildNoApiKeysContent(isDark),
+          child: _buildModelList(isDark),
         ),
       ),
     );
   }
 
-  Widget _buildNoApiKeysContent(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'No API keys added yet',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => context.go(AppRoutes.apiKeys),
-            child: Text(
-              'Add API Key',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                color: AppColors.persian,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildModelList(bool isDark) {
     final grouped = <String, List<Map<String, dynamic>>>{};
@@ -1267,55 +1159,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildByokBanner(bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-            width: 1,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.key, size: 16, color: AppColors.persian),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Add an AI key to start chatting',
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.go(AppRoutes.apiKeys),
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text(
-              'Add Key',
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.persian,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyState(bool isDark) {
-    final currentUser = ref.watch(currentUserProvider);
-    final firstName = currentUser?.name?.split(' ').first ?? '';
-    final greeting = _getGreeting(firstName);
-    final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
-    final badgeBg = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
+    final greeting = _getGreeting('');
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textMuted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
 
     return Column(
       children: [
@@ -1332,81 +1180,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Plan badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: badgeBg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Free plan',
-                                  style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: Text('·',
-                                    style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
-                              ),
-                              GestureDetector(
-                                onTap: () => context.go(AppRoutes.subscription),
-                                child: Text('Upgrade',
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        color: AppColors.persian,
-                                        fontWeight: FontWeight.w500)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 40),
+                    // Mascot
+                    Image.asset('assets/images/mascot.png', width: 72, height: 72),
                     const SizedBox(height: 24),
-                    // Greeting with inline icon
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.auto_awesome, size: 26, color: AppColors.persian),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            greeting,
-                            style: GoogleFonts.dmSerifDisplay(
-                              fontSize: 32,
-                              color: textPrimary,
-                              letterSpacing: -0.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
+                    // Greeting
+                    Text(
+                      greeting,
+                      style: GoogleFonts.dmSerifDisplay(
+                        fontSize: 22,
+                        color: textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 28),
-                    // Centered input
+                    // Mode tiles
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: _buildInputContent(isDark),
-                    ),
-                    const SizedBox(height: 14),
-                    // Suggestion pills
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 680),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _suggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.school_outlined, 'Learn', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.code_outlined, 'Code', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.favorite_outline, 'Life stuff', textPrimary, textMuted, isDark),
-                            _suggestionPill(Icons.auto_awesome_outlined, 'Mio\'s choice', textPrimary, textMuted, isDark),
-                          ],
-                        ),
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _modeTile('✍️', 'Write', textPrimary, textMuted, isDark),
+                          _modeTile('🔍', 'Research', textPrimary, textMuted, isDark),
+                          _modeTile('💻', 'Code', textPrimary, textMuted, isDark),
+                        ],
                       ),
                     ),
                   ],
@@ -1415,7 +1215,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             ),
           ),
         ),
-        // Files attached preview
         if (_selectedFiles.isNotEmpty)
           DocumentViewerWidget(
             files: _selectedFiles,
@@ -1426,42 +1225,56 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _suggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
-    final bg = isDark ? const Color(0xFF111111) : Colors.white;
-    final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
+  Widget _modeTile(String emoji, String label, Color textPrimary, Color textMuted, bool isDark) {
+    final bg = isDark ? const Color(0xFF111111) : const Color(0xFFEDE9E3);
+    final border = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFD8D2CA);
     return GestureDetector(
       onTap: () {
-        _inputController.text = label;
+        final starters = {
+          'Write': 'Help me write',
+          'Research': 'Research topic:',
+          'Code': 'Write code for',
+        };
+        _inputController.text = starters[label] ?? label;
         setState(() => _hasText = true);
         _focusNode.requestFocus();
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        width: 88,
+        height: 80,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: border, width: 1),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 15, color: textMuted),
-            const SizedBox(width: 6),
-            Text(label,
-                style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400)),
+            Text(emoji, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ),
     );
   }
 
+  static const List<String> _greetings = [
+    "How can I help?",
+    "What's on your mind?",
+    "What are we working on?",
+    "Ready when you are.",
+    "What can I do for you?",
+    "Let's get to work.",
+  ];
+
   String _getGreeting(String name) {
-    final hour = DateTime.now().hour;
-    final suffix = name.isNotEmpty ? ', $name' : '';
-    if (hour < 12) return 'Good morning$suffix';
-    if (hour < 17) return 'Good afternoon$suffix';
-    return 'Good evening$suffix';
+    final base = _greetings[DateTime.now().millisecond % _greetings.length];
+    return base;
   }
 
   Widget _buildMessagesList(
@@ -1473,97 +1286,138 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     String streamingThinkingText,
     bool isThinkingStreaming,
   ) {
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final userTextColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final userBorder = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DAD2);
+
     return ListView.builder(
       controller: _scrollController,
       reverse: false,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      cacheExtent: 500,
+      padding: const EdgeInsets.symmetric(vertical: 20),
       addAutomaticKeepAlives: false,
       itemCount: messages.length + (isStreaming ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
           final message = messages[index];
           final isUser = message.role == 'user';
-          return RepaintBoundary(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.gapMessage),
-              child: Align(
-                alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * (isUser ? 0.8 : 0.85),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isUser
-                        ? (isDark ? AppColors.darkUserBubble : AppColors.userBubble)
-                        : Colors.transparent,
-                    borderRadius: isUser
-                        ? const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(4),
-                            bottomLeft: Radius.circular(20),
-                          )
-                        : null,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!isUser &&
-                          message.thinkingContent != null &&
-                          message.thinkingContent!.isNotEmpty)
-                        ThinkingBlockWidget(
-                          thinkingContent: message.thinkingContent!,
-                          isStreaming: false,
-                        ),
-                      Text(
-                        message.content,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 15,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
+          final borderColor = isUser ? userBorder : AppColors.persian;
+          final label = isUser ? 'YOU' : 'MIO';
+          final labelColor = mutedColor;
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: borderColor, width: 2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                    letterSpacing: 0.8,
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                if (!isUser && message.thinkingContent != null && message.thinkingContent!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ThinkingBlockWidget(
+                      thinkingContent: message.thinkingContent!,
+                      isStreaming: false,
+                    ),
+                  ),
+                if (isUser)
+                  SelectableText(
+                    message.content,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15,
+                      color: userTextColor,
+                      height: 1.7,
+                    ),
+                  )
+                else
+                  MarkdownBody(
+                    data: message.content,
+                    selectable: true,
+                    onTapLink: (text, href, title) {
+                      if (href != null) launchUrl(Uri.parse(href));
+                    },
+                    styleSheet: MarkdownStyleSheet(
+                      p: GoogleFonts.dmSans(fontSize: 15, color: textColor, height: 1.7),
+                      h1: GoogleFonts.dmSans(fontSize: 24, fontWeight: FontWeight.w700, color: textColor),
+                      h2: GoogleFonts.dmSans(fontSize: 20, fontWeight: FontWeight.w700, color: textColor),
+                      h3: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w600, color: textColor),
+                      listBullet: GoogleFonts.dmSans(fontSize: 15, color: textColor, height: 1.7),
+                      code: GoogleFonts.jetBrainsMono(fontSize: 13, color: textColor, backgroundColor: isDark ? const Color(0xFF111111) : const Color(0xFFF5F1EB)),
+                      a: GoogleFonts.dmSans(fontSize: 15, color: AppColors.persian, decoration: TextDecoration.underline),
+                      strong: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w700, color: textColor, height: 1.7),
+                      em: GoogleFonts.dmSans(fontSize: 15, fontStyle: FontStyle.italic, color: textColor, height: 1.7),
+                    ),
+                  ),
+              ],
             ),
           );
         }
 
         // Streaming message
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (streamingThinkingText.isNotEmpty)
-                  ThinkingBlockWidget(
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: const BoxDecoration(
+            border: Border(
+              left: BorderSide(color: AppColors.persian, width: 2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'MIO',
+                style: GoogleFonts.dmSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: mutedColor,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (streamingThinkingText.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ThinkingBlockWidget(
                     thinkingContent: streamingThinkingText,
                     isStreaming: isThinkingStreaming,
                   ),
-                if (streamingText.isEmpty && streamingThinkingText.isEmpty)
-                  Text(
-                    '${LoadingWords.getWord(loadingWordIndex)}...',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                    ),
-                  )
-                else if (streamingText.isNotEmpty)
-                  Text(
-                    streamingText,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                ),
+              if (streamingText.isEmpty && streamingThinkingText.isEmpty)
+                Text(
+                  '${LoadingWords.getWord(loadingWordIndex)}...',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: mutedColor,
                   ),
-              ],
-            ),
+                )
+              else if (streamingText.isNotEmpty)
+                MarkdownBody(
+                  data: streamingText,
+                  selectable: true,
+                  styleSheet: MarkdownStyleSheet(
+                    p: GoogleFonts.dmSans(fontSize: 15, color: textColor, height: 1.7),
+                    code: GoogleFonts.jetBrainsMono(fontSize: 13, color: textColor, backgroundColor: isDark ? const Color(0xFF111111) : const Color(0xFFF5F1EB)),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -1618,7 +1472,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       decoration: BoxDecoration(
         color: isDark ? Colors.black : AppColors.bgPrimary,
       ),
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.of(context).viewPadding.bottom),
+      padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + MediaQuery.of(context).viewPadding.bottom),
       child: _buildInputContent(isDark),
     );
   }
@@ -1626,16 +1480,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   Widget _buildInputContent(bool isDark) {
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final inputBg = isDark ? const Color(0xFF0D0D0D) : Colors.white;
+    final inputBg = isDark ? const Color(0xFF0D0D0D) : AppColors.bgPrimary;
     final borderColor = _isFocused
-        ? AppColors.persian.withValues(alpha: 0.5)
-        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE5E5E5));
+        ? (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFC8C4BC))
+        : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE0DAD2));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: inputBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
@@ -1677,7 +1531,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 ),
                 style: GoogleFonts.dmSans(fontSize: 15, color: textPrimary),
                 maxLines: 6,
-                minLines: 3,
+                minLines: 1,
                 textInputAction: TextInputAction.newline,
                 onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
               ),

@@ -97,9 +97,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.chat,
     redirect: (BuildContext context, GoRouterState state) {
       final location = state.matchedLocation;
-      // TEMP: skip auth redirect for UI preview
-      return null;
-
       const publicRoutes = [
         AppRoutes.splash,
         AppRoutes.welcome,
@@ -112,15 +109,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ];
 
       if (!isAuthenticated) {
-  if (publicRoutes.contains(location) ||
-      location.startsWith('/shared/') ||
-      location.startsWith('/chat') ||
-      location.startsWith('/settings') ||
-      location.startsWith('/legal')) {
-    return null;
-  }
-  return AppRoutes.welcome;
-}
+        if (publicRoutes.contains(location) ||
+            location.startsWith('/shared/') ||
+            location.startsWith('/legal')) {
+          return null;
+        }
+        return AppRoutes.welcome;
+      }
 
       if (location == AppRoutes.splash || location == AppRoutes.welcome) {
         return AppRoutes.chat;
