@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/router.dart';
 
 class BillingPanel extends ConsumerWidget {
   const BillingPanel({super.key});
@@ -52,13 +54,16 @@ class BillingPanel extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go(AppRoutes.subscription);
+                    },
                     style: FilledButton.styleFrom(
                       backgroundColor: isDark ? Colors.white : const Color(0xFF1A1A1A),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
-                    child: Text('Add credits', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.black : Colors.white)),
+                    child: Text('Upgrade plan', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.black : Colors.white)),
                   ),
                 ],
               ),

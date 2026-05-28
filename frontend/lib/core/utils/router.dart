@@ -14,7 +14,9 @@ import '../../presentation/screens/chat/chat_screen.dart';
 import '../../presentation/screens/settings/api_keys_screen.dart';
 import '../../presentation/screens/settings/devices_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/settings/checkout_screen.dart';
 import '../../presentation/screens/settings/subscription_screen.dart';
+import '../../presentation/screens/settings/subscription_welcome_screen.dart';
 import '../../presentation/screens/settings/connectors_screen.dart';
 import '../../presentation/screens/settings/connector_detail_screen.dart';
 import '../../presentation/screens/settings/memory_screen.dart';
@@ -49,6 +51,8 @@ class AppRoutes {
   static const settings = '/settings';
   static const apiKeys = '/settings/api-keys';
   static const subscription = '/settings/subscription';
+  static const subscriptionCheckout = '/settings/subscription/checkout';
+  static const subscriptionWelcome = '/settings/subscription/welcome';
   static const devices = '/settings/devices';
   static const usage = '/settings/usage';
   static const storage = '/settings/storage';
@@ -238,6 +242,27 @@ final routerProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const SubscriptionScreen(),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.subscriptionCheckout,
+        pageBuilder: (context, state) {
+          final plan = state.uri.queryParameters['plan'] ?? 'pro';
+          final annual = state.uri.queryParameters['annual'] == 'true';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: CheckoutScreen(plan: plan, isAnnual: annual),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.subscriptionWelcome,
+        pageBuilder: (context, state) {
+          final plan = state.uri.queryParameters['plan'] ?? 'pro';
+          return _buildTransitionPage(
+            key: state.pageKey,
+            child: SubscriptionWelcomeScreen(plan: plan),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.devices,
