@@ -33,7 +33,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   bool _obscurePassword = true;
 
   late final AnimationController _entranceController;
-  late final AnimationController _snowController;
 
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
@@ -47,16 +46,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..forward();
-    _snowController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 12),
-    )..repeat();
   }
 
   @override
   void dispose() {
     _entranceController.dispose();
-    _snowController.dispose();
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -172,42 +166,28 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
     return Scaffold(
       backgroundColor: bg,
-      body: Stack(
-        children: [
-          isWide
-              ? Row(
-                  children: [
-                    Expanded(child: _leftPane(isDark)),
-                    Expanded(child: _InteractiveRightPanel(entrance: _entranceController)),
-                  ],
-                )
-              : SafeArea(
-                  child: Center(
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context)
-                          .copyWith(scrollbars: false),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 48),
-                        child: _mobileContent(isDark),
-                      ),
-                    ),
+      body: isWide
+          ? Row(
+              children: [
+                Expanded(child: _leftPane(isDark)),
+                Expanded(
+                    child: _InteractiveRightPanel(
+                        entrance: _entranceController)),
+              ],
+            )
+          : SafeArea(
+              child: Center(
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context)
+                      .copyWith(scrollbars: false),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 48),
+                    child: _mobileContent(isDark),
                   ),
-                ),
-          // Snowfall
-          Positioned.fill(
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _snowController,
-                builder: (context, _) => CustomPaint(
-                  painter: _SnowPainter(
-                      progress: _snowController.value, isDark: isDark),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -220,7 +200,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       child: Column(
         children: [
           const SizedBox(height: 40),
-          // Logo + brand
           _staggered(
             delay: 0.0,
             child: Row(
@@ -240,7 +219,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             ),
           ),
           const SizedBox(height: 40),
-          // Headline
           _staggered(
             delay: 0.1,
             child: Text(
@@ -255,10 +233,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             ),
           ),
           const SizedBox(height: 40),
-          // Auth buttons
           _staggered(delay: 0.25, child: _authSection(isDark)),
           const SizedBox(height: 32),
-          // Legal
           _staggered(delay: 0.5, child: _legalText(isDark)),
         ],
       ),
@@ -284,7 +260,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo top-left
                     _staggered(
                       delay: 0.0,
                       child: Row(
@@ -303,7 +278,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       ),
                     ),
                     const SizedBox(height: 64),
-                    // Headline
                     _staggered(
                       delay: 0.1,
                       child: Text(
@@ -358,7 +332,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   String get _subtitleForMode {
     switch (_mode) {
       case _AuthMode.signIn:
-        return 'Your AI that cuts through the noise — focused, fast, no filler.';
+        return 'Your AI that cuts through the noise \u2014 focused, fast, no filler.';
       case _AuthMode.signUp:
         return 'Join thousands who think better with ${AppStrings.appName} by their side.';
       case _AuthMode.forgot:
@@ -477,7 +451,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text('Reset link sent — check your inbox.',
+              child: Text('Reset link sent \u2014 check your inbox.',
                   style: GoogleFonts.dmSans(
                       fontSize: 13, color: const Color(0xFF065F46))),
             )
@@ -708,7 +682,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Interactive right panel — living chat mockup with flowing messages
+// Interactive right panel — living chat mockup with smooth Apple-level slides
 // ══════════════════════════════════════════════════════════════════════════════
 class _InteractiveRightPanel extends StatefulWidget {
   final AnimationController entrance;
@@ -721,7 +695,6 @@ class _InteractiveRightPanel extends StatefulWidget {
 class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
     with TickerProviderStateMixin {
   late final AnimationController _pulseController;
-  late final AnimationController _messageController;
   int _currentConversation = 0;
   Timer? _cycleTimer;
 
@@ -729,13 +702,13 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
     _ConversationData(
       userMessage: "Help me write a product launch email",
       aiMessage:
-          "Here's a compelling launch email that highlights your key value props, creates urgency, and includes a clear CTA...",
+          "Here\u2019s a compelling launch email that highlights your key value props, creates urgency, and includes a clear CTA...",
       topic: "Writing",
     ),
     _ConversationData(
       userMessage: "Explain quantum computing simply",
       aiMessage:
-          "Think of regular computers as light switches — on or off. Quantum computers are like dimmer switches that can be anywhere in between...",
+          "Think of regular computers as light switches \u2014 on or off. Quantum computers are like dimmer switches that can be anywhere in between...",
       topic: "Learning",
     ),
     _ConversationData(
@@ -759,21 +732,14 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
-    _messageController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..forward();
 
     _cycleTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _messageController.reverse().then((_) {
-        if (mounted) {
-          setState(() {
-            _currentConversation =
-                (_currentConversation + 1) % _conversations.length;
-          });
-          _messageController.forward();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _currentConversation =
+              (_currentConversation + 1) % _conversations.length;
+        });
+      }
     });
   }
 
@@ -781,14 +747,12 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
   void dispose() {
     _cycleTimer?.cancel();
     _pulseController.dispose();
-    _messageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final panelBg = isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF5F2ED);
     final conversation = _conversations[_currentConversation];
 
     final panelEntrance = CurvedAnimation(
@@ -805,8 +769,19 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
           child: child,
         ),
       ),
-      child: Container(
-        color: panelBg,
+      child: Stack(
+        children: [
+          // Same snow mountains background as onboarding
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/sky_clouds.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (isDark)
+            Positioned.fill(
+                child: Container(color: Colors.black.withOpacity(0.55))),
+          Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: ConstrainedBox(
@@ -814,22 +789,34 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Topic pill
-                AnimatedBuilder(
-                  animation: _messageController,
-                  builder: (context, child) => Opacity(
-                    opacity: _messageController.value,
-                    child: Transform.scale(
-                      scale: 0.9 + 0.1 * _messageController.value,
+                // Topic pill — smooth crossfade
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.92, end: 1.0).animate(anim),
                       child: child,
                     ),
                   ),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    key: ValueKey('topic-${conversation.topic}'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.persian.withOpacity(0.1),
+                      color: isDark
+                          ? AppColors.persian.withOpacity(0.2)
+                          : Colors.white.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Text(
                       conversation.topic,
@@ -842,7 +829,7 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Chat mockup card
+                // Chat card — smooth slide transition
                 AnimatedBuilder(
                   animation: _pulseController,
                   builder: (context, child) {
@@ -864,97 +851,104 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141414) : Colors.white,
+                      color: isDark
+                          ? const Color(0xFF141414).withOpacity(0.88)
+                          : Colors.white.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.darkBorderDefault
-                            : AppColors.borderDefault,
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.white.withOpacity(0.6),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    child: AnimatedBuilder(
-                      animation: _messageController,
-                      builder: (context, _) {
-                        final fade = _messageController.value;
-                        return Opacity(
-                          opacity: fade,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // User message
-                              _ChatBubble(
-                                text: conversation.userMessage,
-                                isUser: true,
-                                isDark: isDark,
-                                delay: 0.0,
-                                animation: _messageController,
-                              ),
-                              const SizedBox(height: 16),
-                              // AI response
-                              _ChatBubble(
-                                text: conversation.aiMessage,
-                                isUser: false,
-                                isDark: isDark,
-                                delay: 0.3,
-                                animation: _messageController,
-                              ),
-                            ],
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, anim) {
+                        final slide = Tween<Offset>(
+                          begin: const Offset(0.06, 0),
+                          end: Offset.zero,
+                        ).animate(anim);
+                        return FadeTransition(
+                          opacity: anim,
+                          child: SlideTransition(
+                            position: slide,
+                            child: child,
                           ),
                         );
                       },
+                      layoutBuilder: (currentChild, previousChildren) {
+                        return Stack(
+                          alignment: Alignment.topLeft,
+                          children: [
+                            ...previousChildren,
+                            if (currentChild != null) currentChild,
+                          ],
+                        );
+                      },
+                      child: _ChatContent(
+                        key: ValueKey('chat-$_currentConversation'),
+                        conversation: conversation,
+                        isDark: isDark,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Prompt bar
-                AnimatedBuilder(
-                  animation: _messageController,
-                  builder: (context, child) => Opacity(
-                    opacity: _messageController.value,
-                    child: Transform.translate(
-                      offset: Offset(0, 10 * (1 - _messageController.value)),
-                      child: child,
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 14),
-                    decoration: BoxDecoration(
+                // Prompt bar — glass morphism
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF141414).withOpacity(0.88)
+                        : Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
                       color: isDark
-                          ? const Color(0xFF1A1A1A)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorderDefault
-                            : AppColors.borderDefault,
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.white.withOpacity(0.6),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "What's on your mind?",
-                            style: GoogleFonts.dmSans(
-                              fontSize: 14,
-                              color: isDark
-                                  ? AppColors.darkTextMuted
-                                  : AppColors.textMuted,
-                            ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "What\u2019s on your mind?",
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted,
                           ),
                         ),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.persian,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.arrow_upward_rounded,
-                              color: Colors.white, size: 18),
+                      ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.persian,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
-                    ),
+                        child: const Icon(Icons.arrow_upward_rounded,
+                            color: Colors.white, size: 18),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -964,7 +958,8 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                   children: List.generate(_conversations.length, (i) {
                     final isActive = i == _currentConversation;
                     return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeOutCubic,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       width: isActive ? 24 : 8,
                       height: 8,
@@ -972,8 +967,8 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                         color: isActive
                             ? AppColors.persian
                             : (isDark
-                                ? AppColors.darkBorderDefault
-                                : AppColors.borderDefault),
+                                ? AppColors.persian.withOpacity(0.2)
+                                : const Color(0xFFD6D0C6)),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
@@ -983,7 +978,42 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
             ),
           ),
         ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+// ── Chat content widget (keyed for AnimatedSwitcher) ─────────────────────────
+class _ChatContent extends StatelessWidget {
+  final _ConversationData conversation;
+  final bool isDark;
+
+  const _ChatContent({
+    super.key,
+    required this.conversation,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ChatBubble(
+          text: conversation.userMessage,
+          isUser: true,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 16),
+        _ChatBubble(
+          text: conversation.aiMessage,
+          isUser: false,
+          isDark: isDark,
+        ),
+      ],
     );
   }
 }
@@ -993,75 +1023,60 @@ class _ChatBubble extends StatelessWidget {
   final String text;
   final bool isUser;
   final bool isDark;
-  final double delay;
-  final AnimationController animation;
 
   const _ChatBubble({
     required this.text,
     required this.isUser,
     required this.isDark,
-    required this.delay,
-    required this.animation,
   });
 
   @override
   Widget build(BuildContext context) {
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: Interval(delay, (delay + 0.5).clamp(0.0, 1.0),
-          curve: Curves.easeOutCubic),
-    );
-    return AnimatedBuilder(
-      animation: curved,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, 12 * (1 - curved.value)),
-        child: child,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.persian.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: ShakingHands(size: 22, animate: false),
-              ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!isUser) ...[
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.persian.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
+            child: const Center(
+              child: ShakingHands(size: 22, animate: false),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isUser
+                  ? AppColors.persian
+                  : (isDark
+                      ? AppColors.darkBgSecondary
+                      : AppColors.bgSecondary),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              text,
+              style: GoogleFonts.dmSans(
+                fontSize: 14,
+                height: 1.5,
                 color: isUser
-                    ? AppColors.persian
+                    ? Colors.white
                     : (isDark
-                        ? AppColors.darkBgSecondary
-                        : AppColors.bgSecondary),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                text,
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: isUser
-                      ? Colors.white
-                      : (isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.textPrimary),
-                ),
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary),
               ),
             ),
           ),
-          if (isUser) const SizedBox(width: 44),
-        ],
-      ),
+        ),
+        if (isUser) const SizedBox(width: 44),
+      ],
     );
   }
 }
@@ -1117,60 +1132,4 @@ class _GooglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
-// ── Snow painter ─────────────────────────────────────────────────────────────
-class _SnowPainter extends CustomPainter {
-  final double progress;
-  final bool isDark;
-  _SnowPainter({required this.progress, required this.isDark});
-
-  static final List<_Snowflake> _flakes = List.generate(60, (i) {
-    final rng = math.Random(i);
-    return _Snowflake(
-      x: rng.nextDouble(),
-      startY: rng.nextDouble(),
-      radius: 1.5 + rng.nextDouble() * 2.0,
-      speed: 0.2 + rng.nextDouble() * 0.5,
-      drift: (rng.nextDouble() - 0.5) * 0.12,
-      opacity: 0.15 + rng.nextDouble() * 0.35,
-    );
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final f in _flakes) {
-      final y = ((f.startY + progress * f.speed) % 1.0) * size.height;
-      final x = (f.x +
-              math.sin(progress * math.pi * 2 + f.startY * 10) * f.drift) *
-          size.width;
-      canvas.drawCircle(
-        Offset(x, y),
-        f.radius,
-        Paint()
-          ..color = (isDark ? Colors.white : const Color(0xFFB0AAA0))
-              .withOpacity(f.opacity),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SnowPainter old) => old.progress != progress;
-}
-
-class _Snowflake {
-  final double x;
-  final double startY;
-  final double radius;
-  final double speed;
-  final double drift;
-  final double opacity;
-  const _Snowflake({
-    required this.x,
-    required this.startY,
-    required this.radius,
-    required this.speed,
-    required this.drift,
-    required this.opacity,
-  });
 }
