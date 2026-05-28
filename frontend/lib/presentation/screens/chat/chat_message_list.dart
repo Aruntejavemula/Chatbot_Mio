@@ -31,7 +31,6 @@ class ChatMessageList extends ConsumerWidget {
       controller: scrollController,
       reverse: false,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      cacheExtent: 500,
       addAutomaticKeepAlives: false,
       itemCount: messages.length + (isStreaming ? 1 : 0),
       itemBuilder: (context, index) {
