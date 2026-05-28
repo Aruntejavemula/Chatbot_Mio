@@ -53,14 +53,14 @@ class _ChatBubbleState extends State<ChatBubble>
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: MioAnimations.standard,
+      duration: MioAnimations.medium,
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.15),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: MioAnimations.curve,
+      curve: MioAnimations.springCurve,
     ));
     _fadeController.forward();
   }

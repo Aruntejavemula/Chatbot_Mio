@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 
 class _DeviceInfo {
   final String name;
@@ -26,9 +27,8 @@ class DevicesScreen extends ConsumerStatefulWidget {
   const DevicesScreen({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showDialog(
+    return showMioModal(
       context: context,
-      barrierColor: Colors.black54,
       builder: (_) => const DevicesScreen(),
     );
   }

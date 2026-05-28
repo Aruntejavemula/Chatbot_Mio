@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 
 class ReferralDialog extends StatefulWidget {
   const ReferralDialog({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showDialog(
+    return showMioModal(
       context: context,
-      barrierColor: Colors.black54,
       builder: (_) => const ReferralDialog(),
     );
   }

@@ -79,18 +79,24 @@ Page<void> _buildTransitionPage({
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: MioAnimations.standard,
+    transitionDuration: MioAnimations.pageTransition,
     reverseTransitionDuration: MioAnimations.standard,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: MioAnimations.curve,
-        )),
-        child: child,
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: MioAnimations.swiftOut,
+      );
+      return FadeTransition(
+        opacity: Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(parent: animation, curve: const Interval(0, 0.5, curve: Curves.easeOut)),
+        ),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.03, 0),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: child,
+        ),
       );
     },
   );

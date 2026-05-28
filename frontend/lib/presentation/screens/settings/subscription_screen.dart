@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 import '../../../core/utils/region_service.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
@@ -221,17 +222,27 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           if (isWide) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: cards.map((card) => Expanded(child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: card,
-              ))).toList(),
+              children: List.generate(cards.length, (i) => Expanded(
+                child: StaggeredListItem(
+                  index: i,
+                  slideOffset: 30,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: cards[i],
+                  ),
+                ),
+              )),
             );
           }
           return Column(
-            children: cards.map((card) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: card,
-            )).toList(),
+            children: List.generate(cards.length, (i) => StaggeredListItem(
+              index: i,
+              slideOffset: 30,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: cards[i],
+              ),
+            )),
           );
         },
       ),

@@ -254,20 +254,30 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     required VoidCallback onTap,
     Widget? trailing,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: textMuted),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(label,
-                  style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w400)),
-            ),
-            if (trailing != null) trailing,
-          ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hoverColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFECE8E1);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        hoverColor: hoverColor.withValues(alpha: 0.5),
+        splashColor: AppColors.persian.withValues(alpha: 0.08),
+        highlightColor: hoverColor.withValues(alpha: 0.3),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: textMuted),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(label,
+                    style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w400)),
+              ),
+              if (trailing != null) trailing,
+            ],
+          ),
         ),
       ),
     );
@@ -399,7 +409,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
         child: Row(
           children: [
             // Profile pill
-            GestureDetector(
+            ScaleTap(
               onTap: () => PreferencesDialog.show(context),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(4, 4, 14, 4),
@@ -438,7 +448,8 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
             ),
             const Spacer(),
             // New chat FAB
-            GestureDetector(
+            ScaleTap(
+              scaleDown: 0.9,
               onTap: () {
                 widget.onNewChat();
                 if (isMobile) widget.onClose();

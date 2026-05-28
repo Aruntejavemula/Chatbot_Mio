@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
 import 'panels/account_panel.dart';
@@ -33,9 +34,8 @@ class PreferencesDialog extends ConsumerStatefulWidget {
   const PreferencesDialog({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showDialog(
+    return showMioModal(
       context: context,
-      barrierColor: Colors.black54,
       builder: (_) => const PreferencesDialog(),
     );
   }
@@ -230,7 +230,18 @@ class _PreferencesDialogState extends ConsumerState<PreferencesDialog> {
           ),
         const SizedBox(height: 12),
         Divider(color: borderColor, height: 1),
-        Expanded(child: _buildPanel()),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: MioAnimations.fast,
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+            child: KeyedSubtree(
+              key: ValueKey<PreferencesSection>(_selected),
+              child: _buildPanel(),
+            ),
+          ),
+        ),
       ],
     );
   }
