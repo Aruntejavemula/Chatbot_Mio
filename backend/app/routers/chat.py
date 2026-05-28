@@ -327,6 +327,15 @@ async def stream_message(
     security_middleware.verify_request_headers(request)
     await security_middleware.check_message_repetition(user_id, body.content)
     await security_middleware.check_load()
+    security_middleware.validate_request_size(
+        int(request.headers.get("content-length", 0)), request.url.path
+    )
+    security_middleware.validate_field_lengths(body.model_dump())
+    security_middleware.check_sql_injection(body.model_dump())
+    if await security_middleware.check_duplicate_request(user_id, body.content):
+        raise HTTPException(status_code=429, detail="Duplicate request detected")
+    if security_middleware.check_prompt_injection(body.content):
+        logger.warning(f"Prompt injection flagged for user {user_id}")
 
     # Check circuit breaker for provider
     if await circuit_breaker.is_open(body.provider):

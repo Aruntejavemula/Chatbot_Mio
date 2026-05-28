@@ -9,6 +9,7 @@ from supabase import Client, create_client
 
 from app.config import get_settings
 from app.middleware.auth_middleware import get_current_user, get_supabase_client
+from app.middleware.security_middleware import security_middleware
 from app.models.user import UserCreate, UserResponse
 from app.services.rate_limiter import rate_limiter
 
@@ -264,6 +265,8 @@ async def google_sign_in(request: Request) -> dict:
             })
         except Exception as e:
             logger.error(f"Google sign-in failed: {str(e)}")
+            client_ip = _get_client_ip(request)
+            await security_middleware.track_failed_auth(client_ip)
             raise HTTPException(status_code=400, detail="Invalid Google token")
         
         if not auth_response.user:
@@ -289,6 +292,14 @@ async def google_sign_in(request: Request) -> dict:
         subscription = await _get_or_create_subscription(
             supabase, auth_user.id, country_bucket
         )
+        
+        # Track account creation per IP (anti-bot)
+        await security_middleware.check_ip_signup_blocked(client_ip)
+        await security_middleware.track_account_creation(client_ip, auth_user.id)
+        
+        # Track account creation per IP (anti-bot)
+        await security_middleware.check_ip_signup_blocked(client_ip)
+        await security_middleware.track_account_creation(client_ip, auth_user.id)
         
         # Get or create settings
         await _get_or_create_settings(supabase, auth_user.id)
@@ -333,6 +344,8 @@ async def apple_sign_in(request: Request) -> dict:
             })
         except Exception as e:
             logger.error(f"Apple sign-in failed: {str(e)}")
+            client_ip = _get_client_ip(request)
+            await security_middleware.track_failed_auth(client_ip)
             raise HTTPException(status_code=400, detail="Invalid Apple token")
         
         if not auth_response.user:
@@ -358,6 +371,14 @@ async def apple_sign_in(request: Request) -> dict:
         subscription = await _get_or_create_subscription(
             supabase, auth_user.id, country_bucket
         )
+        
+        # Track account creation per IP (anti-bot)
+        await security_middleware.check_ip_signup_blocked(client_ip)
+        await security_middleware.track_account_creation(client_ip, auth_user.id)
+        
+        # Track account creation per IP (anti-bot)
+        await security_middleware.check_ip_signup_blocked(client_ip)
+        await security_middleware.track_account_creation(client_ip, auth_user.id)
         
         # Get or create settings
         await _get_or_create_settings(supabase, auth_user.id)

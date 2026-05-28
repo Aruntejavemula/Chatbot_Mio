@@ -234,43 +234,42 @@ class SecurityMiddleware:
         except Exception as e:
             logger.error(f"Error checking suspension: {str(e)}")
 
-    def verify_request_headers(self, request: Request) -> None:
+    def verify_request_headers(self, request: Request) -> dict:
         """
-        Verify required security headers for chat requests.
+        Verify and extract security headers for chat requests.
+
+        Headers are optional for backward compatibility but tracked for
+        anomaly detection. Returns extracted header data.
 
         Args:
             request: FastAPI request object
 
-        Raises:
-            HTTPException: 400 if headers missing or invalid
+        Returns:
+            Dict with device_id, timestamp, and validity info.
         """
         device_id = request.headers.get("X-Device-ID")
-        if not device_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Device ID required",
-            )
-
         timestamp_str = request.headers.get("X-Timestamp")
-        if not timestamp_str:
-            raise HTTPException(
-                status_code=400,
-                detail="Request timestamp required",
-            )
 
-        try:
-            timestamp = int(timestamp_str)
-            now = int(time.time())
-            if abs(now - timestamp) > 300:  # 5 minutes
-                raise HTTPException(
-                    status_code=400,
-                    detail="Request expired",
-                )
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid timestamp format",
-            )
+        result = {
+            "device_id": device_id,
+            "timestamp": None,
+            "timestamp_valid": False,
+        }
+
+        if timestamp_str:
+            try:
+                timestamp = int(timestamp_str)
+                now = int(time.time())
+                if abs(now - timestamp) <= 300:  # 5 minutes
+                    result["timestamp"] = timestamp
+                    result["timestamp_valid"] = True
+            except ValueError:
+                pass
+
+        if device_id:
+            logger.debug(f"Request from device: {device_id}")
+
+        return result
 
     def check_prompt_injection(self, content: str) -> bool:
         """
