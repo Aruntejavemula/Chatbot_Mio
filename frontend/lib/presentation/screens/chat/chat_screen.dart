@@ -21,6 +21,8 @@ import '../../../core/utils/animations.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
+import '../../../core/utils/slash_commands.dart';
+import '../../../data/models/message_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/chat_service.dart';
@@ -79,13 +81,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   final ImagePicker _imagePicker = ImagePicker();
 
   final List<Map<String, dynamic>> _availableModels = [
-    {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
-    {'provider': 'OpenAI', 'model': 'GPT-4o mini', 'color': const Color(0xFF10A37F)},
-    {'provider': 'Anthropic', 'model': 'Claude 4 Sonnet', 'color': const Color(0xFFD97757)},
-    {'provider': 'Anthropic', 'model': 'Claude 3.5 Haiku', 'color': const Color(0xFFD97757)},
-    {'provider': 'Google', 'model': 'Gemini 2.5 Pro', 'color': const Color(0xFF4285F4)},
-    {'provider': 'DeepSeek', 'model': 'DeepSeek R1', 'color': const Color(0xFF4D6BFE)},
-    {'provider': 'Ollama', 'model': 'Ollama (Local)', 'color': const Color(0xFF0EA5E9)},
+    {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F), 'desc': 'Powerful flagship for complex tasks'},
+    {'provider': 'OpenAI', 'model': 'GPT-4o mini', 'color': const Color(0xFF10A37F), 'desc': 'Fast and affordable for everyday use'},
+    {'provider': 'Anthropic', 'model': 'Claude 4 Sonnet', 'color': const Color(0xFFD97757), 'desc': 'Smart, balanced model for most work'},
+    {'provider': 'Anthropic', 'model': 'Claude 3.5 Haiku', 'color': const Color(0xFFD97757), 'desc': 'Fastest Claude for quick answers'},
+    {'provider': 'Google', 'model': 'Gemini 2.5 Pro', 'color': const Color(0xFF4285F4), 'desc': 'Long-context multimodal reasoning'},
+    {'provider': 'DeepSeek', 'model': 'DeepSeek R1', 'color': const Color(0xFF4D6BFE), 'desc': 'Open reasoning model with deep thinking'},
+    {'provider': 'Ollama', 'model': 'Ollama (Local)', 'color': const Color(0xFF0EA5E9), 'desc': 'Run open models privately on-device'},
   ];
 
   List<Map<String, dynamic>> get _filteredModels {
@@ -94,6 +96,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         .where((m) =>
             (m['model'] as String).toLowerCase().contains(_searchQuery.toLowerCase()) ||
             (m['provider'] as String).toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  // ── Slash commands (Claude Code / Devin style) ──
+  String _slashQuery = '';
+  List<SlashCommand> get _slashMatches {
+    if (!_slashQuery.startsWith('/')) return const [];
+    final q = _slashQuery.substring(1).toLowerCase();
+    return kSlashCommands
+        .where((c) => c.name.substring(1).toLowerCase().startsWith(q))
         .toList();
   }
 
@@ -511,6 +523,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
+
+    // Slash commands run locally and never require auth or a selected model.
+    final slash = parseSlashCommand(text);
+    if (slash != null) {
+      if (_isMobile) HapticFeedback.mediumImpact();
+      _runSlashCommand(slash);
+      return;
+    }
+
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       if (_isMobile) HapticFeedback.mediumImpact();
@@ -526,12 +547,77 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _inputController.clear();
     setState(() {
       _hasText = false;
+      _slashQuery = '';
       _selectedFiles = [];
     });
     // TODO: Create chat if needed, then send message
     // For now just print
     debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider '
         'webSearch: $_webSearchActive research: $_researchActive style: ${_selectedStyle ?? "normal"}');
+  }
+
+  void _runSlashCommand(SlashParseResult slash) {
+    _inputController.clear();
+    setState(() {
+      _hasText = false;
+      _slashQuery = '';
+    });
+
+    // /clear empties the conversation.
+    if (slash.command.name == '/clear') {
+      ref.read(messagesProvider.notifier).state = [];
+      FunnySnackbar.show(context, 'Conversation cleared', type: SnackbarType.info);
+      return;
+    }
+
+    final chatId = widget.chatId ?? 'local';
+    final now = DateTime.now();
+    final userText = slash.argument.isEmpty
+        ? slash.command.name
+        : '${slash.command.name} ${slash.argument}';
+    final userMsg = MessageModel(
+      id: 'u-${now.microsecondsSinceEpoch}',
+      chatId: chatId,
+      role: 'user',
+      content: userText,
+      createdAt: now,
+    );
+    final assistantMsg = MessageModel(
+      id: 'a-${now.microsecondsSinceEpoch}',
+      chatId: chatId,
+      role: 'assistant',
+      content: slashCommandResponse(slash.command, slash.argument),
+      createdAt: now.add(const Duration(milliseconds: 1)),
+      model: _selectedModel == 'Think now' ? null : _selectedModel,
+    );
+    final current = ref.read(messagesProvider);
+    ref.read(messagesProvider.notifier).state = [...current, userMsg, assistantMsg];
+    _scrollToBottom();
+  }
+
+  void _onInputChanged(String value) {
+    setState(() {
+      _hasText = value.trim().isNotEmpty;
+      final firstToken = value.trimLeft().split(' ').first;
+      _slashQuery = firstToken.startsWith('/') ? firstToken : '';
+    });
+  }
+
+  void _applySlashCommand(SlashCommand command) {
+    if (command.needsArgument) {
+      _inputController.text = '${command.name} ';
+      _inputController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _inputController.text.length),
+      );
+      setState(() {
+        _hasText = true;
+        _slashQuery = '';
+      });
+      _focusNode.requestFocus();
+    } else {
+      _inputController.text = command.name;
+      _sendMessage();
+    }
   }
 
   void _scrollToBottom() {
@@ -1357,14 +1443,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Text(
-                            model['model'] as String,
-                            style: GoogleFonts.dmSans(
-                              fontSize: 14,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  model['model'] as String,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                  ),
+                                ),
+                                if (model['desc'] != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    model['desc'] as String,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 12,
+                                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           if (_selectedModel == model['model'])
                             const Icon(
                               Icons.check,
@@ -1569,8 +1674,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                           alignment: WrapAlignment.center,
                           children: [
                             _desktopSuggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark),
+                            _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark, prefill: '/learn '),
+                            _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark, prefill: '/init '),
                             _desktopSuggestionPill(Icons.home_outlined, 'Life stuff', textPrimary, textMuted, isDark),
                             _desktopSuggestionPill(Icons.lightbulb_outline, "Mio's choice", textPrimary, textMuted, isDark),
                           ],
@@ -1587,13 +1692,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     );
   }
 
-  Widget _desktopSuggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
+  Widget _desktopSuggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark, {String? prefill}) {
     final bg = isDark ? const Color(0xFF111111) : Colors.white;
     final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
     return ScaleTap(
       onTap: () {
-        _inputController.text = label;
-        setState(() => _hasText = true);
+        final text = prefill ?? label;
+        _inputController.text = text;
+        _inputController.selection = TextSelection.fromPosition(
+          TextPosition(offset: text.length),
+        );
+        _onInputChanged(text);
         _focusNode.requestFocus();
       },
       child: MouseRegion(
@@ -1810,7 +1919,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final isActiveChat = messages.isNotEmpty;
     final hintText = (isDesktop && isActiveChat) ? 'Reply...' : 'How can I help you today?';
 
-    return AnimatedContainer(
+    final inputBox = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: effectiveInputBg,
@@ -1857,7 +1966,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                 maxLines: 6,
                 minLines: 1,
                 textInputAction: TextInputAction.newline,
-                onChanged: (value) => setState(() => _hasText = value.trim().isNotEmpty),
+                onChanged: _onInputChanged,
               ),
             ),
           ),
@@ -1964,6 +2073,77 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
             ),
           ),
         ],
+      ),
+    );
+
+    if (_slashMatches.isEmpty) return inputBox;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSlashMenu(isDark),
+        const SizedBox(height: 8),
+        inputBox,
+      ],
+    );
+  }
+
+  Widget _buildSlashMenu(bool isDark) {
+    final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2);
+    final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
+    final textMuted = isDark ? const Color(0xFF888888) : const Color(0xFF777777);
+    final matches = _slashMatches;
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 260),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ListView.builder(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemCount: matches.length,
+        itemBuilder: (context, i) {
+          final cmd = matches[i];
+          return InkWell(
+            onTap: () => _applySlashCommand(cmd),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(cmd.icon, size: 18, color: AppColors.persian),
+                  const SizedBox(width: 12),
+                  Text(
+                    cmd.name,
+                    style: GoogleFonts.dmMono(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      cmd.description,
+                      style: GoogleFonts.dmSans(fontSize: 12.5, color: textMuted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
