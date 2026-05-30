@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/router.dart';
 
 class _PromptItem {
   final String title;
@@ -163,7 +166,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> with SingleTicker
                           style: GoogleFonts.dmSerifDisplay(fontSize: 28, color: textPrimary)),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () => _showNewPromptDialog(isDark),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
@@ -284,12 +287,58 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> with SingleTicker
     );
   }
 
+  void _showNewPromptDialog(bool isDark) {
+    final titleController = TextEditingController();
+    final bodyController = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('New prompt', style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: bodyController,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'Prompt text'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.persian),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Prompt created')),
+              );
+            },
+            child: Text('Create', style: GoogleFonts.dmSans(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPromptCard(
       _PromptItem prompt, bool isDark, Color textPrimary, Color textMuted, Color borderColor) {
     final isDarkCard = prompt.bgColor.computeLuminance() < 0.4;
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: prompt.description));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${prompt.title}" copied — paste it into chat')),
+        );
+        context.go(AppRoutes.chat);
+      },
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),

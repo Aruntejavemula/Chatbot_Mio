@@ -135,7 +135,9 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             Text('Manage Cookies', style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary)),
             const Spacer(),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cookie preferences saved')),
+              ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: borderColor),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

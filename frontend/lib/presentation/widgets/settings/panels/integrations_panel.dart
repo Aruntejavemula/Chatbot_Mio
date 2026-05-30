@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
@@ -21,18 +22,21 @@ class IntegrationsPanel extends ConsumerWidget {
         'subtitle': 'Use Mio API to build custom integrations',
         'icon': Icons.settings_outlined,
         'color': const Color(0xFF6366F1),
+        'url': 'https://docs.devin.ai',
       },
       {
         'title': 'Use Mio in Zapier',
         'subtitle': 'Connect Mio to thousands of apps with Zapier',
         'icon': Icons.bolt_outlined,
         'color': const Color(0xFFFF4A00),
+        'url': 'https://zapier.com',
       },
       {
         'title': 'Use Mio in Slack',
         'subtitle': 'Use @Mio in Slack to assign tasks to Mio',
         'icon': Icons.tag,
         'color': const Color(0xFF4A154B),
+        'url': 'https://slack.com',
       },
     ];
 
@@ -78,7 +82,10 @@ class IntegrationsPanel extends ConsumerWidget {
                     ),
                     const SizedBox(height: 14),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => launchUrl(
+                        Uri.parse(integration['url'] as String),
+                        mode: LaunchMode.externalApplication,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
