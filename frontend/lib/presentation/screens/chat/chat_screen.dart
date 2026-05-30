@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,7 +27,6 @@ import '../../../data/services/chat_service.dart';
 import '../../widgets/chat/document_viewer_widget.dart';
 import '../../widgets/chat/file_upload_widget.dart';
 import '../../widgets/chat/export_menu_widget.dart';
-import '../../widgets/chat/plus_panel_widget.dart';
 import '../../widgets/chat/prompt_maker_widget.dart';
 import '../../widgets/chat/streaming_text.dart';
 import '../../widgets/chat/thinking_block_widget.dart';
@@ -74,6 +74,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   final LayerLink _plusLayerLink = LayerLink();
   OverlayEntry? _plusOverlay;
   bool _webSearchActive = false;
+  bool _researchActive = false;
+  String? _selectedStyle;
+  final ImagePicker _imagePicker = ImagePicker();
 
   final List<Map<String, dynamic>> _availableModels = [
     {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
@@ -182,65 +185,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     _appLifecycleState = state;
   }
 
-  void _togglePanel() {
-    if (_isMobile) HapticFeedback.lightImpact();
-    setState(() => _isPanelOpen = !_isPanelOpen);
-  }
-
-  Future<void> _showAttachMenu(BuildContext ctx) async {
-    final isDark = Theme.of(ctx).brightness == Brightness.dark;
-    final box = ctx.findRenderObject() as RenderBox?;
-    final overlay = Overlay.of(ctx).context.findRenderObject() as RenderBox;
-    final offset = box?.localToGlobal(Offset.zero, ancestor: overlay) ?? Offset.zero;
-    final size = box?.size ?? Size.zero;
-
-    final result = await showMenu<String>(
-      context: ctx,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy - 52,
-        overlay.size.width - offset.dx - size.width,
-        overlay.size.height - offset.dy,
-      ),
-      elevation: 4,
-      color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      constraints: const BoxConstraints(minWidth: 160, maxWidth: 220),
-      items: [
-        PopupMenuItem<String>(
-          value: 'files',
-          height: 40,
-          child: Row(children: [
-            Icon(Icons.attach_file_outlined, size: 16,
-                color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
-            const SizedBox(width: 10),
-            Text('Upload file',
-                style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
-          ]),
-        ),
-        if (!kIsWeb)
-          PopupMenuItem<String>(
-            value: 'photo',
-            height: 40,
-            child: Row(children: [
-              Icon(Icons.photo_library_outlined, size: 16,
-                  color: isDark ? const Color(0xFFCCCCCC) : const Color(0xFF333333)),
-              const SizedBox(width: 10),
-              Text('Photo library',
-                  style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      color: isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A))),
-            ]),
-          ),
-      ],
-    );
-
-    if (result == 'files') await _pickAttachFile();
-    if (result == 'photo') await _pickAttachPhoto();
-  }
-
   Future<void> _pickAttachFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -263,22 +207,153 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     }
   }
 
-  Future<void> _pickAttachPhoto() async {
-    // On non-web mobile only — image_picker not available on web
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.isNotEmpty) {
-      final f = result.files.first;
-      if (f.path != null) {
-        setState(() {
-          _selectedFiles.add(SelectedFileInfo(
-            name: f.name,
-            path: f.path!,
-            sizeBytes: f.size,
-            type: SelectedFileType.image,
-          ));
-        });
+  Future<void> _pickFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+      final size = await File(image.path).length();
+      setState(() {
+        _selectedFiles.add(SelectedFileInfo(
+          name: image.name,
+          path: image.path,
+          sizeBytes: size,
+          type: SelectedFileType.image,
+        ));
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open photo library')),
+        );
       }
     }
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(source: ImageSource.camera);
+      if (image == null) return;
+      final size = await File(image.path).length();
+      setState(() {
+        _selectedFiles.add(SelectedFileInfo(
+          name: image.name,
+          path: image.path,
+          sizeBytes: size,
+          type: SelectedFileType.image,
+        ));
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open camera')),
+        );
+      }
+    }
+  }
+
+  Widget _buildActiveModesBar(bool isDark) {
+    final chips = <Widget>[];
+    if (_webSearchActive) {
+      chips.add(_modeChip(Icons.language_outlined, 'Web search', isDark,
+          () => setState(() => _webSearchActive = false)));
+    }
+    if (_researchActive) {
+      chips.add(_modeChip(Icons.science_outlined, 'Research', isDark,
+          () => setState(() => _researchActive = false)));
+    }
+    if (_selectedStyle != null) {
+      chips.add(_modeChip(Icons.edit_outlined, _selectedStyle!, isDark,
+          () => setState(() => _selectedStyle = null)));
+    }
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Wrap(spacing: 8, runSpacing: 8, children: chips),
+    );
+  }
+
+  Widget _modeChip(IconData icon, String label, bool isDark, VoidCallback onRemove) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
+      decoration: BoxDecoration(
+        color: AppColors.persian.withValues(alpha: isDark ? 0.18 : 0.10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.persian.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.persian),
+          const SizedBox(width: 6),
+          Text(label, style: GoogleFonts.dmSans(
+              fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.persian)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(Icons.close_rounded, size: 14, color: AppColors.persian.withValues(alpha: 0.8)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStylePicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const styles = <Map<String, dynamic>>[
+      {'name': 'Normal', 'desc': 'Default tone', 'icon': Icons.chat_bubble_outline},
+      {'name': 'Concise', 'desc': 'Short and to the point', 'icon': Icons.short_text},
+      {'name': 'Explanatory', 'desc': 'Detailed and educational', 'icon': Icons.school_outlined},
+      {'name': 'Formal', 'desc': 'Professional tone', 'icon': Icons.business_center_outlined},
+      {'name': 'Creative', 'desc': 'Playful and imaginative', 'icon': Icons.auto_awesome_outlined},
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(2))),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Response style', style: GoogleFonts.dmSans(
+                    fontSize: 16, fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A1A))),
+              ),
+            ),
+            ...styles.map((s) {
+              final name = s['name'] as String;
+              final isSel = (_selectedStyle ?? 'Normal') == name;
+              return ListTile(
+                leading: Icon(s['icon'] as IconData,
+                    color: isSel ? AppColors.persian : (isDark ? Colors.white70 : Colors.black54)),
+                title: Text(name, style: GoogleFonts.dmSans(
+                    fontSize: 15, fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A1A))),
+                subtitle: Text(s['desc'] as String, style: GoogleFonts.dmSans(
+                    fontSize: 12, color: isDark ? Colors.white54 : Colors.black45)),
+                trailing: isSel
+                    ? const Icon(Icons.check_circle_rounded, color: AppColors.persian, size: 20)
+                    : null,
+                onTap: () {
+                  setState(() => _selectedStyle = name == 'Normal' ? null : name);
+                  if (_isMobile) HapticFeedback.selectionClick();
+                  Navigator.of(ctx).pop();
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   void _hidePlusMenu() {
@@ -293,7 +368,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       return;
     }
     setState(() => _isPanelOpen = true);
-    const mutedColor = Color(0xFF8E8E93);
     const dividerColor = Color(0xFF3A3A3C);
 
     _plusOverlay = OverlayEntry(
@@ -332,23 +406,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _plusItem(icon: Icons.attach_file_rounded, label: 'Add files or photos',
+                      _plusItem(icon: Icons.attach_file_rounded, label: 'Upload file',
                           onTap: () { _hidePlusMenu(); _pickAttachFile(); }),
                       _plusDivider(dividerColor),
+                      _plusItem(icon: Icons.photo_library_outlined, label: 'Photos',
+                          onTap: () { _hidePlusMenu(); _pickFromGallery(); }),
+                      if (!kIsWeb) ...[
+                        _plusDivider(dividerColor),
+                        _plusItem(icon: Icons.photo_camera_outlined, label: 'Camera',
+                            onTap: () { _hidePlusMenu(); _pickFromCamera(); }),
+                      ],
+                      _plusDivider(dividerColor),
                       _plusItem(icon: Icons.folder_outlined, label: 'Add to project',
-                          hasArrow: true, onTap: _hidePlusMenu),
+                          hasArrow: true, onTap: () { _hidePlusMenu(); context.push(AppRoutes.projects); }),
                       _plusDivider(dividerColor),
                       _plusItem(icon: Icons.grid_view_rounded, label: 'Skills',
-                          hasArrow: true, onTap: _hidePlusMenu),
+                          hasArrow: true, onTap: () { _hidePlusMenu(); context.push(AppRoutes.prompts); }),
                       _plusDivider(dividerColor),
                       _plusItem(icon: Icons.cable_outlined, label: 'Connectors',
-                          hasArrow: true, onTap: _hidePlusMenu),
+                          hasArrow: true, onTap: () { _hidePlusMenu(); context.push(AppRoutes.connectors); }),
                       _plusDivider(dividerColor),
                       _plusItem(icon: Icons.extension_outlined, label: 'Plugins',
-                          textColor: mutedColor, disabled: true, onTap: null),
+                          hasArrow: true, onTap: () { _hidePlusMenu(); context.push(AppRoutes.connectors); }),
                       _plusDivider(dividerColor),
-                      _plusItem(icon: Icons.science_outlined, label: 'Research',
-                          onTap: _hidePlusMenu),
+                      StatefulBuilder(
+                        builder: (_, setLocal) => _plusItem(
+                          icon: Icons.science_outlined,
+                          label: 'Research',
+                          trailing: _researchActive
+                              ? const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF34C759))
+                              : null,
+                          onTap: () {
+                            setState(() => _researchActive = !_researchActive);
+                            _plusOverlay?.markNeedsBuild();
+                          },
+                        ),
+                      ),
                       _plusDivider(dividerColor),
                       StatefulBuilder(
                         builder: (_, setLocal) => _plusItem(
@@ -365,7 +458,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                       ),
                       _plusDivider(dividerColor),
                       _plusItem(icon: Icons.edit_outlined, label: 'Use style',
-                          hasArrow: true, isLast: true, onTap: _hidePlusMenu),
+                          isLast: true, onTap: () { _hidePlusMenu(); _showStylePicker(); }),
                     ],
                   ),
                 ),
@@ -437,7 +530,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     });
     // TODO: Create chat if needed, then send message
     // For now just print
-    debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider');
+    debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider '
+        'webSearch: $_webSearchActive research: $_researchActive style: ${_selectedStyle ?? "normal"}');
   }
 
   void _scrollToBottom() {
@@ -574,6 +668,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                           onRemoveFile: (int index) => setState(() => _selectedFiles.removeAt(index)),
                                           isDark: isDark,
                                         ),
+                                      _buildActiveModesBar(isDark),
                                       if (showPermanentSidebar)
                                         Center(
                                           child: ConstrainedBox(

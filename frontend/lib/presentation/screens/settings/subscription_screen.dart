@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/animations.dart';
@@ -279,7 +280,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: () {},
+              onPressed: () => launchUrl(
+                Uri.parse('mailto:sales@mio.bot?subject=Team%20%26%20Enterprise%20plan%20inquiry'),
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: isDark ? Colors.white : const Color(0xFF1A1A1A),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

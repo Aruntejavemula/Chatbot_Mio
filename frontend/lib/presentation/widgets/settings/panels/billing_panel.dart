@@ -44,7 +44,10 @@ class BillingPanel extends ConsumerWidget {
                     ),
                   ),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go(AppRoutes.subscription);
+                    },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: borderColor),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -121,7 +124,9 @@ class BillingPanel extends ConsumerWidget {
             Text('Recent activity', style: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
             const Spacer(),
             TextButton(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No invoices to display yet')),
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

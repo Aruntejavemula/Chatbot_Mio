@@ -54,7 +54,9 @@ class ConnectorsPanel extends ConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(8),
-                  onTap: () {},
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Connect ${connector['name']} — authorization required')),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Row(
@@ -99,7 +101,9 @@ class ConnectorsPanel extends ConsumerWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('More connectors coming soon')),
+              ),
               icon: const Icon(Icons.add, size: 16),
               label: Text('Add connectors', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
               style: OutlinedButton.styleFrom(

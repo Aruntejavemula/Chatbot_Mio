@@ -169,7 +169,9 @@ class _PersonalizationPanelState extends ConsumerState<PersonalizationPanel> {
             ),
             const SizedBox(width: 10),
             FilledButton(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Preferences saved')),
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: isDark ? Colors.white : const Color(0xFF1A1A1A),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -202,7 +204,9 @@ class _PersonalizationPanelState extends ConsumerState<PersonalizationPanel> {
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Add knowledge — coming soon')),
+                ),
                 icon: const Icon(Icons.add, size: 16),
                 label: Text('Add', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
                 style: OutlinedButton.styleFrom(
