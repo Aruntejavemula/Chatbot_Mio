@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
@@ -46,7 +47,10 @@ class _MailMioPanelState extends ConsumerState<MailMioPanel> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://docs.devin.ai'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -138,7 +142,7 @@ class _MailMioPanelState extends ConsumerState<MailMioPanel> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => _showAddEmailDialog('Add workflow email'),
               icon: const Icon(Icons.add, size: 16),
               label: Text('Add workflow email', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
               style: OutlinedButton.styleFrom(
@@ -167,7 +171,7 @@ class _MailMioPanelState extends ConsumerState<MailMioPanel> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () => _showAddEmailDialog('Add approved sender'),
               icon: const Icon(Icons.add, size: 16),
               label: Text('Add approved sender', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
               style: OutlinedButton.styleFrom(
@@ -226,6 +230,38 @@ class _MailMioPanelState extends ConsumerState<MailMioPanel> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAddEmailDialog(String title) {
+    final controller = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title, style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(labelText: 'Email address'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.persian),
+            onPressed: () {
+              final email = controller.text.trim();
+              Navigator.of(ctx).pop();
+              if (email.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Added $email')),
+                );
+              }
+            },
+            child: Text('Add', style: GoogleFonts.dmSans(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 

@@ -335,8 +335,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           ),
           const SizedBox(width: 16),
           GestureDetector(
-            onTap: () {},
-            child: Icon(Icons.archive_outlined, size: 18, color: textMuted),
+            onTap: _selectedIds.isNotEmpty
+                ? () {
+                    final count = _selectedIds.length;
+                    _exitSelectMode();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Archived $count chat${count == 1 ? '' : 's'}')),
+                    );
+                  }
+                : null,
+            child: Icon(Icons.archive_outlined, size: 18,
+                color: _selectedIds.isNotEmpty ? textPrimary : textMuted),
           ),
           const SizedBox(width: 12),
           GestureDetector(

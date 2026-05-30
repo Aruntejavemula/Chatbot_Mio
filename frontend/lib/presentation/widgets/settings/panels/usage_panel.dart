@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/router.dart';
 
 class UsagePanel extends ConsumerWidget {
   const UsagePanel({super.key});
@@ -42,7 +44,10 @@ class UsagePanel extends ConsumerWidget {
                     ),
                   ),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go(AppRoutes.subscription);
+                    },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: borderColor),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -52,7 +57,10 @@ class UsagePanel extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go(AppRoutes.subscription);
+                    },
                     style: FilledButton.styleFrom(
                       backgroundColor: isDark ? Colors.white : const Color(0xFF1A1A1A),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

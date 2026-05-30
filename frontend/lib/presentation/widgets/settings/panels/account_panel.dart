@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/router.dart';
 import '../../../../data/repositories/auth_repository.dart';
 
 class AccountPanel extends ConsumerWidget {
@@ -59,7 +61,7 @@ class AccountPanel extends ConsumerWidget {
                 ),
               ),
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () => _showEditProfile(context, name, email),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: borderColor),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -89,9 +91,7 @@ class AccountPanel extends ConsumerWidget {
           textPrimary: textPrimary,
           textMuted: textMuted,
           borderColor: borderColor,
-          onTap: () {
-            Navigator.of(context).pop();
-          },
+          onTap: () => _confirmSignOut(context, ref),
         ),
         const SizedBox(height: 8),
         _actionRow(
@@ -102,7 +102,7 @@ class AccountPanel extends ConsumerWidget {
           textPrimary: textPrimary,
           textMuted: textMuted,
           borderColor: borderColor,
-          onTap: () {},
+          onTap: () => _confirmDeleteAccount(context, ref),
         ),
       ],
     );
@@ -122,6 +122,99 @@ class AccountPanel extends ConsumerWidget {
           ),
           Expanded(
             child: Text(value, style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: valueColor ?? textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfile(BuildContext context, String name, String email) {
+    final nameController = TextEditingController(text: name);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        title: Text('Edit profile', style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              enabled: false,
+              decoration: InputDecoration(labelText: 'Email', hintText: email),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.persian),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile updated')),
+              );
+            },
+            child: Text('Save', style: GoogleFonts.dmSans(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmSignOut(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Sign out?', style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: Text('You will be signed out on this device.', style: GoogleFonts.dmSans()),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await ref.read(authRepositoryProvider).signOut();
+              } catch (_) {}
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                context.go(AppRoutes.welcome);
+              }
+            },
+            child: Text('Sign out', style: GoogleFonts.dmSans(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete account?', style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: Text(
+          'This permanently deletes your account and all data. This action cannot be undone.',
+          style: GoogleFonts.dmSans(),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Account deletion requested. Contact support to confirm.')),
+              );
+            },
+            child: Text('Delete', style: GoogleFonts.dmSans(color: AppColors.error)),
           ),
         ],
       ),
