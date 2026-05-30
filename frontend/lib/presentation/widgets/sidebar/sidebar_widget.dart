@@ -46,9 +46,9 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
   @override
   void initState() {
     super.initState();
-    _slideController = AnimationController(vsync: this, duration: MioAnimations.standard);
+    _slideController = AnimationController(vsync: this, duration: MioAnimations.medium);
     _slideAnimation = Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _slideController, curve: MioAnimations.curve));
+        .animate(CurvedAnimation(parent: _slideController, curve: MioAnimations.springCurve));
   }
 
   @override
@@ -108,10 +108,14 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
         final sidebarWidth = (screenWidth - 60) < 320 ? screenWidth - 60 : 320.0;
         return Stack(
           children: [
+            // Animated backdrop dim
             GestureDetector(
               onTap: widget.onClose,
-              child: Container(width: double.infinity, height: double.infinity,
-                  color: Colors.black.withValues(alpha: 0.5)),
+              child: FadeTransition(
+                opacity: CurvedAnimation(parent: _slideController, curve: Curves.easeOut),
+                child: Container(width: double.infinity, height: double.infinity,
+                    color: Colors.black.withValues(alpha: 0.5)),
+              ),
             ),
             SlideTransition(
               position: _slideAnimation,
@@ -365,18 +369,36 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
           cur++;
           if (index < cur + entry.value.length) {
             final chat = entry.value[index - cur];
-            return InkWell(
-              onTap: () {
-                ref.read(currentChatProvider.notifier).state = chat;
-                if (isMobile) widget.onClose();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                child: Text(
-                  chat.title,
-                  style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final hoverColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFECE8E1);
+            final isActive = currentChat?.id == chat.id;
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ref.read(currentChatProvider.notifier).state = chat;
+                  if (isMobile) widget.onClose();
+                },
+                borderRadius: BorderRadius.circular(8),
+                hoverColor: hoverColor.withValues(alpha: 0.5),
+                splashColor: AppColors.persian.withValues(alpha: 0.08),
+                child: AnimatedContainer(
+                  duration: MioAnimations.fast,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: isActive ? (isDark ? const Color(0xFF1A1A1A) : const Color(0xFFECE8E1)) : Colors.transparent,
+                  ),
+                  child: Text(
+                    chat.title,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      color: textPrimary,
+                      fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             );

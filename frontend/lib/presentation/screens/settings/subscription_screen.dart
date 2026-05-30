@@ -316,14 +316,22 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   }) {
     final checkColor = isDark ? AppColors.darkSuccess : AppColors.lightSuccess;
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Column(
+    return HoverLift(
+      builder: (isHovered) => AnimatedContainer(
+        duration: MioAnimations.fast,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isHovered ? AppColors.persian.withValues(alpha: 0.4) : borderColor,
+            width: isHovered ? 1.5 : 1,
+          ),
+          boxShadow: isHovered
+              ? [BoxShadow(color: AppColors.persian.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 8))]
+              : [],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Billing toggle (Pro card only)
@@ -408,6 +416,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
           ],
         ],
       ),
+    ),
     );
   }
 

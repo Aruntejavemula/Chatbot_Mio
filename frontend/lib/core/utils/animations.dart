@@ -329,6 +329,76 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   }
 }
 
+// ── Hover scale widget (desktop) ──
+class HoverScale extends StatefulWidget {
+  final Widget child;
+  final double scale;
+  final Duration duration;
+
+  const HoverScale({
+    super.key,
+    required this.child,
+    this.scale = 1.02,
+    this.duration = const Duration(milliseconds: 200),
+  });
+
+  @override
+  State<HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<HoverScale> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedScale(
+        scale: _isHovered ? widget.scale : 1.0,
+        duration: widget.duration,
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// ── Hover lift widget (elevation change on hover) ──
+class HoverLift extends StatefulWidget {
+  final Widget Function(bool isHovered) builder;
+  final Duration duration;
+
+  const HoverLift({
+    super.key,
+    required this.builder,
+    this.duration = const Duration(milliseconds: 200),
+  });
+
+  @override
+  State<HoverLift> createState() => _HoverLiftState();
+}
+
+class _HoverLiftState extends State<HoverLift> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: widget.duration,
+        curve: Curves.easeOutCubic,
+        transform: _isHovered
+            ? (Matrix4.identity()..translate(0.0, -2.0))
+            : Matrix4.identity(),
+        child: widget.builder(_isHovered),
+      ),
+    );
+  }
+}
+
 // ── Shimmer skeleton for chat messages ──
 class ChatShimmerSkeleton extends StatelessWidget {
   final bool isDark;

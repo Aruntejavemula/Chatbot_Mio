@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/animations.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/services/project_service.dart';
@@ -305,12 +306,43 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
                   // Grid
                   Expanded(
                     child: _isLoading
-                        ? const Center(child: CircularProgressIndicator(color: AppColors.persian))
+                        ? Center(
+                            child: FadeSlideIn(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.persian,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text('Loading projects...', style: GoogleFonts.dmSans(fontSize: 13, color: textMuted)),
+                                ],
+                              ),
+                            ),
+                          )
                         : filtered.isEmpty
                             ? Center(
-                                child: Text(
-                                  query.isEmpty ? 'No projects yet' : 'No matching projects',
-                                  style: GoogleFonts.dmSans(fontSize: 14, color: textMuted),
+                                child: FadeSlideIn(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.folder_outlined, size: 48, color: textMuted.withValues(alpha: 0.5)),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        query.isEmpty ? 'No projects yet' : 'No matching projects',
+                                        style: GoogleFonts.dmSans(fontSize: 15, color: textMuted),
+                                      ),
+                                      if (query.isEmpty) ...[                                        const SizedBox(height: 4),
+                                        Text('Create one to organize your chats',
+                                            style: GoogleFonts.dmSans(fontSize: 13, color: textMuted.withValues(alpha: 0.7))),
+                                      ],
+                                    ],
+                                  ),
                                 ),
                               )
                             : LayoutBuilder(
@@ -324,8 +356,11 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
                                       childAspectRatio: crossCount == 2 ? 1.6 : 2.5,
                                     ),
                                     itemCount: filtered.length,
-                                    itemBuilder: (context, index) =>
-                                        _buildProjectCard(filtered[index], isDark, textPrimary, textMuted, borderColor),
+                                    itemBuilder: (context, index) => StaggeredListItem(
+                                      index: index,
+                                      slideOffset: 24,
+                                      child: _buildProjectCard(filtered[index], isDark, textPrimary, textMuted, borderColor),
+                                    ),
                                   );
                                 },
                               ),
@@ -341,14 +376,23 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
 
   Widget _buildProjectCard(
       ProjectModel project, bool isDark, Color textPrimary, Color textMuted, Color borderColor) {
-    return GestureDetector(
+    return ScaleTap(
+      scaleDown: 0.98,
       onTap: () => context.go('${AppRoutes.projects}/${project.id}'),
-      child: Container(
+      child: HoverLift(
+        builder: (isHovered) => AnimatedContainer(
+        duration: MioAnimations.fast,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF111111) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
+          border: Border.all(
+            color: isHovered ? AppColors.persian.withValues(alpha: 0.4) : borderColor,
+            width: isHovered ? 1.5 : 1,
+          ),
+          boxShadow: isHovered
+              ? [BoxShadow(color: AppColors.persian.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))]
+              : [],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,6 +425,7 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

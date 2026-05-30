@@ -26,8 +26,8 @@ class MioApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      themeAnimationDuration: const Duration(milliseconds: 300),
-      themeAnimationCurve: Curves.easeOutCubic,
+      themeAnimationDuration: const Duration(milliseconds: 500),
+      themeAnimationCurve: Curves.easeInOut,
       routerConfig: router,
     );
   }

@@ -450,8 +450,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
         if (distanceFromBottom <= 100) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
+            duration: MioAnimations.medium,
+            curve: MioAnimations.swiftOut,
           );
         }
       }
@@ -623,12 +623,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                         right: 16,
                         child: FadeTransition(
                           opacity: _scrollButtonFadeAnimation,
-                          child: GestureDetector(
+                          child: ScaleTap(
+                            scaleDown: 0.85,
                             onTap: () {
                               _scrollController.animateTo(
                                 _scrollController.position.maxScrollExtent,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOutCubic,
+                                duration: MioAnimations.medium,
+                                curve: MioAnimations.swiftOut,
                               );
                             },
                             child: Container(
@@ -643,9 +644,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -691,8 +692,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
           children: [
             // Left: sidebar toggle (mobile only)
             if (!showPermanentSidebar)
-              GestureDetector(
-                onTap: () => setState(() => _isSidebarOpen = true),
+              ScaleTap(
+                scaleDown: 0.9,
+                onTap: () {
+                  if (_isMobile) HapticFeedback.lightImpact();
+                  setState(() => _isSidebarOpen = true);
+                },
                 child: Container(
                   width: 40,
                   height: 40,
