@@ -12,10 +12,8 @@ import '../../../data/models/project_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/settings_repository.dart';
-import '../../screens/projects/create_project_sheet.dart';
 import '../referral/referral_dialog.dart';
 import '../settings/preferences_dialog.dart';
-import 'chat_item.dart';
 
 final projectsProvider = StateProvider<List<ProjectModel>>((ref) => []);
 
@@ -56,8 +54,11 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
   @override
   void didUpdateWidget(covariant SidebarWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isOpen && !oldWidget.isOpen) _slideController.forward();
-    else if (!widget.isOpen && oldWidget.isOpen) _slideController.reverse();
+    if (widget.isOpen && !oldWidget.isOpen) {
+      _slideController.forward();
+    } else if (!widget.isOpen && oldWidget.isOpen) {
+      _slideController.reverse();
+    }
   }
 
   @override
@@ -77,11 +78,17 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     for (final chat in chats) {
       final chatDate = DateTime(chat.updatedAt.year, chat.updatedAt.month, chat.updatedAt.day);
       String group;
-      if (chatDate == today) group = 'TODAY';
-      else if (chatDate == yesterday) group = 'YESTERDAY';
-      else if (chatDate.isAfter(last7Days)) group = 'LAST 7 DAYS';
-      else if (chatDate.isAfter(last30Days)) group = 'LAST 30 DAYS';
-      else group = 'OLDER';
+      if (chatDate == today) {
+        group = 'TODAY';
+      } else if (chatDate == yesterday) {
+        group = 'YESTERDAY';
+      } else if (chatDate.isAfter(last7Days)) {
+        group = 'LAST 7 DAYS';
+      } else if (chatDate.isAfter(last30Days)) {
+        group = 'LAST 30 DAYS';
+      } else {
+        group = 'OLDER';
+      }
       groups.putIfAbsent(group, () => []);
       groups[group]!.add(chat);
     }
@@ -135,7 +142,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     required bool isMobile,
     required double width,
   }) {
-    final bg = isDark ? Colors.black : AppColors.bgPrimary;
+    final bg = isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary;
     final borderColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFECE8E1);
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF888888);
@@ -386,8 +393,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     final grouped = _groupChatsByDate(filteredChats);
 
     return ListView.builder(
-      padding: EdgeInsets.zero,
-      cacheExtent: 500,
+            padding: EdgeInsets.zero,
       addAutomaticKeepAlives: false,
       itemCount: grouped.fold<int>(0, (sum, e) => sum + 1 + e.value.length),
       itemBuilder: (context, index) {
@@ -515,9 +521,5 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     );
   }
 
-  Color _parseProjectColor(String hexColor) {
-    final hex = hexColor.replaceFirst('#', '');
-    if (hex.length == 6) return Color(int.parse('FF$hex', radix: 16));
-    return AppColors.persian;
-  }
+
 }

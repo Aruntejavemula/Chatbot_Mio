@@ -88,6 +88,7 @@ class _VoiceInputWidgetState extends ConsumerState<VoiceInputWidget>
     try {
       final currentStatus = await Permission.microphone.status;
       if (!currentStatus.isGranted) {
+        if (!mounted) return;
         final allowed = await PermissionDialog.microphone(context);
         if (!allowed) return;
       }

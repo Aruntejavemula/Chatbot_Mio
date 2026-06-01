@@ -138,7 +138,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgPrimary = isDark ? Colors.black : AppColors.bgPrimary;
+    final bgPrimary = isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary;
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
     final borderColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);

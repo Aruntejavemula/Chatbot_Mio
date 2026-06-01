@@ -780,7 +780,7 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
           ),
           if (isDark)
             Positioned.fill(
-                child: Container(color: Colors.black.withOpacity(0.55))),
+                child: Container(color: Colors.black.withValues(alpha: 0.55))),
           Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -807,12 +807,12 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.persian.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.85),
+                          ? AppColors.persian.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
+                          color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -839,7 +839,7 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.persian.withOpacity(glow),
+                            color: AppColors.persian.withValues(alpha: glow),
                             blurRadius: 40,
                             spreadRadius: 2,
                           ),
@@ -852,17 +852,17 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF141414).withOpacity(0.88)
-                          : Colors.white.withOpacity(0.85),
+                          ? const Color(0xFF141414).withValues(alpha: 0.88)
+                          : Colors.white.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.white.withOpacity(0.6),
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.white.withValues(alpha: 0.6),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -909,17 +909,17 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                       horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF141414).withOpacity(0.88)
-                        : Colors.white.withOpacity(0.85),
+                        ? const Color(0xFF141414).withValues(alpha: 0.88)
+                        : Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.08)
-                          : Colors.white.withOpacity(0.6),
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.white.withValues(alpha: 0.6),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -967,7 +967,7 @@ class _InteractiveRightPanelState extends State<_InteractiveRightPanel>
                         color: isActive
                             ? AppColors.persian
                             : (isDark
-                                ? AppColors.persian.withOpacity(0.2)
+                                ? AppColors.persian.withValues(alpha: 0.2)
                                 : const Color(0xFFD6D0C6)),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -1040,7 +1040,7 @@ class _ChatBubble extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.persian.withOpacity(0.1),
+              color: AppColors.persian.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(

@@ -185,7 +185,7 @@ class _LaunchChecklistScreenState extends State<LaunchChecklistScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Icon(Icons.checklist_outlined, size: 36, color: AppColors.persian),
+                                          const Icon(Icons.checklist_outlined, size: 36, color: AppColors.persian),
                                           const SizedBox(height: 16),
                                           Text(
                                             'Launch Checklist',

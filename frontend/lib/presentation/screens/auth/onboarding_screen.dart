@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/utils/region_service.dart';
 import '../../../core/utils/router.dart';
 import '../../widgets/common/shaking_hands.dart';
 import '../../widgets/settings/ollama_setup_sheet.dart';
@@ -34,7 +33,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   int _currentPage = 0;
   bool _isKeyVisible = false;
   bool _isAnnualOnboarding = false;
-  String _userCountry = 'US';
   String _selectedProvider = 'OpenRouter';
   String? _keyError;
   String? _nameError;
@@ -50,7 +48,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   @override
   void initState() {
     super.initState();
-    _loadRegion();
     _pageEntranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -81,10 +78,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (mounted) setState(() => _ready = true);
   }
 
-  Future<void> _loadRegion() async {
-    final country = await RegionService.getRegion();
-    if (mounted) setState(() => _userCountry = country);
-  }
 
   @override
   void dispose() {
@@ -169,7 +162,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   // ── Shared helpers ─────────────────────────────────────────────────────────
   Color _cardBg(bool d) => d ? const Color(0xFF141414) : Colors.white;
   Color _cardBorder(bool d) =>
-      d ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.6);
+      d ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.6);
   Color _sub(bool d) => d ? AppColors.darkTextSecondary : const Color(0xFF6B7280);
   Color _txt(bool d) => d ? AppColors.darkTextPrimary : AppColors.textPrimary;
   Color _inBg(bool d) => d ? AppColors.darkInputBg : const Color(0xFFF9FAFB);
@@ -178,19 +171,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   BoxDecoration _glass(bool d) => BoxDecoration(
         color: d
-            ? _cardBg(d).withOpacity(0.88)
-            : _cardBg(d).withOpacity(0.82),
+            ? _cardBg(d).withValues(alpha: 0.88)
+            : _cardBg(d).withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _cardBorder(d)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(d ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: d ? 0.4 : 0.08),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
           if (!d)
             BoxShadow(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               blurRadius: 0,
               spreadRadius: 0,
               offset: const Offset(0, -1),
@@ -229,7 +222,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.persian.withOpacity(0.12),
+          color: AppColors.persian.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -275,7 +268,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           if (isDark)
             Positioned.fill(
-                child: Container(color: Colors.black.withOpacity(0.55))),
+                child: Container(color: Colors.black.withValues(alpha: 0.55))),
           // Content
           SafeArea(
             child: Column(
@@ -307,7 +300,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               onPressed: _skipToReady,
                               style: TextButton.styleFrom(
                                 backgroundColor:
-                                    _cardBg(isDark).withOpacity(0.85),
+                                    _cardBg(isDark).withValues(alpha: 0.85),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 8),
                                 shape: RoundedRectangleBorder(
@@ -375,10 +368,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       color: isActive
                           ? AppColors.persian
                           : isDone
-                              ? AppColors.persian.withOpacity(0.45)
+                              ? AppColors.persian.withValues(alpha: 0.45)
                               : (isDark
-                                  ? Colors.white.withOpacity(0.15)
-                                  : Colors.white.withOpacity(0.5)),
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.white.withValues(alpha: 0.5)),
                     ),
                   ),
                 );
@@ -420,7 +413,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               TextButton(
                 onPressed: () => _goToPage(_currentPage - 1),
                 style: TextButton.styleFrom(
-                  backgroundColor: _cardBg(isDark).withOpacity(0.6),
+                  backgroundColor: _cardBg(isDark).withValues(alpha: 0.6),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -463,7 +456,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.persian.withOpacity(0.15),
+                        color: AppColors.persian.withValues(alpha: 0.15),
                         blurRadius: 30,
                         spreadRadius: 4,
                       ),
@@ -648,7 +641,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.08),
+                          color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -749,7 +742,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.08),
+                          color: AppColors.success.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -812,8 +805,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.persian.withOpacity(0.15),
-                  AppColors.persian.withOpacity(0.05),
+                  AppColors.persian.withValues(alpha: 0.15),
+                  AppColors.persian.withValues(alpha: 0.05),
                 ],
               ),
               shape: BoxShape.circle,
@@ -906,7 +899,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.verified_rounded,
+                              const Icon(Icons.verified_rounded,
                                   size: 16, color: AppColors.persian),
                               const SizedBox(width: 6),
                               Text('Why BYOK?',
@@ -966,7 +959,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.25 : 0.1),
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -1118,7 +1111,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                 horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.persian.withOpacity(0.1)
+                                  ? AppColors.persian.withValues(alpha: 0.1)
                                   : _inBg(isDark),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
@@ -1131,7 +1124,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                   ? [
                                       BoxShadow(
                                         color:
-                                            AppColors.persian.withOpacity(0.1),
+                                            AppColors.persian.withValues(alpha: 0.1),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       )
@@ -1172,7 +1165,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.persian.withOpacity(0.06),
+                          color: AppColors.persian.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -1491,8 +1484,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppColors.persian.withOpacity(0.12),
-                                    AppColors.persian.withOpacity(0.04),
+                                    AppColors.persian.withValues(alpha: 0.12),
+                                    AppColors.persian.withValues(alpha: 0.04),
                                   ],
                                 )
                               : null,
@@ -1510,7 +1503,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               ? [
                                   BoxShadow(
                                     color:
-                                        AppColors.persian.withOpacity(0.15),
+                                        AppColors.persian.withValues(alpha: 0.15),
                                     blurRadius: 16,
                                     offset: const Offset(0, 4),
                                   )
@@ -1547,7 +1540,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppColors.success.withOpacity(0.1),
+                                    color: AppColors.success.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -1600,7 +1593,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: _selectedPlan == 'free'
-                                ? _txt(isDark).withOpacity(0.3)
+                                ? _txt(isDark).withValues(alpha: 0.3)
                                 : _inBorder(isDark),
                             width: _selectedPlan == 'free' ? 1.5 : 1,
                           ),
@@ -1620,7 +1613,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             if (_selectedPlan == 'free')
                               Icon(Icons.check_circle,
                                   size: 20,
-                                  color: _txt(isDark).withOpacity(0.5)),
+                                  color: _txt(isDark).withValues(alpha: 0.5)),
                           ],
                         ),
                       ),
@@ -1734,7 +1727,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text('Save 20%',
@@ -1773,7 +1766,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.persian.withOpacity(0.25),
+                      color: AppColors.persian.withValues(alpha: 0.25),
                       blurRadius: 50,
                       spreadRadius: 10,
                     ),
@@ -1798,7 +1791,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: _cardBg(isDark).withOpacity(isDark ? 0.8 : 0.75),
+                color: _cardBg(isDark).withValues(alpha: isDark ? 0.8 : 0.75),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: _cardBorder(isDark)),
               ),
@@ -1849,7 +1842,7 @@ class _ShimmerButton extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.persian.withOpacity(0.3),
+                color: AppColors.persian.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -1919,7 +1912,7 @@ class _ConfettiPainter extends CustomPainter {
       canvas.drawRect(
         Rect.fromCenter(
             center: Offset.zero, width: p.size, height: p.size * 0.5),
-        Paint()..color = p.color.withOpacity(opacity * 0.85),
+        Paint()..color = p.color.withValues(alpha: opacity * 0.85),
       );
       canvas.restore();
     }

@@ -40,7 +40,7 @@ class UsageIndicatorWidget extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(
+            const Icon(
               Icons.bolt,
               size: 16,
               color: AppColors.persian,

@@ -9,7 +9,6 @@ class DataControlsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final textMuted = isDark ? const Color(0xFF888888) : const Color(0xFF666666);
     final borderColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E4DE);
 
     return ListView(

@@ -256,7 +256,7 @@ class _ConnectorDetailScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
               ),
               child: Text(
@@ -361,7 +361,7 @@ class _ConnectorDetailScreenState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle_outline,
                     size: 18,
                     color: AppColors.success,
@@ -390,8 +390,8 @@ class _ConnectorDetailScreenState
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.darkBgTertiary.withOpacity(0.5)
-            : AppColors.bgTertiary.withOpacity(0.5),
+            ? AppColors.darkBgTertiary.withValues(alpha: 0.5)
+            : AppColors.bgTertiary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Row(

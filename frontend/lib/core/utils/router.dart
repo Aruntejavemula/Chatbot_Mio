@@ -114,8 +114,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.chat,
     redirect: (BuildContext context, GoRouterState state) {
       final location = state.matchedLocation;
-      // TEMP: skip auth redirect for UI preview
-      return null;
 
       const publicRoutes = [
         AppRoutes.splash,

@@ -155,7 +155,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   Widget build(BuildContext context) {
     final chats = ref.watch(chatsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgPrimary = isDark ? Colors.black : AppColors.bgPrimary;
+    final bgPrimary = isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary;
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
     final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
     final borderColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
@@ -365,7 +365,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               ),
             ),
             child: _selectedIds.isNotEmpty
-                ? Icon(Icons.remove, size: 14, color: Colors.white)
+                ? const Icon(Icons.remove, size: 14, color: Colors.white)
                 : null,
           ),
           const SizedBox(width: 10),

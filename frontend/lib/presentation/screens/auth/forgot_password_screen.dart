@@ -106,7 +106,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.persian.withOpacity(0.12),
+                          color: AppColors.persian.withValues(alpha: 0.12),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),
@@ -133,7 +133,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
                   child: TextButton(
                     onPressed: () => context.go(AppRoutes.emailSignIn),
                     style: TextButton.styleFrom(
-                      backgroundColor: _cardBg(isDark).withOpacity(0.6),
+                      backgroundColor: _cardBg(isDark).withValues(alpha: 0.6),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -163,7 +163,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.persian.withOpacity(0.1),
+            color: AppColors.persian.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.lock_reset_rounded,
@@ -236,7 +236,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.persian,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.persian.withOpacity(0.6),
+              disabledBackgroundColor: AppColors.persian.withValues(alpha: 0.6),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
               elevation: 0,
@@ -264,10 +264,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.1),
+            color: AppColors.success.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.mark_email_read_outlined,
+          child: const Icon(Icons.mark_email_read_outlined,
               size: 28, color: AppColors.success),
         ),
         const SizedBox(height: 20),
@@ -316,16 +316,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
 
   BoxDecoration _glass(bool d) => BoxDecoration(
         color: d
-            ? _cardBg(d).withOpacity(0.92)
-            : _cardBg(d).withOpacity(0.85),
+            ? _cardBg(d).withValues(alpha: 0.92)
+            : _cardBg(d).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
             color: d
-                ? Colors.white.withOpacity(0.08)
-                : Colors.white.withOpacity(0.6)),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(d ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: d ? 0.4 : 0.08),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
