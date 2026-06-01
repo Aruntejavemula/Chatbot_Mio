@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/app_logger.dart';
 
 class ApiKeysScreen extends ConsumerStatefulWidget {
   const ApiKeysScreen({super.key});
@@ -299,7 +300,7 @@ class _ApiKeysScreenState extends ConsumerState<ApiKeysScreen> {
                           height: 48,
                           child: OutlinedButton(
                             onPressed: () {
-                              debugPrint(
+                              AppLogger.debug(
                                   'Test key for $providerName');
                             },
                             style: OutlinedButton.styleFrom(
