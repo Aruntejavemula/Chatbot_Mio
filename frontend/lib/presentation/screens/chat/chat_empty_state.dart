@@ -14,7 +14,6 @@ class ChatEmptyState extends ConsumerWidget {
   final List<SelectedFileInfo> selectedFiles;
   final ValueChanged<int> onRemoveFile;
   final Widget inputBar;
-  final ValueChanged<String>? onSuggestionTap;
   final VoidCallback? onTapBackground;
 
   const ChatEmptyState({
@@ -24,14 +23,12 @@ class ChatEmptyState extends ConsumerWidget {
     required this.selectedFiles,
     required this.onRemoveFile,
     required this.inputBar,
-    this.onSuggestionTap,
     this.onTapBackground,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textPrimary = isDark ? const Color(0xFFE8E8E8) : const Color(0xFF1A1A1A);
-    final textMuted = isDark ? const Color(0xFF666666) : const Color(0xFF999999);
 
     if (!isDesktop) {
       // Mobile: simple mascot + greeting + input bar at bottom
@@ -133,29 +130,11 @@ class ChatEmptyState extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 28),
-                      // Input bar with model selector inside
+                      // Input bar
                       FadeSlideIn(
                         delay: const Duration(milliseconds: 200),
                         duration: MioAnimations.slow,
                         child: inputBar,
-                      ),
-                      const SizedBox(height: 16),
-                      // Suggestion pills
-                      FadeSlideIn(
-                        delay: const Duration(milliseconds: 350),
-                        duration: MioAnimations.slow,
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            _desktopSuggestionPill(Icons.edit_outlined, 'Write', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.auto_awesome_outlined, 'Learn', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.code, 'Code', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.home_outlined, 'Life stuff', textPrimary, textMuted, isDark),
-                            _desktopSuggestionPill(Icons.lightbulb_outline, "Mio's choice", textPrimary, textMuted, isDark),
-                          ],
-                        ),
                       ),
                     ],
                   ),
@@ -164,37 +143,6 @@ class ChatEmptyState extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _desktopSuggestionPill(IconData icon, String label, Color textPrimary, Color textMuted, bool isDark) {
-    final bg = isDark ? const Color(0xFF111111) : Colors.white;
-    final border = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE4DFD8);
-    return ScaleTap(
-      onTap: () => onSuggestionTap?.call(label),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: AnimatedContainer(
-          duration: MioAnimations.fast,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: border, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: textMuted),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w400),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

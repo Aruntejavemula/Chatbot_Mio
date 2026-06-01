@@ -160,7 +160,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     required IconData icon,
   }) {
     final isSelected = currentMode == mode;
-    final selectedBorder = AppColors.persian;
+    const selectedBorder = AppColors.persian;
 
     return Expanded(
       child: GestureDetector(
@@ -227,7 +227,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: AppColors.persian,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFD0D0D0),

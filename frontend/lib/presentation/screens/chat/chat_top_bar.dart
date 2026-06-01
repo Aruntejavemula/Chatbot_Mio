@@ -9,10 +9,7 @@ class ChatTopBar extends ConsumerWidget {
   final bool isDark;
   final bool showPermanentSidebar;
   final String? chatId;
-  final String selectedModel;
-  final bool isModelDropdownOpen;
   final VoidCallback onToggleSidebar;
-  final VoidCallback onToggleModelDropdown;
   final VoidCallback onNewChat;
   final VoidCallback onShareChat;
   final VoidCallback onShowMoreOptions;
@@ -22,10 +19,7 @@ class ChatTopBar extends ConsumerWidget {
     required this.isDark,
     required this.showPermanentSidebar,
     this.chatId,
-    required this.selectedModel,
-    required this.isModelDropdownOpen,
     required this.onToggleSidebar,
-    required this.onToggleModelDropdown,
     required this.onNewChat,
     required this.onShareChat,
     required this.onShowMoreOptions,
@@ -46,7 +40,7 @@ class ChatTopBar extends ConsumerWidget {
     return Container(
       height: AppSizes.topBarHeight,
       decoration: BoxDecoration(
-        color: isDark ? Colors.black : AppColors.bgPrimary,
+        color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SafeArea(
@@ -72,32 +66,7 @@ class ChatTopBar extends ConsumerWidget {
             Expanded(
               child: Center(
                 child: (isEmptyState || !hasMessages)
-                    // Empty state: mobile=model selector, desktop=nothing (model is in input bar)
-                    ? (showPermanentSidebar
-                        ? const SizedBox.shrink()
-                        : GestureDetector(
-                            onTap: onToggleModelDropdown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  selectedModel == 'Think now' ? 'Select model' : selectedModel,
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                AnimatedRotation(
-                                  turns: isModelDropdownOpen ? 0.5 : 0.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: textMuted),
-                                ),
-                              ],
-                            ),
-                          ))
-                    // Active chat: title with dropdown
+                    ? const SizedBox.shrink()
                     : GestureDetector(
                         onTap: onShowMoreOptions,
                         child: Row(

@@ -57,7 +57,7 @@ class TokenCapBanner extends StatelessWidget {
   Widget _buildWarningState(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withOpacity(0.1),
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
         border: Border.all(color: const Color(0xFFF59E0B), width: 1),
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       ),
@@ -105,7 +105,7 @@ class TokenCapBanner extends StatelessWidget {
   Widget _buildBlockedState(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFEF4444).withOpacity(0.1),
+        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
         border: Border.all(color: const Color(0xFFEF4444), width: 1),
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       ),

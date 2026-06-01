@@ -126,10 +126,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.error_outline,
+                        child: const Icon(Icons.error_outline,
                             size: 28, color: AppColors.error),
                       ),
                       const SizedBox(height: 20),
@@ -190,7 +190,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.persian.withOpacity(0.12),
+                          color: AppColors.persian.withValues(alpha: 0.12),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),
@@ -228,7 +228,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.persian.withOpacity(0.1),
+              color: AppColors.persian.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.lock_reset_rounded,
@@ -273,7 +273,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.persian,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.persian.withOpacity(0.6),
+                disabledBackgroundColor: AppColors.persian.withValues(alpha: 0.6),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
@@ -302,10 +302,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.1),
+            color: AppColors.success.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.check_circle_outline,
+          child: const Icon(Icons.check_circle_outline,
               size: 28, color: AppColors.success),
         ),
         const SizedBox(height: 20),
@@ -410,16 +410,16 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen>
 
   BoxDecoration _glass(bool d) => BoxDecoration(
         color: d
-            ? _cardBg(d).withOpacity(0.92)
-            : _cardBg(d).withOpacity(0.85),
+            ? _cardBg(d).withValues(alpha: 0.92)
+            : _cardBg(d).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
             color: d
-                ? Colors.white.withOpacity(0.08)
-                : Colors.white.withOpacity(0.6)),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(d ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: d ? 0.4 : 0.08),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),

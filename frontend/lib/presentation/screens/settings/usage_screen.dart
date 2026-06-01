@@ -27,7 +27,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
     super.initState();
     _loadUsage();
     _refreshTimer = Timer.periodic(
-      Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
+      const Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
       (_) => _loadUsage(),
     );
   }
@@ -412,7 +412,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
                     Container(
                       width: 30,
                       height: barHeight.clamp(2.0, 60.0),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.persian,
                         borderRadius: BorderRadius.vertical(
                           top: Radius.circular(AppSizes.radiusSmall),
@@ -456,7 +456,7 @@ class _UsageScreenState extends ConsumerState<UsageScreen> {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.bolt,
             size: 16,
             color: AppColors.persian,

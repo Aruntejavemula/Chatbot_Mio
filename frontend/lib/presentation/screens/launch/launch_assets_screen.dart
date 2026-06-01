@@ -131,7 +131,7 @@ class _LaunchAssetsScreenState extends State<LaunchAssetsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.campaign_outlined, size: 36, color: AppColors.persian),
+                          const Icon(Icons.campaign_outlined, size: 36, color: AppColors.persian),
                           const SizedBox(height: 16),
                           Text(
                             'Launch Assets',

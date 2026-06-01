@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -43,32 +42,7 @@ class _ConnectorsScreenState extends ConsumerState<ConnectorsScreen> {
     }
   }
 
-  Future<void> _connect(String name) async {
-    try {
-      final url = await _service.getAuthUrl(name);
-      final uri = Uri.parse(url);
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to open auth page')),
-        );
-      }
-    }
-  }
 
-  Future<void> _disconnect(String name) async {
-    try {
-      await _service.disconnect(name);
-      await _loadConnectors();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to disconnect')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

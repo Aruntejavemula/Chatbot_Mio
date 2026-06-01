@@ -44,7 +44,7 @@ class DropZoneWidget extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.upload_file_rounded,
                   size: 48,
                   color: AppColors.persian,

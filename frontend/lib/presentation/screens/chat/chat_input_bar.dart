@@ -17,17 +17,21 @@ import '../../widgets/chat/voice_input_widget.dart';
 class ChatInputBar extends ConsumerStatefulWidget {
   final List<SelectedFileInfo> selectedFiles;
   final bool hasMessages;
+  final String selectedModel;
+  final List<Map<String, dynamic>> availableModels;
   final void Function(String text, List<SelectedFileInfo> files) onSend;
   final VoidCallback onAttachFile;
-  final VoidCallback onShowModelSelector;
+  final void Function(String model, String provider) onModelSelected;
 
   const ChatInputBar({
     super.key,
     required this.selectedFiles,
     required this.hasMessages,
+    required this.selectedModel,
+    required this.availableModels,
     required this.onSend,
     required this.onAttachFile,
-    required this.onShowModelSelector,
+    required this.onModelSelected,
   });
 
   @override
@@ -41,8 +45,15 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
   final ValueNotifier<bool> _hasTextNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _isFocusedNotifier = ValueNotifier(false);
   final ValueNotifier<bool> _isModelDropdownOpenNotifier = ValueNotifier(false);
-  final ValueNotifier<String> _selectedModelNotifier = ValueNotifier('Think now');
   late AnimationController _sendButtonAnimController;
+  final LayerLink _menuLink = LayerLink();
+  final LayerLink _modelLink = LayerLink();
+  OverlayEntry? _menuOverlay;
+  OverlayEntry? _modelOverlay;
+  bool _isMenuOpen = false;
+  bool _isModelOpen = false;
+  late AnimationController _glowController;
+  Animation<Color?>? _glowAnimation;
 
   bool get _isDesktop {
     if (kIsWeb) return false;
@@ -64,6 +75,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
       upperBound: 1.0,
       value: 1.0,
     );
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
     _focusNode.addListener(() {
       _isFocusedNotifier.value = _focusNode.hasFocus;
     });
@@ -82,16 +97,285 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
     _inputController.dispose();
     _focusNode.dispose();
     _sendButtonAnimController.dispose();
+    _glowController.dispose();
     _hasTextNotifier.dispose();
     _isFocusedNotifier.dispose();
     _isModelDropdownOpenNotifier.dispose();
-    _selectedModelNotifier.dispose();
+    _closeAllOverlays();
     super.dispose();
+  }
+
+  void _closeAllOverlays() {
+    if (_isMenuOpen) {
+      _menuOverlay?.remove();
+      _menuOverlay = null;
+      _isMenuOpen = false;
+    }
+    if (_isModelOpen) {
+      _modelOverlay?.remove();
+      _modelOverlay = null;
+      _isModelOpen = false;
+      _isModelDropdownOpenNotifier.value = false;
+    }
+  }
+
+  void _toggleMenu() {
+    if (_isMenuOpen) {
+      _menuOverlay?.remove();
+      _menuOverlay = null;
+      _isMenuOpen = false;
+    } else {
+      _closeAllOverlays();
+      _menuOverlay = _createMenuOverlay();
+      Overlay.of(context).insert(_menuOverlay!);
+      _isMenuOpen = true;
+    }
+  }
+
+  void _toggleModelDropdown() {
+    if (_isModelOpen) {
+      _modelOverlay?.remove();
+      _modelOverlay = null;
+      _isModelOpen = false;
+      _isModelDropdownOpenNotifier.value = false;
+    } else {
+      _closeAllOverlays();
+      _modelOverlay = _createModelOverlay();
+      Overlay.of(context).insert(_modelOverlay!);
+      _isModelOpen = true;
+      _isModelDropdownOpenNotifier.value = true;
+    }
+  }
+
+  OverlayEntry _createMenuOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF262626) : Colors.white;
+    final textPrimary = isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1A1A1A);
+    final textMuted = isDark ? const Color(0xFF888888) : const Color(0xFF666666);
+    final divider = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8E2DA);
+
+    return OverlayEntry(
+      builder: (context) {
+        return GestureDetector(
+          onTap: _closeAllOverlays,
+          behavior: HitTestBehavior.translucent,
+          child: Stack(
+            children: [
+              CompositedTransformFollower(
+                link: _menuLink,
+                showWhenUnlinked: false,
+                offset: const Offset(0, -340),
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      width: 260,
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _menuItem(Icons.attach_file, 'Add files or photos', textPrimary, textMuted, () {
+                            _closeAllOverlays();
+                            widget.onAttachFile();
+                          }),
+                          _menuItem(Icons.folder_outlined, 'Add to project', textPrimary, textMuted, () {}, hasChevron: true),
+                          _menuItem(Icons.construction_outlined, 'Skills', textPrimary, textMuted, () {}, hasChevron: true),
+                          _menuItem(Icons.power_outlined, 'Connectors', textPrimary, textMuted, () {}, hasChevron: true),
+                          _menuItem(Icons.extension_outlined, 'Plugins', textPrimary, textMuted, () {}, hasChevron: true),
+                          Divider(height: 1, color: divider, indent: 48),
+                          _menuItem(Icons.search_outlined, 'Research', textPrimary, textMuted, () {}),
+                          _menuItem(Icons.language_outlined, 'Web search', textPrimary, textMuted, () {}, trailing: const Icon(Icons.check, size: 18, color: Color(0xFF4285F4))),
+                          _menuItem(Icons.brush_outlined, 'Use style', textPrimary, textMuted, () {}, hasChevron: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  OverlayEntry _createModelOverlay() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? const Color(0xFFF5F5F5) : const Color(0xFF1A1A1A);
+    final textMuted = isDark ? const Color(0xFF888888) : const Color(0xFF666666);
+    final bg = isDark ? const Color(0xFF262626) : Colors.white;
+
+    return OverlayEntry(
+      builder: (context) {
+        return GestureDetector(
+          onTap: _closeAllOverlays,
+          behavior: HitTestBehavior.translucent,
+          child: Stack(
+            children: [
+              CompositedTransformFollower(
+                link: _modelLink,
+                showWhenUnlinked: false,
+                offset: const Offset(-200, -320),
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      width: 280,
+                      constraints: const BoxConstraints(maxHeight: 340),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: widget.availableModels.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == widget.availableModels.length) {
+                            return GestureDetector(
+                              onTap: () {},
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.expand_more, size: 18, color: textMuted),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'More models',
+                                      style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w500),
+                                    ),
+                                    const Spacer(),
+                                    Icon(Icons.chevron_right, size: 18, color: textMuted),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          final model = widget.availableModels[index];
+                          final isSelected = widget.selectedModel == model['model'];
+                          return GestureDetector(
+                            onTap: () {
+                              widget.onModelSelected(
+                                model['model'] as String,
+                                model['provider'] as String,
+                              );
+                              _closeAllOverlays();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: model['color'] as Color,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          model['model'] as String,
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 14,
+                                            color: textPrimary,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          model['description'] as String,
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 12,
+                                            color: textMuted,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(Icons.check, size: 18, color: Color(0xFF4285F4)),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _menuItem(IconData icon, String label, Color textPrimary, Color textMuted, VoidCallback onTap, {bool hasChevron = false, Widget? trailing}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: textMuted),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary, fontWeight: FontWeight.w400),
+              ),
+            ),
+            if (trailing != null) trailing,
+            if (hasChevron) Icon(Icons.chevron_right, size: 18, color: textMuted),
+          ],
+        ),
+      ),
+    );
   }
 
   void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
+
+    // Gemini-style glow burst
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    _glowAnimation = ColorTween(
+      begin: AppColors.persian,
+      end: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0DBD2),
+    ).animate(CurvedAnimation(
+      parent: _glowController,
+      curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+    ));
+    _glowController.forward(from: 0);
+
     widget.onSend(text, widget.selectedFiles);
     _inputController.clear();
     _hasTextNotifier.value = false;
@@ -113,7 +397,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.black : AppColors.bgPrimary,
+        color: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
       ),
       padding: EdgeInsets.fromLTRB(
         isDesktopLayout ? 0 : 16,
@@ -190,64 +474,60 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: widget.onAttachFile,
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(Icons.add, size: 22, color: textMuted),
+                      // + menu button
+                      CompositedTransformTarget(
+                        link: _menuLink,
+                        child: GestureDetector(
+                          onTap: _toggleMenu,
+                          child: AnimatedRotation(
+                            turns: _isMenuOpen ? 0.125 : 0.0,
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOutCubic,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(Icons.add, size: 22, color: textMuted),
+                            ),
+                          ),
                         ),
                       ),
                       const Spacer(),
-                      // Desktop: model selector inside input bar
-                      if (isDesktopLayout) ...[
-                        GestureDetector(
-                          onTap: () {
-                            _isModelDropdownOpenNotifier.value = !_isModelDropdownOpenNotifier.value;
-                            widget.onShowModelSelector();
-                          },
-                          child: ValueListenableBuilder<String>(
-                            valueListenable: _selectedModelNotifier,
-                            builder: (context, selectedModel, child) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F2ED),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      selectedModel == 'Think now' ? 'Select model' : selectedModel,
-                                      style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: textPrimary,
-                                      ),
+                      // Model selector (always shown, like Claude)
+                      CompositedTransformTarget(
+                        link: _modelLink,
+                        child: GestureDetector(
+                          onTap: _toggleModelDropdown,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: _isModelDropdownOpenNotifier,
+                            builder: (context, isOpen, _) {
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    widget.selectedModel == 'Think now' ? 'Select model' : widget.selectedModel,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: textPrimary,
                                     ),
-                                    const SizedBox(width: 4),
-                                    ValueListenableBuilder<bool>(
-                                      valueListenable: _isModelDropdownOpenNotifier,
-                                      builder: (context, isOpen, child) {
-                                        return AnimatedRotation(
-                                          turns: isOpen ? 0.5 : 0.0,
-                                          duration: const Duration(milliseconds: 200),
-                                          child: Icon(
-                                            Icons.keyboard_arrow_down_rounded,
-                                            size: 16,
-                                            color: textMuted,
-                                          ),
-                                        );
-                                      },
+                                  ),
+                                  const SizedBox(width: 4),
+                                  AnimatedRotation(
+                                    turns: isOpen ? 0.5 : 0.0,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 16,
+                                      color: textMuted,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               );
                             },
                           ),
                         ),
-                        const SizedBox(width: 8),
-                      ],
+                      ),
+                      const SizedBox(width: 8),
+                      // Mic / Send
                       ValueListenableBuilder<bool>(
                         valueListenable: _hasTextNotifier,
                         builder: (context, hasText, child) {
@@ -300,24 +580,38 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar>
                                         : null,
                                     child: Transform.scale(
                                       scale: _sendButtonAnimController.value,
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
-                                        curve: Curves.easeOutCubic,
-                                        width: 34,
-                                        height: 34,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(17),
-                                          color: hasText
-                                              ? (isDark ? Colors.white : const Color(0xFF1A1814))
-                                              : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD6D0C6)),
-                                        ),
+                                      child: AnimatedBuilder(
+                                        animation: _glowController,
+                                        builder: (context, child) {
+                                          final glowColor = _glowAnimation?.value;
+                                          return Container(
+                                            width: 34,
+                                            height: 34,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(17),
+                                              color: hasText
+                                                  ? AppColors.persian
+                                                  : (isDark ? const Color(0xFF3A3530) : const Color(0xFF8A8078)),
+                                              boxShadow: glowColor != null
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: glowColor.withValues(
+                                                          alpha: (1.0 - _glowController.value) * 0.6,
+                                                        ),
+                                                        blurRadius: 18 + _glowController.value * 12,
+                                                        spreadRadius: 2 + _glowController.value * 4,
+                                                      ),
+                                                    ]
+                                                  : null,
+                                            ),
+                                            child: child,
+                                          );
+                                        },
                                         child: Center(
                                           child: Icon(
                                             Icons.arrow_upward_rounded,
                                             size: 18,
-                                            color: hasText
-                                                ? (isDark ? Colors.black : Colors.white)
-                                                : textMuted,
+                                            color: hasText ? Colors.white : textMuted,
                                           ),
                                         ),
                                       ),

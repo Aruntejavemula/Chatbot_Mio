@@ -154,7 +154,7 @@ class PrivacyScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.shield_outlined, size: 36, color: AppColors.persian),
+                          const Icon(Icons.shield_outlined, size: 36, color: AppColors.persian),
                           const SizedBox(height: 16),
                           Text(
                             'Privacy Policy',

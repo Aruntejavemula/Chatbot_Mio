@@ -104,12 +104,12 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
                   isDark: isDark,
                   onTap: () => setState(() => _skillsExpanded = !_skillsExpanded),
                   children: [
-                    _SkillItem(name: 'Web Search', icon: Icons.search_outlined, requiredPlan: 'basic'),
-                    _SkillItem(name: 'Calculator', icon: Icons.calculate_outlined, requiredPlan: 'basic'),
-                    _SkillItem(name: 'Translator', icon: Icons.translate_outlined, requiredPlan: 'basic'),
-                    _SkillItem(name: 'Deep Research', icon: Icons.biotech_outlined, requiredPlan: 'pro'),
-                    _SkillItem(name: 'Image Gen', icon: Icons.image_outlined, requiredPlan: 'pro'),
-                    _SkillItem(name: 'Code Runner', icon: Icons.code_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Web Search', icon: Icons.search_outlined, requiredPlan: 'basic'),
+                    const _SkillItem(name: 'Calculator', icon: Icons.calculate_outlined, requiredPlan: 'basic'),
+                    const _SkillItem(name: 'Translator', icon: Icons.translate_outlined, requiredPlan: 'basic'),
+                    const _SkillItem(name: 'Deep Research', icon: Icons.biotech_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Image Gen', icon: Icons.image_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Code Runner', icon: Icons.code_outlined, requiredPlan: 'pro'),
                   ],
                 ),
                 // Connectors expandable
@@ -124,11 +124,11 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
                   onTap: () => setState(() => _connectorsExpanded = !_connectorsExpanded),
                   isLast: true,
                   children: [
-                    _SkillItem(name: 'Google Drive', icon: Icons.cloud_outlined, requiredPlan: 'pro'),
-                    _SkillItem(name: 'Notion', icon: Icons.note_outlined, requiredPlan: 'pro'),
-                    _SkillItem(name: 'Gmail', icon: Icons.email_outlined, requiredPlan: 'pro'),
-                    _SkillItem(name: 'GitHub', icon: Icons.code, requiredPlan: 'pro'),
-                    _SkillItem(name: 'Slack', icon: Icons.chat_bubble_outline, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Google Drive', icon: Icons.cloud_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Notion', icon: Icons.note_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Gmail', icon: Icons.email_outlined, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'GitHub', icon: Icons.code, requiredPlan: 'pro'),
+                    const _SkillItem(name: 'Slack', icon: Icons.chat_bubble_outline, requiredPlan: 'pro'),
                   ],
                 ),
               ],
@@ -293,6 +293,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
     widget.onToggle();
     final currentStatus = await Permission.photos.status;
     if (!currentStatus.isGranted) {
+      if (!mounted) return;
       final allowed = await PermissionDialog.photos(context);
       if (!allowed) return;
     }
@@ -336,6 +337,7 @@ class _PlusPanelWidgetState extends State<PlusPanelWidget> {
     widget.onToggle();
     final currentStatus = await Permission.camera.status;
     if (!currentStatus.isGranted) {
+      if (!mounted) return;
       final allowed = await PermissionDialog.camera(context);
       if (!allowed) return;
     }

@@ -11,7 +11,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/constants/cost_rates.dart';
 import '../../../core/utils/animations.dart';
 import '../../../data/models/message_model.dart';
 import 'artifact_viewer.dart';

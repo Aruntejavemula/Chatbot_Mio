@@ -178,7 +178,7 @@ class TermsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.description_outlined, size: 36, color: AppColors.persian),
+                          const Icon(Icons.description_outlined, size: 36, color: AppColors.persian),
                           const SizedBox(height: 16),
                           Text(
                             'Terms of Service',

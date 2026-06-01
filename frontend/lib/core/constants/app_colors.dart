@@ -29,7 +29,7 @@ class AppColors {
   static const aiBubbleText = Color(0xFF1A1814);
 
   // Dark mode
-  static const darkBgPrimary = Color(0xFF000000);
+  static const darkBgPrimary = Color(0xFF1A1A1A);
   static const darkBgSecondary = Color(0xFF1A1A1A);
   static const darkBgTertiary = Color(0xFF242424);
   static const darkBgHover = Color(0xFF262626);

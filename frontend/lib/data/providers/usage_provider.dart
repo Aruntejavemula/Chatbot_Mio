@@ -47,7 +47,7 @@ class UsageNotifier extends StateNotifier<UsageState> {
 
     refresh();
     _refreshTimer = Timer.periodic(
-      Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
+      const Duration(seconds: AppConstants.usageRefreshIntervalSeconds),
       (_) => refresh(),
     );
   }

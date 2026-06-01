@@ -38,8 +38,8 @@ class BackgroundAgentStatusWidget extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingScreen, vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.08),
-        border: Border.all(color: accentColor.withOpacity(0.3)),
+        color: accentColor.withValues(alpha: 0.08),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Row(

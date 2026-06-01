@@ -11,6 +11,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
+import '../../../data/models/message_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../widgets/chat/document_viewer_widget.dart';
@@ -39,17 +40,15 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isSidebarOpen = false;
-  bool _isModelDropdownOpen = false;
   String _selectedModel = 'Think now';
-  String _selectedProvider = '';
   final List<Map<String, dynamic>> _availableModels = [
-    {'provider': 'OpenAI', 'model': 'GPT-4o', 'color': const Color(0xFF10A37F)},
-    {'provider': 'OpenAI', 'model': 'GPT-4o mini', 'color': const Color(0xFF10A37F)},
-    {'provider': 'Anthropic', 'model': 'Claude 4 Sonnet', 'color': const Color(0xFFD97757)},
-    {'provider': 'Anthropic', 'model': 'Claude 3.5 Haiku', 'color': const Color(0xFFD97757)},
-    {'provider': 'Google', 'model': 'Gemini 2.5 Pro', 'color': const Color(0xFF4285F4)},
-    {'provider': 'DeepSeek', 'model': 'DeepSeek R1', 'color': const Color(0xFF4D6BFE)},
-    {'provider': 'Ollama', 'model': 'Ollama (Local)', 'color': const Color(0xFF0EA5E9)},
+    {'provider': 'Anthropic', 'model': 'Claude 4 Sonnet', 'description': 'Most capable for everyday tasks', 'color': const Color(0xFFD97757)},
+    {'provider': 'OpenAI', 'model': 'GPT-4o', 'description': 'Great for reasoning and coding', 'color': const Color(0xFF10A37F)},
+    {'provider': 'Google', 'model': 'Gemini 2.5 Pro', 'description': 'Long context and multimodal', 'color': const Color(0xFF4285F4)},
+    {'provider': 'DeepSeek', 'model': 'DeepSeek R1', 'description': 'Deep reasoning, open weights', 'color': const Color(0xFF4D6BFE)},
+    {'provider': 'Anthropic', 'model': 'Claude 3.5 Haiku', 'description': 'Fastest for quick answers', 'color': const Color(0xFFD97757)},
+    {'provider': 'OpenAI', 'model': 'GPT-4o mini', 'description': 'Lightweight and cost-efficient', 'color': const Color(0xFF10A37F)},
+    {'provider': 'Ollama', 'model': 'Ollama (Local)', 'description': 'Run models on your machine', 'color': const Color(0xFF0EA5E9)},
   ];
 
   late ScrollController _scrollController;
@@ -62,6 +61,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   bool _showDisclaimer = true;
   List<SelectedFileInfo> _selectedFiles = [];
+
 
   @override
   void initState() {
@@ -156,7 +156,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
 
     setState(() => _selectedFiles = []);
-    debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider');
+
+    // Add user message
+    final userMsg = MessageModel(
+      id: 'msg-user-${DateTime.now().millisecondsSinceEpoch}',
+      chatId: widget.chatId ?? 'new-chat',
+      role: 'user',
+      content: text,
+      createdAt: DateTime.now(),
+    );
+    final currentMsgs = ref.read(messagesProvider);
+    ref.read(messagesProvider.notifier).state = [...currentMsgs, userMsg];
+
+    // Mock reply with 2-second loading
+    _mockReply(text);
+  }
+
+  Future<void> _mockReply(String userText) async {
+    ref.read(isStreamingProvider.notifier).state = true;
+    ref.read(streamingTextProvider.notifier).state = '';
+
+    // Simulate 2-second thinking/loading
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    final mockReplies = [
+      "That's a great question! Let me think through this carefully...",
+      "I'd be happy to help with that. Here's what I know:",
+      "Interesting! Let me provide a thoughtful response.",
+      "Great topic. Let me break this down for you.",
+    ];
+    final reply = mockReplies[userText.length % mockReplies.length];
+
+    // Simulate streaming
+    ref.read(streamingTextProvider.notifier).state = reply;
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+
+    // Finish streaming and add to messages
+    final aiMsg = MessageModel(
+      id: 'msg-ai-${DateTime.now().millisecondsSinceEpoch}',
+      chatId: widget.chatId ?? 'new-chat',
+      role: 'assistant',
+      content: reply,
+      model: _selectedModel,
+      createdAt: DateTime.now(),
+    );
+    final msgs = ref.read(messagesProvider);
+    ref.read(messagesProvider.notifier).state = [...msgs, aiMsg];
+    ref.read(isStreamingProvider.notifier).state = false;
+    ref.read(streamingTextProvider.notifier).state = '';
   }
 
   Future<void> _pickAttachFile() async {
@@ -239,11 +290,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   void _onModelSelected(String model, String provider) {
-    setState(() {
-      _selectedModel = model;
-      _selectedProvider = provider;
-      _isModelDropdownOpen = false;
-    });
+    setState(() => _selectedModel = model);
   }
 
   Widget _buildDisclaimerPill(bool isDark) {
@@ -287,78 +334,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
   }
 
-  Widget _buildModelDropdown(bool isDark) {
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
-
-    return Positioned(
-      bottom: 90 + MediaQuery.of(context).viewPadding.bottom,
-      left: 16,
-      right: 16,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 300),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSecondary : AppColors.bgSecondary,
-            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorderDefault : AppColors.borderDefault,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _availableModels.length,
-            itemBuilder: (context, index) {
-              final model = _availableModels[index];
-              final isSelected = _selectedModel == model['model'];
-              return InkWell(
-                onTap: () => _onModelSelected(
-                  model['model'] as String,
-                  model['provider'] as String,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: model['color'] as Color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        model['model'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isSelected ? AppColors.persian : textPrimary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (isSelected)
-                        const Icon(Icons.check, size: 16, color: AppColors.persian),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(messagesProvider);
@@ -387,7 +362,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final hasMessages = messages.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : AppColors.bgPrimary,
+      backgroundColor: isDark ? AppColors.darkBgPrimary : AppColors.bgPrimary,
       resizeToAvoidBottomInset: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -407,12 +382,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 child: Stack(
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        if (_isModelDropdownOpen) {
-                          setState(() => _isModelDropdownOpen = false);
-                        }
-                        FocusScope.of(context).unfocus();
-                      },
+                      onTap: () => FocusScope.of(context).unfocus(),
                       child: Column(
                         children: [
                           if (!_isOnline) const OfflineBannerWidget(),
@@ -420,10 +390,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             isDark: isDark,
                             showPermanentSidebar: showPermanentSidebar,
                             chatId: widget.chatId,
-                            selectedModel: _selectedModel,
-                            isModelDropdownOpen: _isModelDropdownOpen,
                             onToggleSidebar: () => setState(() => _isSidebarOpen = !_isSidebarOpen),
-                            onToggleModelDropdown: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
                             onNewChat: () => context.go(AppRoutes.chat),
                             onShareChat: _shareChat,
                             onShowMoreOptions: () => _showMoreOptionsSheet(isDark),
@@ -438,15 +405,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     inputBar: ChatInputBar(
                                       selectedFiles: _selectedFiles,
                                       hasMessages: hasMessages,
+                                      selectedModel: _selectedModel,
+                                      availableModels: _availableModels,
                                       onSend: _sendMessage,
                                       onAttachFile: _pickAttachFile,
-                                      onShowModelSelector: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                                      onModelSelected: _onModelSelected,
                                     ),
-                                    onSuggestionTap: (label) {},
-                                    onTapBackground: () {
-                                      if (_isModelDropdownOpen) setState(() => _isModelDropdownOpen = false);
-                                      FocusScope.of(context).unfocus();
-                                    },
+                                    onTapBackground: () => FocusScope.of(context).unfocus(),
                                   )
                                 : Column(
                                     children: [
@@ -474,9 +439,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       ChatInputBar(
                                         selectedFiles: _selectedFiles,
                                         hasMessages: hasMessages,
+                                        selectedModel: _selectedModel,
+                                        availableModels: _availableModels,
                                         onSend: _sendMessage,
                                         onAttachFile: _pickAttachFile,
-                                        onShowModelSelector: () => setState(() => _isModelDropdownOpen = !_isModelDropdownOpen),
+                                        onModelSelected: _onModelSelected,
                                       ),
                                     ],
                                   ),
@@ -484,7 +451,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         ],
                       ),
                     ),
-                    if (_isModelDropdownOpen) _buildModelDropdown(isDark),
                     if (!showPermanentSidebar && _isSidebarOpen)
                       SidebarWidget(
                         isOpen: _isSidebarOpen,

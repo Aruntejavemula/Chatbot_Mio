@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/animations.dart';
-import '../../../data/repositories/auth_repository.dart';
-import '../../../data/repositories/settings_repository.dart';
 import 'panels/account_panel.dart';
 import 'panels/billing_panel.dart';
 import 'panels/connectors_panel.dart';
@@ -106,7 +104,7 @@ class _PreferencesDialogState extends ConsumerState<PreferencesDialog> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Row(
               children: [
-                Icon(Icons.auto_awesome_outlined, size: 20, color: AppColors.persian),
+                const Icon(Icons.auto_awesome_outlined, size: 20, color: AppColors.persian),
                 const SizedBox(width: 8),
                 Text(
                   'Mio',
