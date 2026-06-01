@@ -14,15 +14,15 @@ class DataControlsPanel extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(28),
       children: [
-        _controlRow('My shared chats', textPrimary, borderColor),
-        _controlRow('My shared files', textPrimary, borderColor),
-        _controlRow('My deployed websites', textPrimary, borderColor),
-        _controlRow('My purchased domains', textPrimary, borderColor),
+        _controlRow(context, 'My shared chats', textPrimary, borderColor),
+        _controlRow(context, 'My shared files', textPrimary, borderColor),
+        _controlRow(context, 'My deployed websites', textPrimary, borderColor),
+        _controlRow(context, 'My purchased domains', textPrimary, borderColor),
       ],
     );
   }
 
-  Widget _controlRow(String label, Color textPrimary, Color borderColor) {
+  Widget _controlRow(BuildContext context, String label, Color textPrimary, Color borderColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
@@ -34,7 +34,9 @@ class DataControlsPanel extends ConsumerWidget {
             child: Text(label, style: GoogleFonts.dmSans(fontSize: 14, color: textPrimary)),
           ),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$label — nothing to manage yet')),
+            ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: borderColor),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

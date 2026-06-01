@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
+import 'app_logger.dart';
+
 /// Singleton service that monitors network connectivity.
 ///
 /// Uses connectivity_plus to detect online/offline state changes
@@ -32,7 +34,7 @@ class ConnectivityService {
     );
     if (isOnline.value != connected) {
       isOnline.value = connected;
-      debugPrint('ConnectivityService: online=$connected');
+      AppLogger.debug('ConnectivityService: online=$connected');
     }
   }
 

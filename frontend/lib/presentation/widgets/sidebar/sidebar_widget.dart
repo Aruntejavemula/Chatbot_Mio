@@ -37,7 +37,9 @@ class SidebarWidget extends ConsumerStatefulWidget {
 
 class _SidebarWidgetState extends ConsumerState<SidebarWidget>
     with SingleTickerProviderStateMixin {
-  final String _searchQuery = '';
+  String _searchQuery = '';
+  bool _showSearchField = false;
+  final TextEditingController _searchController = TextEditingController();
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
 
@@ -62,6 +64,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
   @override
   void dispose() {
     _slideController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -169,9 +172,10 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
               _navRow(icon: Icons.add, label: 'New chat', textPrimary: textPrimary, textMuted: textMuted,
                   onTap: () { widget.onNewChat(); }),
               _navRow(icon: Icons.search, label: 'Search', textPrimary: textPrimary, textMuted: textMuted,
-                  onTap: () {}),
+                  onTap: () => setState(() => _showSearchField = !_showSearchField)),
               _navRow(icon: Icons.tune_outlined, label: 'Customize', textPrimary: textPrimary, textMuted: textMuted,
-                  onTap: () => PreferencesDialog.show(context)),
+                  onTap: () => PreferencesDialog.show(context,
+                      initialSection: PreferencesSection.personalization)),
               const SizedBox(height: 8),
               _navRow(icon: Icons.chat_bubble_outline, label: 'Chats', textPrimary: textPrimary, textMuted: textMuted,
                   onTap: () => context.go('/chat')),
@@ -184,7 +188,7 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
                 label: 'Code',
                 textPrimary: textPrimary,
                 textMuted: textMuted,
-                onTap: () {},
+                onTap: () => context.go(AppRoutes.subscription),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
@@ -211,7 +215,10 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
                       textPrimary: textPrimary,
                       textMuted: textMuted,
                       activeBg: tabActiveBg,
-                      onTap: () {},
+                      onTap: () {
+                        context.go('/chat');
+                        widget.onClose();
+                      },
                     ),
                     _tabItem(
                       icon: Icons.folder_outlined,
@@ -230,6 +237,37 @@ class _SidebarWidgetState extends ConsumerState<SidebarWidget>
               ),
             ],
             const SizedBox(height: 12),
+            if (_showSearchField)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: GoogleFonts.dmSans(fontSize: 13, color: textPrimary),
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  decoration: InputDecoration(
+                    hintText: 'Search chats...',
+                    hintStyle: GoogleFonts.dmSans(fontSize: 13, color: textMuted),
+                    prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                    suffixIcon: GestureDetector(
+                      onTap: () => setState(() {
+                        _showSearchField = false;
+                        _searchQuery = '';
+                        _searchController.clear();
+                      }),
+                      child: Icon(Icons.close_rounded, size: 18, color: textMuted),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFECE8E1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
             // Recents section
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),

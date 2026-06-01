@@ -5,10 +5,12 @@ import 'core/theme/app_theme.dart';
 import 'core/utils/router.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/home_widget_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.initialize();
+  await HomeWidgetService.initialize();
   runApp(const ProviderScope(child: MioApp()));
 }
 

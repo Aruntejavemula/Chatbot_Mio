@@ -102,10 +102,15 @@ Page<void> _buildTransitionPage({
   );
 }
 
+/// Root navigator key so non-widget code (e.g. the home-screen widget handler)
+/// can navigate without a BuildContext.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.chat,
     redirect: (BuildContext context, GoRouterState state) {
       final location = state.matchedLocation;

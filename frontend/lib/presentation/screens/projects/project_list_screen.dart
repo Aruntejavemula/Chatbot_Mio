@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/services/project_service.dart';
+import '../../widgets/common/skeletons.dart';
+import '../../widgets/common/animated_empty_state.dart';
 
 class ProjectListScreen extends ConsumerStatefulWidget {
   const ProjectListScreen({super.key});
@@ -305,14 +307,32 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
                   // Grid
                   Expanded(
                     child: _isLoading
-                        ? const Center(child: CircularProgressIndicator(color: AppColors.persian))
+                        ? LayoutBuilder(
+                            builder: (context, constraints) {
+                              final crossCount = constraints.maxWidth > 500 ? 2 : 1;
+                              return MioSkeleton.cardGrid(
+                                isDark: isDark,
+                                count: crossCount == 2 ? 4 : 3,
+                                crossAxisCount: crossCount,
+                                childAspectRatio: crossCount == 2 ? 1.6 : 2.5,
+                              );
+                            },
+                          )
                         : filtered.isEmpty
-                            ? Center(
-                                child: Text(
-                                  query.isEmpty ? 'No projects yet' : 'No matching projects',
-                                  style: GoogleFonts.dmSans(fontSize: 14, color: textMuted),
-                                ),
-                              )
+                            ? (query.isEmpty
+                                ? AnimatedEmptyState(
+                                    icon: Icons.folder_open_rounded,
+                                    title: 'No projects yet',
+                                    subtitle:
+                                        'Create a project to group related chats and instructions.',
+                                    actionLabel: 'New project',
+                                    onAction: _showCreateProjectDialog,
+                                  )
+                                : const AnimatedEmptyState(
+                                    icon: Icons.search_off_rounded,
+                                    title: 'No matching projects',
+                                    subtitle: 'Try a different search term.',
+                                  ))
                             : LayoutBuilder(
                                 builder: (context, constraints) {
                                   final crossCount = constraints.maxWidth > 500 ? 2 : 1;
@@ -353,15 +373,26 @@ class _ProjectListScreenState extends ConsumerState<ProjectListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              project.name,
-              style: GoogleFonts.dmSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
+            Hero(
+              tag: 'project-title-${project.id}',
+              flightShuttleBuilder: (_, __, ___, ____, toContext) =>
+                  DefaultTextStyle(
+                style: DefaultTextStyle.of(toContext).style,
+                child: (toContext.widget as Hero).child,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              child: Material(
+                color: Colors.transparent,
+                child: Text(
+                  project.name,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
             if (project.systemPrompt.isNotEmpty) ...[
               const SizedBox(height: 8),

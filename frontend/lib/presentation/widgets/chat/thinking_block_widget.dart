@@ -114,18 +114,21 @@ class _ThinkingBlockWidgetState extends State<ThinkingBlockWidget>
 
   Widget _buildThinkingIcon(Color textMuted) {
     if (widget.isStreaming) {
-      return AnimatedBuilder(
-        animation: _rotationController,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _rotationController.value * 2 * pi,
-            child: Icon(
-              Icons.sync,
-              size: 16,
-              color: textMuted,
-            ),
-          );
-        },
+      return RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _rotationController,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _rotationController.value * 2 * pi,
+              child: child,
+            );
+          },
+          child: Icon(
+            Icons.sync,
+            size: 16,
+            color: textMuted,
+          ),
+        ),
       );
     }
     return Icon(

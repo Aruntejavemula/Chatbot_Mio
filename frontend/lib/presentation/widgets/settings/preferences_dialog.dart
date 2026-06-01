@@ -29,12 +29,14 @@ enum PreferencesSection {
 }
 
 class PreferencesDialog extends ConsumerStatefulWidget {
-  const PreferencesDialog({super.key});
+  final PreferencesSection initialSection;
+  const PreferencesDialog({super.key, this.initialSection = PreferencesSection.account});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context,
+      {PreferencesSection initialSection = PreferencesSection.account}) {
     return showMioModal(
       context: context,
-      builder: (_) => const PreferencesDialog(),
+      builder: (_) => PreferencesDialog(initialSection: initialSection),
     );
   }
 
@@ -43,7 +45,7 @@ class PreferencesDialog extends ConsumerStatefulWidget {
 }
 
 class _PreferencesDialogState extends ConsumerState<PreferencesDialog> {
-  PreferencesSection _selected = PreferencesSection.account;
+  late PreferencesSection _selected = widget.initialSection;
 
   @override
   Widget build(BuildContext context) {

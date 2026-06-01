@@ -48,6 +48,84 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
     }
   }
 
+  void _showProjectMenu(bool isDark) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text('Rename project', style: GoogleFonts.dmSans()),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showRenameDialog(isDark);
+              },
+            ),
+            ListTile(
+              leading: Icon(_isStarred ? Icons.star : Icons.star_border),
+              title: Text(_isStarred ? 'Remove from favorites' : 'Add to favorites',
+                  style: GoogleFonts.dmSans()),
+              onTap: () {
+                setState(() => _isStarred = !_isStarred);
+                Navigator.of(ctx).pop();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              title: Text('Delete project',
+                  style: GoogleFonts.dmSans(color: AppColors.error)),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Project deleted')),
+                );
+                context.go(AppRoutes.projects);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRenameDialog(bool isDark) {
+    final controller = TextEditingController(text: _project?.name ?? '');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Rename project', style: GoogleFonts.dmSans(fontWeight: FontWeight.w600)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Project name'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: GoogleFonts.dmSans())),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.persian),
+            onPressed: () {
+              final name = controller.text.trim();
+              Navigator.of(ctx).pop();
+              if (name.isNotEmpty) {
+                setState(() => _project = _project?.copyWith(name: name));
+              }
+            },
+            child: Text('Save', style: GoogleFonts.dmSans(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatRelative(DateTime date) {
     final diff = DateTime.now().difference(date);
     if (diff.inSeconds < 60) return 'Last message ${diff.inSeconds} seconds ago';
@@ -101,14 +179,28 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      _project?.name ?? 'Project',
-                      style: GoogleFonts.dmSerifDisplay(fontSize: 28, color: textPrimary),
+                    child: Hero(
+                      tag: 'project-title-${widget.projectId}',
+                      flightShuttleBuilder: (_, __, ___, ____, toContext) =>
+                          DefaultTextStyle(
+                        style: DefaultTextStyle.of(toContext).style,
+                        child: (toContext.widget as Hero).child,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Text(
+                          _project?.name ?? 'Project',
+                          style: GoogleFonts.dmSerifDisplay(
+                              fontSize: 28, color: textPrimary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                   ),
                   IconButton(
                     icon: Icon(Icons.more_vert, size: 20, color: textMuted),
-                    onPressed: () {},
+                    onPressed: () => _showProjectMenu(isDark),
                   ),
                   IconButton(
                     icon: Icon(
