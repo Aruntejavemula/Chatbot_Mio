@@ -124,6 +124,21 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     });
   }
 
+  void _archiveChat(ChatModel chat) {
+    // Optimistically remove so the swipe animation matches state even without a
+    // backend; the repo call is best-effort.
+    final current = ref.read(chatsProvider);
+    ref.read(chatsProvider.notifier).state =
+        current.where((c) => c.id != chat.id).toList();
+    try {
+      ref.read(chatRepositoryProvider).deleteChat(chat.id);
+    } catch (_) {/* preview mode: no backend */}
+    setState(() => _deletedToast = 'Chat archived');
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _deletedToast = null);
+    });
+  }
+
   String _formatRelativeTime(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
@@ -264,7 +279,23 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                 itemBuilder: (context, index) {
                                   final chat = filteredChats[index];
                                   final isSelected = _selectedIds.contains(chat.id);
-                                  return _buildChatRow(chat, isSelected, isDark, textPrimary, textMuted);
+                                  final row = _buildChatRow(
+                                      chat, isSelected, isDark, textPrimary, textMuted);
+                                  if (_isSelectMode) return row;
+                                  // Swipe left to archive (with undo toast).
+                                  return Dismissible(
+                                    key: ValueKey(chat.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 24),
+                                      color: Colors.red.withValues(alpha: 0.10),
+                                      child: const Icon(Icons.archive_outlined,
+                                          color: Colors.red, size: 20),
+                                    ),
+                                    onDismissed: (_) => _archiveChat(chat),
+                                    child: row,
+                                  );
                                 },
                               ),
                       ),

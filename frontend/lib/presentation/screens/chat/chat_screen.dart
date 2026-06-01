@@ -699,6 +699,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     final firstToken = value.trimLeft().split(' ').first;
     final slashQuery = firstToken.startsWith('/') ? firstToken : '';
     if (hasText == _hasText && slashQuery == _slashQuery) return;
+    // Pulse the send button the moment it becomes enabled.
+    if (hasText && !_hasText) {
+      _sendButtonAnimController.value = 1.14;
+      _sendButtonAnimController.animateWith(
+        SpringSimulation(MioAnimations.spring, 1.14, 1.0, 0),
+      );
+    }
     setState(() {
       _hasText = hasText;
       _slashQuery = slashQuery;
