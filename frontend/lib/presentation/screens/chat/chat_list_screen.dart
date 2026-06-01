@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../widgets/common/animated_empty_state.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -266,12 +267,20 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       // Chat list
                       Expanded(
                         child: filteredChats.isEmpty
-                            ? Center(
-                                child: Text(
-                                  query.isEmpty ? 'No chats yet' : 'No matching chats',
-                                  style: GoogleFonts.dmSans(fontSize: 14, color: textMuted),
-                                ),
-                              )
+                            ? (query.isEmpty
+                                ? AnimatedEmptyState(
+                                    icon: Icons.chat_bubble_outline_rounded,
+                                    title: 'No chats yet',
+                                    subtitle:
+                                        'Start a conversation and it will show up here.',
+                                    actionLabel: 'New chat',
+                                    onAction: () => context.go(AppRoutes.chat),
+                                  )
+                                : const AnimatedEmptyState(
+                                    icon: Icons.search_off_rounded,
+                                    title: 'No matching chats',
+                                    subtitle: 'Try a different search term.',
+                                  ))
                             : ListView.separated(
                                 padding: const EdgeInsets.only(top: 4),
                                 itemCount: filteredChats.length,

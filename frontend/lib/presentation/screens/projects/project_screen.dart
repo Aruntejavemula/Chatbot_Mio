@@ -179,9 +179,23 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      _project?.name ?? 'Project',
-                      style: GoogleFonts.dmSerifDisplay(fontSize: 28, color: textPrimary),
+                    child: Hero(
+                      tag: 'project-title-${widget.projectId}',
+                      flightShuttleBuilder: (_, __, ___, ____, toContext) =>
+                          DefaultTextStyle(
+                        style: DefaultTextStyle.of(toContext).style,
+                        child: (toContext.widget as Hero).child,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Text(
+                          _project?.name ?? 'Project',
+                          style: GoogleFonts.dmSerifDisplay(
+                              fontSize: 28, color: textPrimary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                   ),
                   IconButton(
