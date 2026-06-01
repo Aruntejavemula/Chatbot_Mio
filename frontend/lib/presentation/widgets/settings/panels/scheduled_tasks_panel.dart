@@ -32,7 +32,9 @@ class _ScheduledTasksPanelState extends ConsumerState<ScheduledTasksPanel> {
               _tabButton('Completed', 1, textPrimary, textMuted, borderColor, isDark),
               const Spacer(),
               FilledButton.icon(
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Create a scheduled task from any chat')),
+                ),
                 icon: const Icon(Icons.add, size: 16),
                 label: Text('New schedule', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
                 style: FilledButton.styleFrom(

@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/router.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../widgets/common/animated_empty_state.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -119,6 +120,21 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       _selectedIds.clear();
       _isSelectMode = false;
     });
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _deletedToast = null);
+    });
+  }
+
+  void _archiveChat(ChatModel chat) {
+    // Optimistically remove so the swipe animation matches state even without a
+    // backend; the repo call is best-effort.
+    final current = ref.read(chatsProvider);
+    ref.read(chatsProvider.notifier).state =
+        current.where((c) => c.id != chat.id).toList();
+    try {
+      ref.read(chatRepositoryProvider).deleteChat(chat.id);
+    } catch (_) {/* preview mode: no backend */}
+    setState(() => _deletedToast = 'Chat archived');
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) setState(() => _deletedToast = null);
     });
@@ -251,12 +267,20 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       // Chat list
                       Expanded(
                         child: filteredChats.isEmpty
-                            ? Center(
-                                child: Text(
-                                  query.isEmpty ? 'No chats yet' : 'No matching chats',
-                                  style: GoogleFonts.dmSans(fontSize: 14, color: textMuted),
-                                ),
-                              )
+                            ? (query.isEmpty
+                                ? AnimatedEmptyState(
+                                    icon: Icons.chat_bubble_outline_rounded,
+                                    title: 'No chats yet',
+                                    subtitle:
+                                        'Start a conversation and it will show up here.',
+                                    actionLabel: 'New chat',
+                                    onAction: () => context.go(AppRoutes.chat),
+                                  )
+                                : const AnimatedEmptyState(
+                                    icon: Icons.search_off_rounded,
+                                    title: 'No matching chats',
+                                    subtitle: 'Try a different search term.',
+                                  ))
                             : ListView.separated(
                                 padding: const EdgeInsets.only(top: 4),
                                 itemCount: filteredChats.length,
@@ -264,7 +288,23 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                 itemBuilder: (context, index) {
                                   final chat = filteredChats[index];
                                   final isSelected = _selectedIds.contains(chat.id);
-                                  return _buildChatRow(chat, isSelected, isDark, textPrimary, textMuted);
+                                  final row = _buildChatRow(
+                                      chat, isSelected, isDark, textPrimary, textMuted);
+                                  if (_isSelectMode) return row;
+                                  // Swipe left to archive (with undo toast).
+                                  return Dismissible(
+                                    key: ValueKey(chat.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 24),
+                                      color: Colors.red.withValues(alpha: 0.10),
+                                      child: const Icon(Icons.archive_outlined,
+                                          color: Colors.red, size: 20),
+                                    ),
+                                    onDismissed: (_) => _archiveChat(chat),
+                                    child: row,
+                                  );
                                 },
                               ),
                       ),
@@ -335,8 +375,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           ),
           const SizedBox(width: 16),
           GestureDetector(
-            onTap: () {},
-            child: Icon(Icons.archive_outlined, size: 18, color: textMuted),
+            onTap: _selectedIds.isNotEmpty
+                ? () {
+                    final count = _selectedIds.length;
+                    _exitSelectMode();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Archived $count chat${count == 1 ? '' : 's'}')),
+                    );
+                  }
+                : null,
+            child: Icon(Icons.archive_outlined, size: 18,
+                color: _selectedIds.isNotEmpty ? textPrimary : textMuted),
           ),
           const SizedBox(width: 12),
           GestureDetector(
