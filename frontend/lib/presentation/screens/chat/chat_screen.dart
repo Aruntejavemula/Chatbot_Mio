@@ -42,6 +42,11 @@ import '../../../core/utils/responsive.dart';
 import '../../../data/services/notification_service.dart';
 import '../../widgets/settings/ollama_setup_sheet.dart';
 
+// TODO(mock): TEMPORARY — remove `kUseMockChat` and `_mockStreamResponse` once the
+// real backend chat send path is wired. This lets us preview the loading icon,
+// thinking block, streaming text and blinking cursor without a server.
+const bool kUseMockChat = true;
+
 class ChatScreen extends ConsumerStatefulWidget {
   final String? chatId;
   final String? projectId;
@@ -532,6 +537,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       return;
     }
 
+    // TODO(mock): preview path — runs without auth/backend so the streaming UI is
+    // visible. Remove together with `kUseMockChat`.
+    if (kUseMockChat) {
+      if (_isMobile) HapticFeedback.mediumImpact();
+      _inputController.clear();
+      setState(() {
+        _hasText = false;
+        _slashQuery = '';
+        _selectedFiles = [];
+      });
+      _mockStreamResponse(text);
+      return;
+    }
+
     final isAuthenticated = ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       if (_isMobile) HapticFeedback.mediumImpact();
@@ -550,10 +569,87 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
       _slashQuery = '';
       _selectedFiles = [];
     });
+
     // TODO: Create chat if needed, then send message
-    // For now just print
     debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider '
         'webSearch: $_webSearchActive research: $_researchActive style: ${_selectedStyle ?? "normal"}');
+  }
+
+  // TODO(mock): TEMPORARY preview of the streaming chat experience (loading dots →
+  // thinking block → typed answer with blinking cursor). Delete with `kUseMockChat`.
+  Future<void> _mockStreamResponse(String prompt) async {
+    final chatId = widget.chatId ?? 'local';
+    final model = _selectedModel == 'Think now' ? null : _selectedModel;
+
+    final userMsg = MessageModel(
+      id: 'u-${DateTime.now().microsecondsSinceEpoch}',
+      chatId: chatId,
+      role: 'user',
+      content: prompt,
+      createdAt: DateTime.now(),
+    );
+    ref.read(messagesProvider.notifier).state = [
+      ...ref.read(messagesProvider),
+      userMsg,
+    ];
+    _scrollToBottom();
+
+    // Start streaming → shows the bouncing-dot loading indicator first.
+    ref.read(isStreamingProvider.notifier).state = true;
+    ref.read(streamingTextProvider.notifier).state = '';
+    ref.read(streamingThinkingTextProvider.notifier).state = '';
+    ref.read(isThinkingStreamingProvider.notifier).state = false;
+
+    await Future.delayed(const Duration(milliseconds: 650));
+    if (!mounted) return;
+
+    // Thinking phase (Claude-style collapsible block).
+    const thinking = 'Reading the request, breaking it into steps, and drafting a clear, helpful answer.';
+    ref.read(isThinkingStreamingProvider.notifier).state = true;
+    final tBuf = StringBuffer();
+    for (final w in thinking.split(' ')) {
+      if (!mounted) return;
+      tBuf.write(tBuf.isEmpty ? w : ' $w');
+      ref.read(streamingThinkingTextProvider.notifier).state = tBuf.toString();
+      await Future.delayed(const Duration(milliseconds: 40));
+    }
+    ref.read(isThinkingStreamingProvider.notifier).state = false;
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    // Answer phase (ChatGPT-style word-by-word with blinking cursor).
+    final reply =
+        'This is a mock response to "$prompt". It streams word by word so you can '
+        'preview the loading dots, the thinking block, and the blinking cursor. '
+        'Wire up the backend to replace this with real model output.';
+    final buf = StringBuffer();
+    for (final w in reply.split(' ')) {
+      if (!mounted) return;
+      buf.write(buf.isEmpty ? w : ' $w');
+      ref.read(streamingTextProvider.notifier).state = buf.toString();
+      _scrollToBottom();
+      await Future.delayed(const Duration(milliseconds: 30));
+    }
+
+    if (!mounted) return;
+    final aiMsg = MessageModel(
+      id: 'a-${DateTime.now().microsecondsSinceEpoch}',
+      chatId: chatId,
+      role: 'assistant',
+      content: reply,
+      model: model,
+      createdAt: DateTime.now(),
+      thinkingContent: thinking,
+      hasThinking: true,
+    );
+    ref.read(messagesProvider.notifier).state = [
+      ...ref.read(messagesProvider),
+      aiMsg,
+    ];
+    ref.read(isStreamingProvider.notifier).state = false;
+    ref.read(streamingTextProvider.notifier).state = '';
+    ref.read(streamingThinkingTextProvider.notifier).state = '';
+    ref.read(isThinkingStreamingProvider.notifier).state = false;
+    _scrollToBottom();
   }
 
   void _runSlashCommand(SlashParseResult slash) {
