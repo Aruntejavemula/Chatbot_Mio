@@ -68,7 +68,8 @@ class _StreamingTextState extends State<StreamingText>
     final revealedText = widget.text.substring(0, displayLength);
     final pendingText = widget.text.substring(displayLength);
 
-    return Text.rich(
+    return RepaintBoundary(
+      child: Text.rich(
       TextSpan(
         children: [
           // Already revealed text
@@ -110,6 +111,7 @@ class _StreamingTextState extends State<StreamingText>
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -155,15 +157,17 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildDot(_dot1),
-        const SizedBox(width: 4),
-        _buildDot(_dot2),
-        const SizedBox(width: 4),
-        _buildDot(_dot3),
-      ],
+    return RepaintBoundary(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDot(_dot1),
+          const SizedBox(width: 4),
+          _buildDot(_dot2),
+          const SizedBox(width: 4),
+          _buildDot(_dot3),
+        ],
+      ),
     );
   }
 

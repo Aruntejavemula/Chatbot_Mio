@@ -692,10 +692,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   }
 
   void _onInputChanged(String value) {
+    // Only rebuild when a value that actually affects the UI changes. Typing
+    // within a normal message (after the first character) no longer rebuilds the
+    // whole screen on every keystroke — this is the main fix for typing lag.
+    final hasText = value.trim().isNotEmpty;
+    final firstToken = value.trimLeft().split(' ').first;
+    final slashQuery = firstToken.startsWith('/') ? firstToken : '';
+    if (hasText == _hasText && slashQuery == _slashQuery) return;
     setState(() {
-      _hasText = value.trim().isNotEmpty;
-      final firstToken = value.trimLeft().split(' ').first;
-      _slashQuery = firstToken.startsWith('/') ? firstToken : '';
+      _hasText = hasText;
+      _slashQuery = slashQuery;
     });
   }
 
@@ -753,11 +759,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(messagesProvider);
+    // Only watch the streaming on/off flag here. The actual streaming text and
+    // thinking text are watched inside the streaming bubble via a Consumer, so a
+    // streamed word rebuilds only that bubble — not the whole chat screen.
     final isStreaming = ref.watch(isStreamingProvider);
-    final streamingText = ref.watch(streamingTextProvider);
-    final streamingThinkingText = ref.watch(streamingThinkingTextProvider);
-    final isThinkingStreaming = ref.watch(isThinkingStreamingProvider);
-    final loadingWordIndex = ref.watch(loadingWordIndexProvider);
     final tokenCap = ref.watch(tokenCapProvider);
     ref.watch(chatsProvider);
     ref.watch(currentChatProvider);
@@ -832,8 +837,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
                                     children: [
                                       Expanded(
                                         child: _buildMessagesList(
-                                          isDark, messages, isStreaming, streamingText,
-                                          loadingWordIndex, streamingThinkingText, isThinkingStreaming),
+                                          isDark, messages, isStreaming),
                                       ),
                                       if (_showDisclaimer) _buildDisclaimerPill(isDark),
                                       if (tokenCap != null)
@@ -1846,17 +1850,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     bool isDark,
     List messages,
     bool isStreaming,
-    String streamingText,
-    int loadingWordIndex,
-    String streamingThinkingText,
-    bool isThinkingStreaming,
   ) {
     return ListView.builder(
       controller: _scrollController,
       reverse: false,
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       cacheExtent: 500,
       addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
       itemCount: messages.length + (isStreaming ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < messages.length) {
@@ -1910,29 +1912,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
           );
         }
 
-        // Streaming message
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (streamingThinkingText.isNotEmpty)
-                  ThinkingBlockWidget(
-                    thinkingContent: streamingThinkingText,
-                    isStreaming: isThinkingStreaming,
-                  ),
-                if (streamingText.isEmpty && streamingThinkingText.isEmpty)
-                  const TypingIndicator()
-                else if (streamingText.isNotEmpty)
-                  StreamingText(
-                    text: streamingText,
-                    textColor: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                  ),
-              ],
-            ),
-          ),
+        // Streaming message — watched locally so streamed words only rebuild
+        // this bubble, not the whole chat screen.
+        return Consumer(
+          builder: (context, ref, _) {
+            final streamingText = ref.watch(streamingTextProvider);
+            final streamingThinkingText = ref.watch(streamingThinkingTextProvider);
+            final isThinkingStreaming = ref.watch(isThinkingStreamingProvider);
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (streamingThinkingText.isNotEmpty)
+                      ThinkingBlockWidget(
+                        thinkingContent: streamingThinkingText,
+                        isStreaming: isThinkingStreaming,
+                      ),
+                    if (streamingText.isEmpty && streamingThinkingText.isEmpty)
+                      const TypingIndicator()
+                    else if (streamingText.isNotEmpty)
+                      StreamingText(
+                        text: streamingText,
+                        textColor: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
