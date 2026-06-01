@@ -18,6 +18,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/loading_words.dart';
 import '../../../core/utils/animations.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/connectivity_service.dart';
 import '../../../core/utils/funny_warnings.dart';
 import '../../../core/utils/router.dart';
@@ -571,8 +572,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with TickerProviderStat
     });
 
     // TODO: Create chat if needed, then send message
-    debugPrint('Send: $text with model: $_selectedModel provider: $_selectedProvider '
-        'webSearch: $_webSearchActive research: $_researchActive style: ${_selectedStyle ?? "normal"}');
+    AppLogger.debug('Send: model=$_selectedModel provider=$_selectedProvider '
+        'webSearch=$_webSearchActive research=$_researchActive style=${_selectedStyle ?? "normal"}');
   }
 
   // TODO(mock): TEMPORARY preview of the streaming chat experience (loading dots →

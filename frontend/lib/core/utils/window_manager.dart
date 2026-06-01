@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'app_logger.dart';
 
 /// Window management utility for desktop platforms.
 ///
@@ -14,7 +15,7 @@ class MioWindowManager {
   /// When the window_manager package is added, this will enforce a
   /// minimum size constraint on desktop platforms.
   void setMinimumSize(double width, double height) {
-    debugPrint(
+    AppLogger.debug(
       'MioWindowManager: setMinimumSize($width, $height) - stub, no-op',
     );
   }

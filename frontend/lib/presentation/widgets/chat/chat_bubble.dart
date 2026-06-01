@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/cost_rates.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/animations.dart';
 import '../../../data/models/message_model.dart';
 import 'artifact_viewer.dart';
@@ -460,7 +461,7 @@ class _ChatBubbleState extends State<ChatBubble>
 
   Widget _buildRetryButton(Color mutedColor) {
     return GestureDetector(
-      onTap: () => debugPrint('retry: ${widget.message.id}'),
+      onTap: () => AppLogger.debug('retry: ${widget.message.id}'),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

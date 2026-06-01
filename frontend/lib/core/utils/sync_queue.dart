@@ -1,7 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import 'app_logger.dart';
 
 /// Represents a message queued for sending when connectivity is restored.
 class QueuedMessage {
@@ -63,7 +64,7 @@ class SyncQueue {
             .toList();
       }
     } catch (e) {
-      debugPrint('SyncQueue: failed to load queue: $e');
+      AppLogger.debug('SyncQueue: failed to load queue: $e');
       _queue = [];
     }
     _loaded = true;
@@ -112,7 +113,7 @@ class SyncQueue {
       final encoded = jsonEncode(_queue.map((m) => m.toJson()).toList());
       await _storage.write(key: _storageKey, value: encoded);
     } catch (e) {
-      debugPrint('SyncQueue: failed to persist queue: $e');
+      AppLogger.debug('SyncQueue: failed to persist queue: $e');
     }
   }
 }
